@@ -1,11 +1,4 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "api/benchmark.py",
-            "use": "@vercel/python"
-        }
-    ],
     "crons": [
         {
             "path": "/api/benchmark",

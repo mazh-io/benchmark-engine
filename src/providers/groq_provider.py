@@ -1,10 +1,7 @@
-import os
 import time
 import uuid
 from groq import Groq
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.env_helper import get_env
 
 # Pricing per 1M tokens (approximate, check Groq website for latest)
 PRICING = {
@@ -19,7 +16,7 @@ def call_groq(prompt: str, model: str = "llama-3.1-8b-instant"):
     Call Groq API and return benchmark results.
     Returns: dict with input_tokens, output_tokens, latency_ms, cost_usd, success, error_message, response_text
     """
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = get_env("GROQ_API_KEY")
     if not api_key:
         return {
             "input_tokens": 0,

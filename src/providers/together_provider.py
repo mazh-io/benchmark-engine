@@ -1,10 +1,7 @@
-import os
 import time
 import uuid
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.env_helper import get_env
 
 # Pricing per 1M tokens (approximate, check Together.ai website for latest)
 PRICING = {
@@ -18,7 +15,7 @@ def call_together(prompt: str, model: str = "meta-llama/Llama-3-8b-chat-hf"):
     Call Together AI API and return benchmark results.
     Returns: dict with input_tokens, output_tokens, latency_ms, cost_usd, success, error_message, response_text
     """
-    api_key = os.getenv("TOGETHER_API_KEY")
+    api_key = get_env("TOGETHER_API_KEY")
     if not api_key:
         return {
             "input_tokens": 0,

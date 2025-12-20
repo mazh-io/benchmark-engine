@@ -1,17 +1,10 @@
-import os
 from supabase import create_client, Client
 from datetime import datetime
-
-# Try to load from .env file (local development)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # dotenv not available in production
+from utils.env_helper import get_env
 
 # Get Supabase credentials from environment
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE = os.getenv("SUPABASE_SERVICE_ROLE")
+SUPABASE_URL = get_env("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE = get_env("SUPABASE_SERVICE_ROLE")
 
 # Check if credentials are available
 if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE:

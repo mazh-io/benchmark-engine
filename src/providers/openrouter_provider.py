@@ -1,10 +1,7 @@
-import os
 import time
 import requests
 import uuid
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.env_helper import get_env
 
 # OpenRouter pricing varies by model, using approximate values
 # Check https://openrouter.ai/models for exact pricing
@@ -20,7 +17,7 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
     Call OpenRouter API and return benchmark results.
     Returns: dict with input_tokens, output_tokens, latency_ms, cost_usd, success, error_message, response_text
     """
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = get_env("OPENROUTER_API_KEY")
     if not api_key:
         return {
             "input_tokens": 0,

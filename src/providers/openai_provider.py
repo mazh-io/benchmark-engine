@@ -1,10 +1,7 @@
-import os
 import time
 import uuid
 from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.env_helper import get_env
 
 
 
@@ -28,7 +25,7 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
         success, error_message, response_text
     """
     # Get API key from .env file
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = get_env("OPENAI_API_KEY")
     if not api_key:
         # If no API key, return error result with all the request data
         return {

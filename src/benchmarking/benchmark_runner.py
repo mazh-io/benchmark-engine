@@ -1,110 +1,10 @@
 from benchmarking.run_manager import RunManager
 from database.supabase_client import save_benchmark, get_or_create_provider, get_or_create_model, save_price
-
 from providers.openai_provider import call_openai
 from providers.groq_provider import call_groq
 from providers.together_provider import call_together
 from providers.openrouter_provider import call_openrouter
-
-
-
-# Prompt that we are using for benchmarking
-# AI should summarize this text into exactly three concise bullet points
-BENCHMARK_PROMPT = """The history of timekeeping is a testament to humanity's obsession with measuring the passage of existence. Before the mechanical precision of modern clocks, early civilizations relied on the celestial bodies to organize their lives. The sun, moon, and stars provided the first canvas for tracking time. The Egyptians, for instance, constructed towering obelisks that cast shadows, effectively functioning as primitive sundials that divided the day into segments. However, these devices had a significant limitation: they were useless at night or on cloudy days.
-
-To overcome the reliance on the sun, the Greeks and Romans refined the water clock, or clepsydra. These devices measured time by the regulated flow of water into or out of a vessel. While more consistent than sundials, they required constant maintenance to ensure the flow remained steady despite temperature changes affecting the water's viscosity. Simultaneously, in the East, incense clocks burned at a known rate, providing a scented measure of passing hours in temples and homes.
-
-The true revolution occurred in medieval Europe with the invention of the mechanical escapement mechanism. This innovation allowed for the controlled release of energy from a falling weight, translating it into the rhythmic ticking sound we associate with clocks today. These early mechanical clocks, often installed in town towers, did not have faces or hands; they simply rang bells to signal the hour for prayer and work. They were the heartbeat of the medieval city, synchronizing the community's labor and worship.
-
-By the 17th century, the pendulum clock, introduced by Christiaan Huygens, brought unprecedented accuracy, reducing the deviation from minutes per day to seconds. This leap forward enabled scientists to conduct more precise experiments and navigators to begin solving the problem of longitude at sea. The evolution continued with the shrinking of mechanisms into pocket watches and eventually wristwatches, democratizing time and strapping it to the individual's arm.
-
-Today, we rely on atomic clocks, which measure time based on the vibration of cesium atoms. These devices are so accurate that they would lose less than a second in millions of years. This hyper-precision underpins the GPS technology that guides our cars and the internet protocols that synchronize our global communication networks. From the shadow of an obelisk to the vibration of an atom, the history of timekeeping is a journey from observing nature to mastering the fundamental forces of physics."""
-
-
-# Provider configuration mapping
-# Maps internal provider name to display name and base URL
-PROVIDER_CONFIG = {
-    "openai": {
-        "display_name": "OpenAI",
-        "base_url": "https://api.openai.com"
-    },
-    "groq": {
-        "display_name": "Groq",
-        "base_url": "https://api.groq.com"
-    },
-    "together": {
-        "display_name": "Together AI",
-        "base_url": "https://api.together.xyz"
-    },
-    "openrouter": {
-        "display_name": "OpenRouter",
-        "base_url": "https://openrouter.ai"
-    }
-}
-
-# List of providers that we are testing
-# Format: provider_name function model_name
-PROVIDERS = [
-    ("openai", call_openai, "gpt-4o-mini"),
-    ("groq", call_groq, "llama-3.1-8b-instant"),
-    ("together", call_together, "mistralai/Mixtral-8x7B-Instruct-v0.1"),
-    ("openrouter", call_openrouter, "openai/gpt-4o-mini"),
-]
-
-# Pricing data from provider files
-# Format: (provider_display_name, model_name, input_price_per_1M, output_price_per_1M)
-PRICING_DATA = [
-    # OpenAI
-    ("OpenAI", "gpt-4o-mini", 0.15, 0.60),
-    ("OpenAI", "gpt-4o", 2.50, 10.00),
-    ("OpenAI", "gpt-4-turbo", 10.00, 30.00),
-    ("OpenAI", "gpt-3.5-turbo", 0.50, 1.50),
-    # Groq
-    ("Groq", "llama-3.1-8b-instant", 0.05, 0.08),
-    ("Groq", "llama-3.1-70b-versatile", 0.59, 0.79),
-    ("Groq", "mixtral-8x7b-32768", 0.24, 0.24),
-    # Together AI
-    ("Together AI", "mistralai/Mixtral-8x7B-Instruct-v0.1", 0.24, 0.24),
-    ("Together AI", "meta-llama/Llama-3-8b-chat-hf", 0.10, 0.10),
-    ("Together AI", "meta-llama/Llama-3-70b-chat-hf", 0.59, 0.79),
-    # OpenRouter
-    ("OpenRouter", "openai/gpt-4o-mini", 0.15, 0.60),
-]
-
-
-def populate_prices_table():
-    """
-    Populate the prices table with current pricing data.
-    This ensures the prices table is up-to-date before each benchmark run.
-    
-    Returns:
-        Tuple of (success_count, error_count)
-    """
-    success_count = 0
-    error_count = 0
-    
-    for provider_display, model_name, input_price, output_price in PRICING_DATA:
-        # Get or create provider
-        provider_id = get_or_create_provider(provider_display, None, None)
-        if not provider_id:
-            error_count += 1
-            continue
-        
-        # Get or create model
-        model_id = get_or_create_model(model_name, provider_id)
-        if not model_id:
-            error_count += 1
-            continue
-        
-        # Save price
-        price_id = save_price(provider_id, model_id, input_price, output_price)
-        if price_id:
-            success_count += 1
-        else:
-            error_count += 1
-    
-    return success_count, error_count
-
+from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG, PROVIDERS
 
 def run_benchmark(run_name: str, triggered_by: str):
     """
@@ -115,19 +15,16 @@ def run_benchmark(run_name: str, triggered_by: str):
         triggered_by: Who triggered the run (e.g. "system")
     
     Process:
-        1. Populate prices table with current pricing data
-        2. Create a new run in db
-        3. Test each provider sequentially without concurrency
-        4. Save results to db
-        5. End the run
+        1. Create a new run in db
+        2. Test each provider sequentially without concurrency
+        3. Save results to db
+        4. End the run
     """
     print(f"Starting benchmark run: {run_name}")
     print(f"Triggered by: {triggered_by}\n")
 
     # Populate prices table before starting benchmarks
     print("Populating prices table...")
-    success_count, error_count = populate_prices_table()
-    print(f"Prices table populated: {success_count} successful, {error_count} errors\n")
 
     # Create Runmanager to manage the lifecycle of the run
     run_manager = RunManager(run_name, triggered_by)

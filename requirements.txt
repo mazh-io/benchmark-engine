@@ -7,3 +7,4 @@ together
 openrouter
 httpx
 requests
+beautifulsoup4

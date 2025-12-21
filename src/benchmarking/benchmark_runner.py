@@ -1,5 +1,5 @@
 from benchmarking.run_manager import RunManager
-from database.supabase_client import save_benchmark
+from database.supabase_client import save_benchmark, get_or_create_provider, get_or_create_model
 
 from providers.openai_provider import call_openai
 from providers.groq_provider import call_groq
@@ -20,6 +20,27 @@ By the 17th century, the pendulum clock, introduced by Christiaan Huygens, broug
 
 Today, we rely on atomic clocks, which measure time based on the vibration of cesium atoms. These devices are so accurate that they would lose less than a second in millions of years. This hyper-precision underpins the GPS technology that guides our cars and the internet protocols that synchronize our global communication networks. From the shadow of an obelisk to the vibration of an atom, the history of timekeeping is a journey from observing nature to mastering the fundamental forces of physics."""
 
+
+# Provider configuration mapping
+# Maps internal provider name to display name and base URL
+PROVIDER_CONFIG = {
+    "openai": {
+        "display_name": "OpenAI",
+        "base_url": "https://api.openai.com"
+    },
+    "groq": {
+        "display_name": "Groq",
+        "base_url": "https://api.groq.com"
+    },
+    "together": {
+        "display_name": "Together AI",
+        "base_url": "https://api.together.xyz"
+    },
+    "openrouter": {
+        "display_name": "OpenRouter",
+        "base_url": "https://openrouter.ai"
+    }
+}
 
 # List of providers that we are testing
 # Format: provider_name function model_name
@@ -62,30 +83,75 @@ def run_benchmark(run_name: str, triggered_by: str):
         print("\n" + "=" * 60)
         print(f"Testing → {provider_name} / {model}")
         print("=" * 60)
+        
+        # Get or create provider in database
+        provider_config = PROVIDER_CONFIG.get(provider_name, {"display_name": provider_name.title(), "base_url": None})
+        provider_id = get_or_create_provider(
+            name=provider_config["display_name"],
+            base_url=provider_config["base_url"],
+            logo_url=None
+        )
+        
+        # Get or create model in database (requires provider_id)
+        model_id = None
+        if provider_id:
+            model_id = get_or_create_model(
+                name=model,
+                provider_id=provider_id,
+                context_window=None  # Can be added later if needed
+            )
+        
         # Call the provider function with the prompt and model to get a dictionary with the results
         # This will return a dictionary with the results
         result = func(BENCHMARK_PROMPT, model)
 
         # Save results to db
-        save_result = save_benchmark(
-            run_id=run_manager.run_id,  # UUID of the main run (foreign key to runs table)
-            provider=provider_name,     # Name of the provider
-            model=model,                # Name of the model
-            input_tokens=result["input_tokens"],
-            output_tokens=result["output_tokens"],
-            latency_ms=result["latency_ms"],
-            cost_usd=result["cost_usd"],
-            success=result["success"],
-            error_message=result["error_message"],
-            response_text=result.get("response_text")  # Response text from the AI
-        )
+        # Prepare data for saving (only include fields that exist in schema)
+        benchmark_data = {
+            "run_id": run_manager.run_id,
+            "provider_id": provider_id,  # Foreign key to providers table
+            "model_id": model_id,  # Foreign key to models table
+            "provider": provider_name,  # Legacy field for backward compatibility
+            "model": model,  # Legacy field for backward compatibility
+            "input_tokens": result["input_tokens"],
+            "output_tokens": result["output_tokens"],
+            "total_latency_ms": result.get("total_latency_ms") or result.get("latency_ms", 0),
+            "ttft_ms": result.get("ttft_ms"),
+            "tps": result.get("tps"),
+            "status_code": result.get("status_code"),
+            "cost_usd": result["cost_usd"],
+            "success": result["success"],
+            "error_message": result.get("error_message"),
+            "response_text": result.get("response_text")
+        }
+        
+        # Remove None values to avoid issues (but keep provider_id and model_id even if None - they're nullable in schema)
+        # Only remove None for non-nullable fields
+        filtered_data = {}
+        for k, v in benchmark_data.items():
+            # Keep provider_id and model_id even if None (they're nullable foreign keys)
+            if k in ["provider_id", "model_id"]:
+                filtered_data[k] = v
+            elif v is not None:
+                filtered_data[k] = v
+        
+        benchmark_data = filtered_data
+        
+        save_result = save_benchmark(**benchmark_data)
 
         # Print results to console
         if result["success"]:
-            print(f"Success ({provider_name})")
-            print(f"   Latency: {result['latency_ms']:.2f} ms")
+            print(f" Success ({provider_name})")
+            latency = result.get("total_latency_ms") or result.get("latency_ms", 0)
+            print(f"   Total Latency: {latency:.2f} ms")
+            if result.get("ttft_ms"):
+                print(f"   TTFT: {result['ttft_ms']:.2f} ms")
+            if result.get("tps"):
+                print(f"   TPS: {result['tps']:.2f} tokens/sec")
             print(f"   Tokens: {result['input_tokens']} in / {result['output_tokens']} out")
             print(f"   Cost: ${result['cost_usd']:.6f}")
+            if result.get("status_code"):
+                print(f"   Status: {result['status_code']}")
         else:
             print(f"Failed: {result['error_message']}")
 

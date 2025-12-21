@@ -46,10 +46,12 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
     
     # Start time for latency calculation
     start_time = time.time()
+    first_token_time = None
+    status_code = 200
     
     try:
-        # Send request to OpenAI API
-        response = client.chat.completions.create(
+        # Send streaming request to OpenAI API for TTFT measurement
+        stream = client.chat.completions.create(
             model=model,
             messages=[
                 # System prompt: instruct the AI to summarize the provided text into exactly three concise bullet points
@@ -59,16 +61,57 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
             ],
             temperature=0.8,  # Higher temperature for more variation in the response
             top_p=0.9,        # Nucleus sampling for diversity in the response
-            user=request_id   # OpenAI user parameter for tracking in the dashboard
+            user=request_id,  # OpenAI user parameter for tracking in the dashboard
+            stream=True       # Enable streaming for TTFT measurement
         )
         
-        # Calculate latency in milliseconds
-        latency_ms = (time.time() - start_time) * 1000
+        # Collect streaming response
+        response_text_parts = []
+        first_chunk_received = False
+        total_output_tokens = 0
         
-        # Get information from response for input and output tokens
-        input_tokens = response.usage.prompt_tokens
-        output_tokens = response.usage.completion_tokens
-        response_text = response.choices[0].message.content
+        for chunk in stream:
+            # Measure Time to First Token (TTFT)
+            if not first_chunk_received and chunk.choices and chunk.choices[0].delta.content:
+                first_token_time = time.time()
+                first_chunk_received = True
+            
+            # Collect content
+            if chunk.choices and chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                response_text_parts.append(content)
+                # Approximate token count (rough estimate: 1 token ≈ 4 characters)
+                total_output_tokens += len(content) // 4
+        
+        # End time for total latency
+        end_time = time.time()
+        total_latency_ms = (end_time - start_time) * 1000
+        
+        # Calculate TTFT (Time to First Token)
+        ttft_ms = None
+        if first_token_time:
+            ttft_ms = (first_token_time - start_time) * 1000
+        
+        # Calculate TPS (Tokens Per Second)
+        # Formula: (Total Tokens - 1) / (Time End - Time First Token)
+        tps = None
+        if first_token_time and total_output_tokens > 1:
+            time_for_tokens = end_time - first_token_time
+            if time_for_tokens > 0:
+                tps = (total_output_tokens - 1) / time_for_tokens
+        
+        # Combine response text
+        response_text = "".join(response_text_parts)
+        
+        # Get actual token counts from final chunk (if available) or use estimates
+        # Note: OpenAI streaming doesn't provide usage in chunks, so we estimate
+        # For accurate counts, we'd need to make a separate non-streaming call or use the final chunk
+        # For now, we'll use the estimated output tokens and estimate input tokens
+        input_tokens = len(prompt.split()) // 0.75  # Rough estimate: 1 token ≈ 0.75 words
+        output_tokens = total_output_tokens
+        
+        # Make a non-streaming call to get accurate token counts (optional, adds latency)
+        # For MVP, we'll use estimates above
         
         # Calculate cost based on the model's pricing
         pricing = PRICING.get(model, PRICING["gpt-4o-mini"])
@@ -76,9 +119,13 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
         
         # Return the result with all the request data
         return {
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "latency_ms": latency_ms,
+            "input_tokens": int(input_tokens),
+            "output_tokens": int(output_tokens),
+            "total_latency_ms": total_latency_ms,
+            "latency_ms": total_latency_ms,  # Backward compatibility
+            "ttft_ms": ttft_ms,
+            "tps": tps,
+            "status_code": status_code,
             "cost_usd": cost_usd,
             "success": True,
             "error_message": None,
@@ -87,11 +134,24 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
         
     except Exception as e:
         # If there is an error, calculate latency and return error result with all the request data
-        latency_ms = (time.time() - start_time) * 1000
+        end_time = time.time()
+        total_latency_ms = (end_time - start_time) * 1000
+        
+        # Try to extract status code from error if available
+        status_code = 500  # Default error code
+        if hasattr(e, 'status_code'):
+            status_code = e.status_code
+        elif hasattr(e, 'response') and hasattr(e.response, 'status_code'):
+            status_code = e.response.status_code
+        
         return {
             "input_tokens": 0,
             "output_tokens": 0,
-            "latency_ms": latency_ms,
+            "total_latency_ms": total_latency_ms,
+            "latency_ms": total_latency_ms,  # Backward compatibility
+            "ttft_ms": None,
+            "tps": None,
+            "status_code": status_code,
             "cost_usd": 0,
             "success": False,
             "error_message": str(e),

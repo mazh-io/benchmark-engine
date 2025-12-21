@@ -63,11 +63,16 @@ def save_benchmark(**data):
     Args:
         **data: Dictionary with all the benchmark data:
             - run_id: UUID of the run (foreign key to runs table)
-            - provider: Name of the provider (e.g. "openai")
-            - model: Name of the model (e.g. "gpt-4o-mini")
+            - provider_id: UUID of the provider (optional, foreign key)
+            - model_id: UUID of the model (optional, foreign key)
+            - provider: Name of the provider (e.g. "openai") - for backward compatibility
+            - model: Name of the model (e.g. "gpt-4o-mini") - for backward compatibility
             - input_tokens: Number of input tokens
             - output_tokens: Number of output tokens
-            - latency_ms: Latency in milliseconds
+            - total_latency_ms: Total latency in milliseconds (or latency_ms for backward compatibility)
+            - ttft_ms: Time to First Token in milliseconds (optional)
+            - tps: Tokens Per Second (optional)
+            - status_code: HTTP status code (200, 500, 429, etc.) (optional)
             - cost_usd: Cost in USD
             - success: Whether the benchmark was successful (True/False)
             - error_message: Error message if the benchmark failed
@@ -76,6 +81,15 @@ def save_benchmark(**data):
         Response from Supabase, or None if the save failed
     """
     try:
+        # Remove latency_ms if present (we only use total_latency_ms)
+        if "latency_ms" in data:
+            del data["latency_ms"]
+        
+        # Ensure total_latency_ms exists
+        if "total_latency_ms" not in data:
+            print("Warning: total_latency_ms not provided")
+            return None
+        
         # Insert a new row into the benchmark_results table
         # PostgreSQL will automatically generate a UUID for id and a timestamp for created_at
         response = supabase.table("benchmark_results").insert(data).execute()
@@ -131,4 +145,164 @@ def get_benchmark_results_by_run_id(run_id: str):
         return response.data
     except Exception as e:
         print("DB Error (get_benchmark_results_by_run_id):", e)
+        return None
+
+
+# ============================================================================
+# PROVIDERS FUNCTIONS
+# ============================================================================
+
+def get_or_create_provider(name: str, base_url: str = None, logo_url: str = None):
+    """
+    Get existing provider or create a new one if it doesn't exist.
+    
+    Args:
+        name: Name of the provider (e.g. "OpenAI", "Groq")
+        base_url: Base URL of the provider API (optional)
+        logo_url: URL to provider logo (optional)
+    
+    Returns:
+        UUID of the provider, or None if creation failed
+    """
+    try:
+        # Try to get existing provider
+        response = supabase.table("providers").select("id").eq("name", name).execute()
+        
+        if response.data:
+            return response.data[0]["id"]
+        
+        # Create new provider if it doesn't exist
+        response = supabase.table("providers").insert({
+            "name": name,
+            "base_url": base_url,
+            "logo_url": logo_url
+        }).execute()
+        
+        return response.data[0]["id"]
+    except Exception as e:
+        print("DB Error (get_or_create_provider):", e)
+        return None
+
+
+def get_all_providers():
+    """
+    Get all providers from the providers table.
+    
+    Returns:
+        List of all providers, or None if query failed
+    """
+    try:
+        response = supabase.table("providers").select("*").execute()
+        return response.data
+    except Exception as e:
+        print("DB Error (get_all_providers):", e)
+        return None
+
+
+# ============================================================================
+# MODELS FUNCTIONS
+# ============================================================================
+
+def get_or_create_model(name: str, provider_id: str, context_window: int = None):
+    """
+    Get existing model or create a new one if it doesn't exist.
+    
+    Args:
+        name: Name of the model (e.g. "gpt-4o-mini", "llama-3-70b-instruct")
+        provider_id: UUID of the provider (foreign key)
+        context_window: Context window size in tokens (optional)
+    
+    Returns:
+        UUID of the model, or None if creation failed
+    """
+    try:
+        # Try to get existing model
+        response = supabase.table("models").select("id").eq("name", name).eq("provider_id", provider_id).execute()
+        
+        if response.data:
+            return response.data[0]["id"]
+        
+        # Create new model if it doesn't exist
+        response = supabase.table("models").insert({
+            "name": name,
+            "provider_id": provider_id,
+            "context_window": context_window
+        }).execute()
+        
+        return response.data[0]["id"]
+    except Exception as e:
+        print("DB Error (get_or_create_model):", e)
+        return None
+
+
+def get_all_models():
+    """
+    Get all models from the models table.
+    
+    Returns:
+        List of all models, or None if query failed
+    """
+    try:
+        response = supabase.table("models").select("*").execute()
+        return response.data
+    except Exception as e:
+        print("DB Error (get_all_models):", e)
+        return None
+
+
+# ============================================================================
+# PRICES FUNCTIONS
+# ============================================================================
+
+def save_price(provider_id: str, model_id: str, input_price_per_m: float, output_price_per_m: float):
+    """
+    Save pricing data to the prices table (history table).
+    
+    Args:
+        provider_id: UUID of the provider
+        model_id: UUID of the model
+        input_price_per_m: Input price per 1M tokens
+        output_price_per_m: Output price per 1M tokens
+    
+    Returns:
+        UUID of the created price record, or None if save failed
+    """
+    try:
+        response = supabase.table("prices").insert({
+            "provider_id": provider_id,
+            "model_id": model_id,
+            "input_price_per_m": input_price_per_m,
+            "output_price_per_m": output_price_per_m
+        }).execute()
+        
+        return response.data[0]["id"]
+    except Exception as e:
+        print("DB Error (save_price):", e)
+        return None
+
+
+def get_latest_prices(provider_id: str = None, model_id: str = None):
+    """
+    Get latest pricing data from the prices table.
+    
+    Args:
+        provider_id: Optional filter by provider UUID
+        model_id: Optional filter by model UUID
+    
+    Returns:
+        List of latest prices, or None if query failed
+    """
+    try:
+        query = supabase.table("prices").select("*")
+        
+        if provider_id:
+            query = query.eq("provider_id", provider_id)
+        if model_id:
+            query = query.eq("model_id", model_id)
+        
+        # Order by timestamp descending and get latest
+        response = query.order("timestamp", desc=True).execute()
+        return response.data
+    except Exception as e:
+        print("DB Error (get_latest_prices):", e)
         return None

@@ -5,10 +5,16 @@ A lightweight MVP tool for benchmarking AI model providers. Test multiple provid
 ## Features
 
 - **Multi-Provider Support**: Test OpenAI, Groq, Together AI, and OpenRouter
-- **Performance Metrics**: Track latency, input/output tokens, and cost per request
+- **Advanced Performance Metrics**: 
+  - **Total Latency**: Complete request-to-response time
+  - **TTFT (Time to First Token)**: Measures how quickly the first token arrives (via streaming)
+  - **TPS (Tokens Per Second)**: Calculates token generation speed
+  - **Status Codes**: HTTP status tracking (200, 500, 429, etc.)
+- **Streaming Support**: All providers use streaming for accurate TTFT and TPS measurement
 - **Database Integration**: Store all benchmark results in Supabase with full history
 - **Simple & Linear**: Sequential execution (no async complexity) - perfect for MVP
-- **Error Handling**: Graceful failure handling with detailed error messages
+- **Error Handling**: Graceful failure handling with detailed error messages and logging
+- **Error Logging**: Automatic logging to `logs/` directory for debugging
 - **UUID Tracking**: Each request gets a unique UUID for tracking and debugging
 - **Response Storage**: Full AI responses stored for validation and analysis
 
@@ -113,10 +119,23 @@ Triggered by: system
 Run started: 766108b9-5a8e-4822-ae57-31de08cb0da3
 
 Testing → openai / gpt-4o-mini
-Success (openai)
-   Latency: 5068.09 ms
-   Tokens: 531 in / 103 out
-   Cost: $0.000141
+✅ Success (openai)
+   Total Latency: 4412.03 ms
+   TTFT: 871.24 ms
+   TPS: 30.50 tokens/sec
+   Tokens: 520 in / 109 out
+   Cost: $0.000143
+   Status: 200
+ Saved to DB
+
+Testing → groq / llama-3.1-8b-instant
+✅ Success (groq)
+   Total Latency: 2612.43 ms
+   TTFT: 2395.38 ms
+   TPS: 700.32 tokens/sec
+   Tokens: 520 in / 153 out
+   Cost: $0.000038
+   Status: 200
  Saved to DB
 ...
 ```
@@ -139,7 +158,10 @@ Stores individual benchmark test results for each provider/model:
 - `model` (text) - Model name (e.g. "gpt-4o-mini")
 - `input_tokens` (integer) - Number of input tokens
 - `output_tokens` (integer) - Number of output tokens
-- `latency_ms` (double precision) - Response time in milliseconds
+- `total_latency_ms` (double precision) - Total response time in milliseconds
+- `ttft_ms` (double precision, nullable) - Time to First Token in milliseconds (measured via streaming)
+- `tps` (double precision, nullable) - Tokens Per Second: (Total Tokens - 1) / (Time End - Time First Token)
+- `status_code` (integer, nullable) - HTTP status code (200, 500, 429, etc.)
 - `cost_usd` (double precision) - Cost in USD
 - `success` (boolean) - Whether the request succeeded
 - `error_message` (text, nullable) - Error message if failed
@@ -189,18 +211,36 @@ MIT
 
 ## How It Works
 
-1. **Run Creation**: Each execution creates a new `benchmark_runs` entry with a unique UUID
+1. **Run Creation**: Each execution creates a new `runs` entry with a unique UUID
 2. **Sequential Testing**: Providers are tested one after another (no async)
-3. **Metrics Collection**: For each provider:
-   - Latency is measured from API call start to response
-   - Token counts are extracted from API response
-   - Cost is calculated based on provider pricing tables
-   - Full response text is stored for validation
+3. **Streaming & Metrics Collection**: For each provider:
+   - **Streaming**: All providers use streaming to measure TTFT accurately
+   - **Total Latency**: Measured from API call start to complete response
+   - **TTFT (Time to First Token)**: Measured when first token arrives via streaming
+   - **TPS (Tokens Per Second)**: Calculated as (Total Tokens - 1) / (Time End - Time First Token)
+   - **Status Code**: HTTP status code captured (200, 500, 429, etc.)
+   - **Token counts**: Extracted from API response
+   - **Cost**: Calculated based on provider pricing tables
+   - **Full response text**: Stored for validation
 4. **Database Storage**: All results are saved to Supabase with:
    - Run ID linking all benchmarks together
+   - All performance metrics (total_latency_ms, ttft_ms, tps, status_code)
    - Success/failure status
    - Error messages for failed requests
    - Complete response text for successful requests
+5. **Error Logging**: All errors are automatically logged to `logs/benchmark_engine_YYYYMMDD.log`
+
+## Testing
+
+### Quick Test
+
+Test a single provider quickly:
+
+```bash
+python3 test_single_provider.py
+```
+
+This will test all providers with a shorter prompt and display results including TTFT and TPS.
 
 ## Troubleshooting
 
@@ -209,6 +249,12 @@ MIT
 - **401 Unauthorized**: Check that your API keys are correct in `.env`
 - **400 Bad Request**: Verify model names are correct for each provider
 - **Database Errors**: Ensure Supabase credentials are correct and schema is applied
+- **TTFT/TPS showing None**: This may happen if streaming fails or first token isn't detected. Check provider API status.
+- **Logs not appearing**: Ensure `logs/` directory exists and has write permissions
+
+### Check Logs
+
+All errors are logged to `logs/benchmark_engine_YYYYMMDD.log`. Check this file for detailed error information.
 
 ## Notes
 

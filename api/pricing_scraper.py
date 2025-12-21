@@ -24,7 +24,7 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "success", "message": "Benchmark completed successfully"}).encode())
+            self.wfile.write(json.dumps({"status": "success", "message": "Pricing scraper completed successfully"}).encode())
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-type', 'application/json')

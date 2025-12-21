@@ -1,9 +1,6 @@
 from benchmarking.run_manager import RunManager
 from database.supabase_client import save_benchmark, get_or_create_provider, get_or_create_model, save_price
-from providers.openai_provider import call_openai
-from providers.groq_provider import call_groq
-from providers.together_provider import call_together
-from providers.openrouter_provider import call_openrouter
+
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG, PROVIDERS
 
 def run_benchmark(run_name: str, triggered_by: str):

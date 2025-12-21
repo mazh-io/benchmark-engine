@@ -1,4 +1,8 @@
 # Global constants for the benchmark engine
+from providers.openai_provider import call_openai
+from providers.groq_provider import call_groq
+from providers.together_provider import call_together
+from providers.openrouter_provider import call_openrouter
 
 BENCHMARK_PROMPT = """The history of timekeeping is a testament to humanity's obsession with measuring the passage of existence. Before the mechanical precision of modern clocks, early civilizations relied on the celestial bodies to organize their lives. The sun, moon, and stars provided the first canvas for tracking time. The Egyptians, for instance, constructed towering obelisks that cast shadows, effectively functioning as primitive sundials that divided the day into segments. However, these devices had a significant limitation: they were useless at night or on cloudy days.
 
@@ -30,8 +34,8 @@ PROVIDER_CONFIG = {
 }
 
 PROVIDERS = [
-    ("openai", "call_openai", "gpt-4o-mini"),
-    ("groq", "call_groq", "llama-3.1-8b-instant"),
-    ("together", "call_together", "mistralai/Mixtral-8x7B-Instruct-v0.1"),
-    ("openrouter", "call_openrouter", "openai/gpt-4o-mini"),
+    ("openai", call_openai, "gpt-4o-mini"),
+    ("groq", call_groq, "llama-3.1-8b-instant"),
+    ("together", call_together, "mistralai/Mixtral-8x7B-Instruct-v0.1"),
+    ("openrouter", call_openrouter, "openai/gpt-4o-mini"),
 ]

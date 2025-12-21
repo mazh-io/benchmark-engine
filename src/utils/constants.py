@@ -17,20 +17,24 @@ Today, we rely on atomic clocks, which measure time based on the vibration of ce
 PROVIDER_CONFIG = {
     "openai": {
         "display_name": "OpenAI",
-        "base_url": "https://api.openai.com"
+        "base_url": "https://api.openai.com",
+        "pricing_url": "https://platform.openai.com/docs/pricing",
     },
     "groq": {
         "display_name": "Groq",
-        "base_url": "https://api.groq.com"
+        "base_url": "https://api.groq.com",
+        "pricing_url": "https://groq.com/pricing",
     },
     "together": {
         "display_name": "Together AI",
-        "base_url": "https://api.together.xyz"
+        "base_url": "https://api.together.xyz",
+        "models_url": "https://api.together.xyz/v1/models",
     },
     "openrouter": {
         "display_name": "OpenRouter",
-        "base_url": "https://openrouter.ai"
-    }
+        "base_url": "https://openrouter.ai",
+        "pricing_url": "https://openrouter.ai/api/v1/pricing/public",
+    },
 }
 
 PROVIDERS = [

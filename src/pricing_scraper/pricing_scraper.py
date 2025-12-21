@@ -249,7 +249,6 @@ def fetch_groq_llm_prices() -> List[Dict[str, Any]]:
 # DB save
 # -------------------------
 def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
-    ts = _utc_iso()
 
     for r in rows:
         provider_key = r["provider_key"]
@@ -271,7 +270,7 @@ def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
         if not model_id:
             continue
 
-        save_price(provider_id, model_id, float(input_per_m), float(output_per_m), timestamp=ts)
+        save_price(provider_id, model_id, float(input_per_m), float(output_per_m))
 
 
 # -------------------------

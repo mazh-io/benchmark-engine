@@ -67,17 +67,14 @@ Run the benchmark once:
 python main.py
 ```
 
-### Scheduled Runs (Every 15 minutes for 4 hours)
-
-Run continuously for 4 hours with 15-minute intervals:
-
-```bash
-python run_scheduled.py
-```
-
-This will execute 16 benchmark runs (4 hours × 60 minutes / 15 minutes).
+This will:
+1. Populate the `prices` table with current pricing data
+2. Execute benchmarks for all configured providers
+3. Save results to the database
 
 ### Cron Job Setup
+
+For automated scheduling (e.g., every 15 minutes), use `cron_example.sh`:
 
 For automated scheduling, use `cron_example.sh`:
 

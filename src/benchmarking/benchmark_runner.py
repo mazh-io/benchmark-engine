@@ -20,9 +20,6 @@ def run_benchmark(run_name: str, triggered_by: str):
     print(f"Starting benchmark run: {run_name}")
     print(f"Triggered by: {triggered_by}\n")
 
-    # Populate prices table before starting benchmarks
-    print("Populating prices table...")
-
     # Create Runmanager to manage the lifecycle of the run
     run_manager = RunManager(run_name, triggered_by)
     run_manager.start()  # Create run in db and get its UUID

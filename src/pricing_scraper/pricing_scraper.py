@@ -1,10 +1,10 @@
 import re
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from html.parser import HTMLParser
 from typing import Any, Dict, List, Optional, Tuple
 
-from database.supabase_client import get_or_create_provider, get_or_create_model, save_price
+from database.supabase_client import get_or_create_provider, get_or_create_model, save_price, get_last_price_timestamp
 from utils.constants import PROVIDER_CONFIG
 from utils.env_helper import get_env
 
@@ -249,7 +249,10 @@ def fetch_groq_llm_prices() -> List[Dict[str, Any]]:
 # DB save
 # -------------------------
 def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
-
+    """Save prices to database only if 24 hours have passed since last update."""
+    inserted_count = 0
+    skipped_count = 0
+    
     for r in rows:
         provider_key = r["provider_key"]
         provider_name = r["provider_name"]
@@ -270,7 +273,36 @@ def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
         if not model_id:
             continue
 
+        # Check if 24 hours have passed since last price update
+        last_timestamp = get_last_price_timestamp(provider_id, model_id)
+        if last_timestamp:
+            # Parse timestamp (handle both ISO format with/without timezone)
+            if isinstance(last_timestamp, str):
+                # Remove timezone info if present for comparison
+                if last_timestamp.endswith('Z'):
+                    last_timestamp = last_timestamp[:-1]
+                if '+' in last_timestamp:
+                    last_timestamp = last_timestamp.split('+')[0]
+                last_dt = datetime.fromisoformat(last_timestamp.replace('Z', ''))
+            else:
+                last_dt = last_timestamp
+            
+            # Make sure last_dt is timezone-aware
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=timezone.utc)
+            
+            now = datetime.now(timezone.utc)
+            time_diff = now - last_dt
+            
+            if time_diff < timedelta(hours=24):
+                skipped_count += 1
+                continue
+        
+        # Insert new price record (no updates, only inserts)
         save_price(provider_id, model_id, float(input_per_m), float(output_per_m))
+        inserted_count += 1
+    
+    print(f"[save_prices] Inserted: {inserted_count}, Skipped (within 24h): {skipped_count}")
 
 
 # -------------------------

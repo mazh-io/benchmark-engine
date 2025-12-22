@@ -306,3 +306,25 @@ def get_latest_prices(provider_id: str = None, model_id: str = None):
     except Exception as e:
         print("DB Error (get_latest_prices):", e)
         return None
+
+
+def get_last_price_timestamp(provider_id: str, model_id: str):
+    """
+    Get the timestamp of the last price record for a specific provider/model.
+    
+    Args:
+        provider_id: UUID of the provider
+        model_id: UUID of the model
+    
+    Returns:
+        Timestamp of the last price record, or None if no record exists
+    """
+    try:
+        response = supabase.table("prices").select("timestamp").eq("provider_id", provider_id).eq("model_id", model_id).order("timestamp", desc=True).limit(1).execute()
+        
+        if response.data:
+            return response.data[0]["timestamp"]
+        return None
+    except Exception as e:
+        print("DB Error (get_last_price_timestamp):", e)
+        return None

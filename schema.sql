@@ -71,6 +71,15 @@ create table if not exists public.benchmark_results (
     
     -- Cost calculation
     cost_usd double precision not null,
+    
+    -- Bang for Buck metric (Generated Column)
+    -- Calculates tokens per dollar for cost efficiency comparison
+    tokens_per_dollar double precision generated always as (
+        case 
+            when cost_usd > 0 then (input_tokens + output_tokens) / cost_usd
+            else null
+        end
+    ) stored,
 
     created_at timestamptz not null default now()
 );
@@ -88,3 +97,4 @@ create index if not exists idx_benchmark_results_model_id on public.benchmark_re
 create index if not exists idx_benchmark_results_provider on public.benchmark_results(provider);
 create index if not exists idx_benchmark_results_model on public.benchmark_results(model);
 create index if not exists idx_benchmark_results_created_at on public.benchmark_results(created_at);
+create index if not exists idx_benchmark_results_tokens_per_dollar on public.benchmark_results(tokens_per_dollar);

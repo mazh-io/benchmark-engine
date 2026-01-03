@@ -10,6 +10,7 @@ PRICING = {
     "anthropic/claude-3-haiku": {"input": 0.25, "output": 1.25},
     "google/gemini-pro": {"input": 0.50, "output": 1.50},
     "meta-llama/llama-3.1-70b-instruct": {"input": 0.59, "output": 0.79},
+    "minimax/minimax-01": {"input": 0.30, "output": 1.50},  # Challenger to Claude Sonnet
 }
 
 def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):

@@ -5,6 +5,7 @@ from utils.env_helper import get_env
 
 # Pricing per 1M tokens (approximate, check Groq website for latest)
 PRICING = {
+    "llama-3.3-70b-versatile": {"input": 0.59, "output": 0.79},  # Latest Llama 3.3
     "llama-3.1-70b-versatile": {"input": 0.59, "output": 0.79},
     "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
     "mixtral-8x7b-32768": {"input": 0.24, "output": 0.24},

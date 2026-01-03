@@ -328,3 +328,109 @@ def get_last_price_timestamp(provider_id: str, model_id: str):
     except Exception as e:
         print("DB Error (get_last_price_timestamp):", e)
         return None
+
+
+# ============================================================================
+# RUN ERRORS FUNCTIONS
+# ============================================================================
+
+def save_run_error(run_id: str, provider: str, model: str, error_type: str, error_message: str, 
+                   status_code: int = None, provider_id: str = None, model_id: str = None):
+    """
+    Save an error that occurred during a benchmark run.
+    
+    This function logs errors to the run_errors table so we can track provider reliability
+    and ensure that one failing provider doesn't crash the entire benchmark.
+    
+    Args:
+        run_id: UUID of the run (foreign key to runs table)
+        provider: Name of the provider (e.g. "openai", "anthropic")
+        model: Name of the model (e.g. "gpt-4o-mini")
+        error_type: Type of error (e.g. "RATE_LIMIT", "AUTH_ERROR", "TIMEOUT", "UNKNOWN_ERROR")
+        error_message: Detailed error message
+        status_code: HTTP status code if available (optional)
+        provider_id: UUID of the provider (optional, foreign key)
+        model_id: UUID of the model (optional, foreign key)
+    
+    Returns:
+        UUID of the created error record, or None if save failed
+    """
+    try:
+        error_data = {
+            "run_id": run_id,
+            "provider": provider,
+            "model": model,
+            "error_type": error_type,
+            "error_message": error_message
+        }
+        
+        # Add optional fields if provided
+        if status_code is not None:
+            error_data["status_code"] = status_code
+        if provider_id is not None:
+            error_data["provider_id"] = provider_id
+        if model_id is not None:
+            error_data["model_id"] = model_id
+        
+        response = supabase.table("run_errors").insert(error_data).execute()
+        return response.data[0]["id"]
+    except Exception as e:
+        print("DB Error (save_run_error):", e)
+        return None
+
+
+def get_run_errors(run_id: str = None, provider: str = None, error_type: str = None):
+    """
+    Get errors from the run_errors table with optional filters.
+    
+    Args:
+        run_id: Optional filter by run UUID
+        provider: Optional filter by provider name
+        error_type: Optional filter by error type
+    
+    Returns:
+        List of errors, or None if query failed
+    """
+    try:
+        query = supabase.table("run_errors").select("*")
+        
+        if run_id:
+            query = query.eq("run_id", run_id)
+        if provider:
+            query = query.eq("provider", provider)
+        if error_type:
+            query = query.eq("error_type", error_type)
+        
+        # Order by timestamp descending (most recent first)
+        response = query.order("timestamp", desc=True).execute()
+        return response.data
+    except Exception as e:
+        print("DB Error (get_run_errors):", e)
+        return None
+
+
+def get_error_count_by_provider(hours: int = 24):
+    """
+    Get count of errors grouped by provider for the last N hours.
+    
+    This is useful for monitoring which providers are having issues.
+    
+    Args:
+        hours: Number of hours to look back (default 24)
+    
+    Returns:
+        List of dicts with provider and error count, or None if query failed
+    """
+    try:
+        # Note: This requires a raw SQL query since Supabase Python client
+        # doesn't support GROUP BY directly. For now, we'll return all errors
+        # and let the caller group them.
+        response = supabase.table("run_errors").select("provider, error_type").gte(
+            "timestamp", 
+            f"now() - interval '{hours} hours'"
+        ).execute()
+        
+        return response.data
+    except Exception as e:
+        print("DB Error (get_error_count_by_provider):", e)
+        return None

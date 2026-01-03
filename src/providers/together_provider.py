@@ -6,6 +6,7 @@ from utils.env_helper import get_env
 
 # Pricing per 1M tokens (approximate, check Together.ai website for latest)
 PRICING = {
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo": {"input": 0.88, "output": 0.88},  # Latest
     "meta-llama/Llama-3-70b-chat-hf": {"input": 0.59, "output": 0.79},
     "meta-llama/Llama-3-8b-chat-hf": {"input": 0.10, "output": 0.10},
     "mistralai/Mixtral-8x7B-Instruct-v0.1": {"input": 0.24, "output": 0.24},

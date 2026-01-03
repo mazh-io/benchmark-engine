@@ -10,6 +10,10 @@ PRICING = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4-turbo": {"input": 10.00, "output": 30.00},
     "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
+    # O1 models (reasoning models)
+    "o1-preview": {"input": 15.00, "output": 60.00},
+    "o1-mini": {"input": 3.00, "output": 12.00},
+    "o1": {"input": 15.00, "output": 60.00},  # Alias for o1-preview
 }
 
 def call_openai(prompt: str, model: str = "gpt-4o-mini"):

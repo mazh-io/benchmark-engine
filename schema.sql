@@ -38,7 +38,7 @@ create table if not exists public.runs (
     run_name text not null,
     triggered_by text not null,
     started_at timestamptz not null default now(),
-    finished_at timestamptz
+    finished_at timestamptz  -- NULL = running, NOT NULL = finished
 );
 
 -- BENCHMARK RESULTS TABLE (Time-Series Table)
@@ -84,6 +84,30 @@ create table if not exists public.benchmark_results (
     created_at timestamptz not null default now()
 );
 
+-- RUN ERRORS TABLE
+-- Stores errors that occur during benchmark runs
+-- This table tracks all failures so we can monitor provider reliability
+create table if not exists public.run_errors (
+    id uuid primary key default gen_random_uuid(),
+    run_id uuid not null references public.runs(id) on delete cascade,
+    
+    -- Foreign keys to providers and models (nullable because error might occur before we identify these)
+    provider_id uuid references public.providers(id) on delete set null,
+    model_id uuid references public.models(id) on delete set null,
+    
+    -- Legacy text fields
+    provider text,
+    model text,
+    
+    -- Error details
+    error_type text not null,  -- e.g., "RATE_LIMIT", "AUTH_ERROR", "TIMEOUT", "UNKNOWN_ERROR"
+    error_message text not null,
+    status_code integer,       -- HTTP status code if available
+    
+    -- Timing
+    timestamp timestamptz not null default now()
+);
+
 -- Indexes for query performance
 create index if not exists idx_providers_name on public.providers(name);
 create index if not exists idx_models_provider_id on public.models(provider_id);
@@ -98,3 +122,7 @@ create index if not exists idx_benchmark_results_provider on public.benchmark_re
 create index if not exists idx_benchmark_results_model on public.benchmark_results(model);
 create index if not exists idx_benchmark_results_created_at on public.benchmark_results(created_at);
 create index if not exists idx_benchmark_results_tokens_per_dollar on public.benchmark_results(tokens_per_dollar);
+create index if not exists idx_run_errors_run_id on public.run_errors(run_id);
+create index if not exists idx_run_errors_provider_id on public.run_errors(provider_id);
+create index if not exists idx_run_errors_error_type on public.run_errors(error_type);
+create index if not exists idx_run_errors_timestamp on public.run_errors(timestamp);

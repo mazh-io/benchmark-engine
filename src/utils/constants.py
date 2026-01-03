@@ -104,6 +104,7 @@ PROVIDERS = [
     
     # OpenRouter - Aggregator
     ("openrouter", call_openrouter, "openai/gpt-4o-mini"),     # Baseline
+    ("openrouter", call_openrouter, "meta-llama/llama-3.3-70b-instruct"),  # Infrastructure War comparison
     ("openrouter", call_openrouter, "minimax/minimax-01"),     # Challenger to Claude
     
     # New providers (Phase 2 - OpenAI Compatible)

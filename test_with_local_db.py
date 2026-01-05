@@ -247,7 +247,7 @@ class LocalRunManager:
             self.formatter.success(f"Run created in database: {self.run_id}")
             self.start_time = time.time()
         else:
-            raise Exception("❌ Failed to create run in database!")
+            raise Exception("Failed to create run in database!")
     
     def start_phase(self, phase_num: int, phase_name: str, model_count: int):
         """Start a new phase."""
@@ -394,9 +394,9 @@ class LocalRunManager:
         if self.phase_failed == 0:
             self.formatter.success(f"\n🎉 Phase {phase_num} - ALL TESTS PASSED!")
         elif self.phase_successful > 0:
-            self.formatter.warning(f"\n⚠️  Phase {phase_num} - PARTIAL SUCCESS ({self.phase_successful}/{total_tests} passed)")
+            self.formatter.warning(f" Phase {phase_num} - PARTIAL SUCCESS ({self.phase_successful}/{total_tests} passed)")
         else:
-            self.formatter.error(f"\n❌ Phase {phase_num} - ALL TESTS FAILED")
+            self.formatter.error(f" Phase {phase_num} - ALL TESTS FAILED")
         
         print()
     
@@ -409,7 +409,7 @@ class LocalRunManager:
         update_run_status(self.run_id)
         
         # Display final summary
-        self.formatter.header("📊 FINAL RUN SUMMARY")
+        self.formatter.header(" FINAL RUN SUMMARY")
         
         print(f"{Colors.BOLD}🎯 Overall Results:{Colors.ENDC}")
         self.formatter.metric("Run ID:", self.run_id)
@@ -422,9 +422,9 @@ class LocalRunManager:
         
         # Phase breakdown
         if self.phase_results:
-            print(f"\n{Colors.BOLD}📋 Phase Breakdown:{Colors.ENDC}")
+            print(f"\n{Colors.BOLD} Phase Breakdown:{Colors.ENDC}")
             for phase in self.phase_results:
-                status_icon = "✅" if phase.failed_tests == 0 else "⚠️" if phase.successful_tests > 0 else "❌"
+                status_icon = "" if phase.failed_tests == 0 else "⚠️" if phase.successful_tests > 0 else ""
                 success_rate = (phase.successful_tests / phase.total_tests * 100) if phase.total_tests > 0 else 0
                 print(f"   {status_icon} Phase {phase.phase_number} ({phase.phase_name}): "
                       f"{phase.successful_tests}/{phase.total_tests} ({success_rate:.1f}%) "
@@ -452,20 +452,20 @@ class LocalRunManager:
         elif self.total_successful > 0:
             self.formatter.warning(f"✅ Partial Success: {self.total_successful}/{total_tests} tests passed")
         else:
-            self.formatter.error("❌ All tests failed - check configuration and API keys")
+            self.formatter.error(" All tests failed - check configuration and API keys")
         
         # Final instructions
         print()
         self.formatter.info(f"Test Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        self.formatter.success("\n✅ Results saved to local database: benchmark_engine_local")
-        print(f"\n{Colors.BOLD}   📋 Check pg-admin:{Colors.ENDC}")
+        self.formatter.success(" Results saved to local database: benchmark_engine_local")
+        print(f"\n{Colors.BOLD}    Check pg-admin:{Colors.ENDC}")
         print(f"   • Database: benchmark_engine_local")
         print(f"   • Tables: runs, results, run_errors, providers, models")
         print(f"   • Run ID: {self.run_id}")
     
     def _display_recent_results(self):
         """Display recent results from database."""
-        print(f"\n{Colors.BOLD}📋 Recent Results from Database (Top 5):{Colors.ENDC}")
+        print(f"\n{Colors.BOLD} Recent Results from Database (Top 5):{Colors.ENDC}")
         
         recent = get_recent_results(limit=5)
         if recent:
@@ -516,11 +516,11 @@ class TestRunner:
             run_manager.finish()
         
         except KeyboardInterrupt:
-            self.formatter.warning("\n⚠️  Test interrupted by user")
+            self.formatter.warning("  Test interrupted by user")
             run_manager.finish()
         
         except Exception as e:
-            self.formatter.error(f"\n❌ Fatal error: {str(e)}")
+            self.formatter.error(f" Fatal error: {str(e)}")
             if run_manager.run_id:
                 update_run_status(run_manager.run_id)
     
@@ -547,11 +547,11 @@ class TestRunner:
             run_manager.finish()
         
         except KeyboardInterrupt:
-            self.formatter.warning("\n⚠️  Test interrupted by user")
+            self.formatter.warning("  Test interrupted by user")
             run_manager.finish()
         
         except Exception as e:
-            self.formatter.error(f"\n❌ Fatal error: {str(e)}")
+            self.formatter.error(f" Fatal error: {str(e)}")
             if run_manager.run_id:
                 update_run_status(run_manager.run_id)
     
@@ -586,11 +586,11 @@ class TestRunner:
             run_manager.finish()
         
         except KeyboardInterrupt:
-            self.formatter.warning("\n⚠️  Test interrupted by user")
+            self.formatter.warning("  Test interrupted by user")
             run_manager.finish()
         
         except Exception as e:
-            self.formatter.error(f"\n❌ Fatal error: {str(e)}")
+            self.formatter.error(f" Fatal error: {str(e)}")
             if run_manager.run_id:
                 update_run_status(run_manager.run_id)
 

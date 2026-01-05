@@ -93,7 +93,7 @@ PROVIDERS = [
     # OpenAI - Industry standard
     ("openai", call_openai, "gpt-4o-mini"),                    # Baseline budget model
     ("openai", call_openai, "gpt-4o"),                         # Flagship
-    # ("openai", call_openai, "o1-preview"),                     # Reasoning model (requires Tier 5 access)
+    ("openai", call_openai, "o1-preview"),                     # Reasoning model (requires Tier 5 access)
     
     # Groq - LPU benchmark (updated to latest)
     ("groq", call_groq, "llama-3.3-70b-versatile"),            # Latest Llama 3.3
@@ -126,11 +126,10 @@ PROVIDERS = [
     
     # Phase 3 - Custom SDK Providers
     # Anthropic Claude - Developer favorite, high quality
-    ("anthropic", call_anthropic, "claude-3-5-sonnet-latest"),  # Flagship (auto-latest)
-    ("anthropic", call_anthropic, "claude-3-5-haiku-latest"),   # Budget (auto-latest)
+    ("anthropic", call_anthropic, "claude-3-5-sonnet-latest"),  # Flagship (best quality)
+    ("anthropic", call_anthropic, "claude-3-5-haiku-latest"),   # Budget (fast & cheap)
     
-    # Google Gemini - Large context window, multimodal
-    ("google", call_google, "gemini-1.5-pro"),          # High quality
-    ("google", call_google, "gemini-1.5-flash"),        # Fast & cheap
-    ("google", call_google, "gemini-2.0-flash-exp"),    # Experimental (free tier quota=0)
+    # Google Gemini - NEW SDK with Gemini 2.5
+    ("google", call_google, "models/gemini-2.5-pro"),       # Latest Pro - best quality
+    ("google", call_google, "models/gemini-2.5-flash"),     # Latest Flash - fast & cheap
 ]

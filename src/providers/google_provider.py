@@ -1,24 +1,23 @@
 """
-Google Gemini Provider Integration.
+Google Gemini Provider Integration (Updated to google.genai SDK).
 
 Google's Gemini models are known for their large context windows and multimodal
-capabilities. The API uses Google's proprietary SDK structure.
+capabilities. This provider uses the NEW google.genai SDK (not the deprecated google.generativeai).
 
 Key Models:
 - gemini-1.5-pro: Large context window, high quality
 - gemini-1.5-flash: Fast and cost-effective
-- gemini-2.0-flash-exp: Experimental (requires paid tier, free tier has 0 quota)
 
-API Documentation: https://ai.google.dev/docs
+API Documentation: https://ai.google.dev/gemini-api/docs
 """
 
 import uuid
-from typing import Dict, Any, Optional, Iterator
+from typing import Dict, Any, Optional
 import logging
 
 try:
-    import google.generativeai as genai
-    from google.generativeai.types import GenerateContentResponse
+    from google import genai
+    from google.genai import types
     GOOGLE_AVAILABLE = True
 except ImportError:
     GOOGLE_AVAILABLE = False
@@ -32,25 +31,17 @@ logger = logging.getLogger(__name__)
 # Model Pricing (USD per 1M tokens)
 # Source: https://ai.google.dev/pricing (as of Jan 2025)
 PRICING_TABLE: Dict[str, Dict[str, float]] = {
-    "gemini-1.5-pro": {
+    "models/gemini-2.5-pro": {
         "input": 1.25,   # $1.25 per 1M input tokens
         "output": 5.00,  # $5.00 per 1M output tokens
     },
-    "gemini-1.5-pro-latest": {
-        "input": 1.25,
-        "output": 5.00,
-    },
-    "gemini-1.5-flash": {
+    "models/gemini-2.5-flash": {
         "input": 0.075,  # $0.075 per 1M input tokens
         "output": 0.30,  # $0.30 per 1M output tokens
     },
-    "gemini-1.5-flash-latest": {
+    "models/gemini-2.0-flash": {
         "input": 0.075,
         "output": 0.30,
-    },
-    "gemini-2.0-flash-exp": {
-        "input": 0.00,   # Free during preview
-        "output": 0.00,
     },
 }
 
@@ -63,27 +54,16 @@ SYSTEM_PROMPT = (
     "text into exactly three concise bullet points."
 )
 
-# Generation configuration
-GENERATION_CONFIG = {
-    "temperature": 0.7,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 1024,
-}
-
 
 class GoogleProvider(BaseProvider):
     """
-    Google Gemini API provider implementation.
+    Google Gemini API provider implementation using the NEW google.genai SDK.
     
-    Gemini uses Google's proprietary generative AI SDK which has a different
-    structure from both OpenAI and Anthropic:
-    - Uses GenerativeModel class
-    - Streaming returns generator of chunks
-    - Token counting may not be available in stream
-    - System instructions are set on the model
+    This provider uses the modern google.genai SDK which replaces the deprecated
+    google.generativeai package.
     
     Attributes:
+        client: Google GenAI client instance
         provider_name: Always "google"
         api_key: Google API key from environment
         
@@ -93,7 +73,6 @@ class GoogleProvider(BaseProvider):
         ...     prompt="Explain neural networks",
         ...     model="gemini-1.5-flash"
         ... )
-        >>> print(f"Context window: Huge!")
     """
     
     def __init__(self, api_key: str) -> None:
@@ -105,12 +84,12 @@ class GoogleProvider(BaseProvider):
             
         Raises:
             ValueError: If api_key is empty or None
-            ImportError: If google-generativeai package is not installed
+            ImportError: If google.genai package is not installed
         """
         if not GOOGLE_AVAILABLE:
             raise ImportError(
-                "Google Generative AI SDK not installed. "
-                "Install with: pip install google-generativeai"
+                "Google GenAI SDK not installed. "
+                "Install with: pip install google-genai"
             )
         
         if not api_key:
@@ -118,12 +97,12 @@ class GoogleProvider(BaseProvider):
         
         super().__init__(provider_name="google", api_key=api_key)
         
-        # Configure the SDK with API key
-        genai.configure(api_key=api_key)
+        # Initialize Google GenAI client
+        self.client = genai.Client(api_key=api_key)
         
         logger.info(
-            "Google provider initialized",
-            extra={"models": list(PRICING_TABLE.keys())}
+            "Google provider initialized with new SDK",
+            extra={"sdk": "google.genai", "models": list(PRICING_TABLE.keys())}
         )
     
     def get_pricing(self, model: str) -> Dict[str, float]:
@@ -148,13 +127,7 @@ class GoogleProvider(BaseProvider):
     
     def call(self, prompt: str, model: str) -> Dict[str, Any]:
         """
-        Make a streaming API call to Google Gemini.
-        
-        Google's API structure:
-        - Create GenerativeModel with system_instruction
-        - Call generate_content with stream=True
-        - Iterate over chunks to get text
-        - Token counting may require separate API call
+        Make a streaming API call to Google Gemini using the new SDK.
         
         Args:
             prompt: Input text to send to the model
@@ -178,24 +151,26 @@ class GoogleProvider(BaseProvider):
         metrics.start()
         
         try:
-            # Create model with system instruction
-            gemini_model = genai.GenerativeModel(
-                model_name=model,
-                generation_config=GENERATION_CONFIG,
-                system_instruction=SYSTEM_PROMPT,
-            )
+            # Create system instruction and user message
+            full_prompt = f"{SYSTEM_PROMPT}\n\nREQUEST ID: {request_id}\n\n{prompt}"
             
             # Generate content with streaming
-            response_stream = gemini_model.generate_content(
-                f"REQUEST ID: {request_id}\n\n{prompt}",
-                stream=True
+            response = self.client.models.generate_content_stream(
+                model=model,
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    top_p=0.95,
+                    top_k=40,
+                    max_output_tokens=1024,
+                )
             )
             
             response_text_parts = []
             first_chunk_received = False
             
             # Process streaming chunks
-            for chunk in response_stream:
+            for chunk in response:
                 if chunk.text:
                     if not first_chunk_received:
                         metrics.mark_first_token()
@@ -207,21 +182,17 @@ class GoogleProvider(BaseProvider):
             # Combine response
             response_text = "".join(response_text_parts)
             
-            # Try to get token counts
-            # Note: Google may not provide usage in streaming mode
-            # We may need to estimate
+            # Get usage metadata
             try:
-                # Some models provide usage_metadata
-                if hasattr(response_stream, 'usage_metadata'):
-                    input_tokens = response_stream.usage_metadata.prompt_token_count
-                    output_tokens = response_stream.usage_metadata.candidates_token_count
-                else:
-                    raise AttributeError("No usage_metadata")
-            except (AttributeError, Exception):
+                # Try to get usage from response
+                usage = response.usage_metadata
+                input_tokens = usage.prompt_token_count if hasattr(usage, 'prompt_token_count') else self._estimate_tokens(prompt + SYSTEM_PROMPT)
+                output_tokens = usage.candidates_token_count if hasattr(usage, 'candidates_token_count') else self._estimate_tokens(response_text)
+            except (AttributeError, Exception) as e:
                 # Fallback: estimate tokens
                 logger.warning(
                     "Usage data not provided by Google, estimating",
-                    extra={"request_id": request_id}
+                    extra={"request_id": request_id, "error": str(e)}
                 )
                 input_tokens = self._estimate_tokens(prompt + SYSTEM_PROMPT)
                 output_tokens = self._estimate_tokens(response_text)
@@ -299,7 +270,7 @@ def call_google(prompt: str, model: str) -> Dict[str, Any]:
     """
     # Check if SDK is installed
     if not GOOGLE_AVAILABLE:
-        logger.error("Google Generative AI SDK not installed")
+        logger.error("Google GenAI SDK not installed")
         return {
             "input_tokens": 0,
             "output_tokens": 0,
@@ -309,7 +280,7 @@ def call_google(prompt: str, model: str) -> Dict[str, Any]:
             "status_code": None,
             "cost_usd": 0.0,
             "success": False,
-            "error_message": "[DEPENDENCY_ERROR] Google SDK not installed. Run: pip install google-generativeai",
+            "error_message": "[DEPENDENCY_ERROR] Google GenAI SDK not installed. Run: pip install google-genai",
             "error_type": "DEPENDENCY_ERROR",
             "response_text": None,
         }
@@ -355,4 +326,3 @@ def call_google(prompt: str, model: str) -> Dict[str, Any]:
             "error_type": "INIT_ERROR",
             "response_text": None,
         }
-

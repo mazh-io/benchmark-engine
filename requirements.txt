@@ -10,7 +10,7 @@ openrouter
 
 # Custom SDK providers (Phase 3)
 anthropic
-google-generativeai
+google-genai
 
 # Utilities
 httpx

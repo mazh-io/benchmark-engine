@@ -93,7 +93,8 @@ PROVIDERS = [
     # OpenAI - Industry standard
     ("openai", call_openai, "gpt-4o-mini"),                    # Baseline budget model
     ("openai", call_openai, "gpt-4o"),                         # Flagship
-    ("openai", call_openai, "o1-preview"),                     # Reasoning model (requires Tier 5 access)
+    ("openai", call_openai, "o3"),                             # New reasoning model (replacement for o1-preview)
+    ("openai", call_openai, "o4-mini"),                        # New budget reasoning model (replacement for o1-mini)
     
     # Groq - LPU benchmark (updated to latest)
     ("groq", call_groq, "llama-3.3-70b-versatile"),            # Latest Llama 3.3

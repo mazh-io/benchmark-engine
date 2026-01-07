@@ -277,6 +277,22 @@ class LocalRunManager:
             elapsed = time.time() - start
             
             if result.get("success"):
+                # Calculate pricing per 1M tokens from cost and tokens
+                input_tokens = result.get("input_tokens", 0)
+                output_tokens = result.get("output_tokens", 0)
+                cost_usd = result.get("cost_usd", 0)
+                
+                # Estimate pricing (rough calculation)
+                input_price_per_m = None
+                output_price_per_m = None
+                
+                if input_tokens > 0 and output_tokens > 0 and cost_usd > 0:
+                    # Rough estimate: assume typical ratio of input:output pricing (1:4)
+                    total_tokens = input_tokens + output_tokens
+                    avg_price_per_token = cost_usd / total_tokens
+                    input_price_per_m = avg_price_per_token * 1_000_000 * 0.8  # Rough estimate
+                    output_price_per_m = avg_price_per_token * 1_000_000 * 3.2  # Rough estimate
+                
                 # Save successful result
                 save_result(
                     run_id=self.run_id,
@@ -284,15 +300,17 @@ class LocalRunManager:
                     model_id=model_id,
                     provider=provider_name,
                     model=model,
-                    input_tokens=result.get("input_tokens", 0),
-                    output_tokens=result.get("output_tokens", 0),
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
                     total_latency_ms=result.get("total_latency_ms", 0),
                     ttft_ms=result.get("ttft_ms"),
                     tps=result.get("tps"),
-                    cost_usd=result.get("cost_usd", 0),
+                    cost_usd=cost_usd,
                     status_code=result.get("status_code"),
                     success=True,
-                    response_text=result.get("response_text", "")[:500]
+                    response_text=result.get("response_text", "")[:500],
+                    input_price_per_m=input_price_per_m,
+                    output_price_per_m=output_price_per_m
                 )
                 
                 # Update stats

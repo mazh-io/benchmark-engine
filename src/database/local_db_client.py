@@ -191,6 +191,48 @@ class LocalDBClient:
             print(f"DB Error (get_or_create_model): {e}")
             return None
     
+    def save_pricing(self, provider_id: str, model_id: str, input_price: float, output_price: float) -> Optional[str]:
+        """
+        Save pricing data for a model.
+        
+        Args:
+            provider_id: UUID of provider
+            model_id: UUID of model
+            input_price: Input price per 1M tokens
+            output_price: Output price per 1M tokens
+            
+        Returns:
+            UUID of created pricing record
+        """
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            query = """
+                INSERT INTO prices (provider_id, model_id, input_price_per_m, output_price_per_m)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+                RETURNING id
+            """
+            
+            cur.execute(query, (provider_id, model_id, input_price, output_price))
+            result = cur.fetchone()
+            
+            if result:
+                price_id = str(result['id'])
+            else:
+                price_id = None  # Already exists
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            return price_id
+        
+        except Exception as e:
+            print(f"DB Error (save_pricing): {e}")
+            return None
+    
     def save_result(self, **data) -> Optional[str]:
         """
         Save benchmark result.
@@ -237,6 +279,16 @@ class LocalDBClient:
             cur.execute(query, values)
             result = cur.fetchone()
             result_id = str(result['id'])
+            
+            # Save pricing if available
+            if data.get('provider_id') and data.get('model_id'):
+                if data.get('input_price_per_m') and data.get('output_price_per_m'):
+                    self.save_pricing(
+                        provider_id=data.get('provider_id'),
+                        model_id=data.get('model_id'),
+                        input_price=data.get('input_price_per_m'),
+                        output_price=data.get('output_price_per_m')
+                    )
             
             conn.commit()
             cur.close()

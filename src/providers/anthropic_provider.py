@@ -31,27 +31,25 @@ from utils.env_helper import get_env
 logger = logging.getLogger(__name__)
 
 # Model Pricing (USD per 1M tokens)
-# Source: https://www.anthropic.com/pricing (as of Jan 2025)
+# Source: https://www.anthropic.com/pricing (as of Jan 2026)
 PRICING_TABLE: Dict[str, Dict[str, float]] = {
-    "claude-3-5-sonnet-latest": {
+    # Claude 4.5 - NEW (Released Sept-Oct 2025)
+    "claude-sonnet-4-5-20250929": {
         "input": 3.00,   # $3.00 per 1M input tokens
         "output": 15.00,  # $15.00 per 1M output tokens
     },
-    "claude-3-5-sonnet-20241022": {
+    "claude-haiku-4-5-20251001": {
+        "input": 0.80,   # $0.80 per 1M input tokens
+        "output": 4.00,  # $4.00 per 1M output tokens
+    },
+    # Claude 3.5 - DEPRECATED (Retired Oct 2025)
+    "claude-3-5-sonnet-latest": {
         "input": 3.00,
         "output": 15.00,
     },
     "claude-3-5-haiku-latest": {
-        "input": 0.80,   # $0.80 per 1M input tokens
-        "output": 4.00,  # $4.00 per 1M output tokens
-    },
-    "claude-3-5-haiku-20241022": {
         "input": 0.80,
         "output": 4.00,
-    },
-    "claude-3-opus-latest": {
-        "input": 15.00,
-        "output": 75.00,
     },
 }
 

@@ -126,9 +126,9 @@ PROVIDERS = [
     ("sambanova", call_sambanova, "Meta-Llama-3.3-70B-Instruct"),
     
     # Phase 3 - Custom SDK Providers
-    # Anthropic Claude - Developer favorite, high quality
-    ("anthropic", call_anthropic, "claude-3-5-sonnet-latest"),  # Flagship (best quality)
-    ("anthropic", call_anthropic, "claude-3-5-haiku-latest"),   # Budget (fast & cheap)
+    # Anthropic Claude 4.5 - NEW VERSION (3.5 retired Oct 2025)
+    ("anthropic", call_anthropic, "claude-sonnet-4-5-20250929"),  # Flagship (Sonnet 4.5)
+    ("anthropic", call_anthropic, "claude-haiku-4-5-20251001"),   # Budget (Haiku 4.5, shutdown Feb 2026)
     
     # Google Gemini - NEW SDK with Gemini 2.5
     ("google", call_google, "models/gemini-2.5-pro"),       # Latest Pro - best quality

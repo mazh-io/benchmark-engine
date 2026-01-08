@@ -168,19 +168,52 @@ class GoogleProvider(BaseProvider):
             
             response_text_parts = []
             first_chunk_received = False
+            chunk_count = 0
             
             # Process streaming chunks
             for chunk in response:
-                if chunk.text:
-                    if not first_chunk_received:
-                        metrics.mark_first_token()
-                        first_chunk_received = True
-                    response_text_parts.append(chunk.text)
+                chunk_count += 1
+                try:
+                    # Try to get text from chunk
+                    text = None
+                    if hasattr(chunk, 'text') and chunk.text:
+                        text = chunk.text
+                    elif hasattr(chunk, 'candidates') and chunk.candidates:
+                        # Try alternative path: chunk.candidates[0].content.parts[0].text
+                        candidate = chunk.candidates[0]
+                        if hasattr(candidate, 'content') and candidate.content:
+                            if hasattr(candidate.content, 'parts') and candidate.content.parts:
+                                text = candidate.content.parts[0].text
+                    
+                    if text:
+                        if not first_chunk_received:
+                            metrics.mark_first_token()
+                            first_chunk_received = True
+                        response_text_parts.append(text)
+                        
+                except Exception as e:
+                    logger.warning(
+                        f"Error extracting text from chunk {chunk_count}",
+                        extra={"error": str(e), "request_id": request_id}
+                    )
+                    continue
             
             metrics.end()
             
             # Combine response
             response_text = "".join(response_text_parts)
+            
+            # Log if no response text was captured
+            if not response_text:
+                logger.warning(
+                    "No response text captured from streaming",
+                    extra={
+                        "request_id": request_id,
+                        "model": model,
+                        "chunk_count": chunk_count,
+                        "first_chunk_received": first_chunk_received
+                    }
+                )
             
             # Get usage metadata
             try:
@@ -205,6 +238,31 @@ class GoogleProvider(BaseProvider):
             ttft_ms = metrics.get_ttft_ms()
             tps = metrics.get_tps(output_tokens)
             
+            # Check if we got a response
+            if not response_text or len(response_text.strip()) == 0:
+                logger.error(
+                    "Google Gemini returned empty response",
+                    extra={
+                        "request_id": request_id,
+                        "model": model,
+                        "chunk_count": chunk_count,
+                        "output_tokens": output_tokens,
+                    }
+                )
+                return {
+                    "input_tokens": input_tokens,
+                    "output_tokens": 0,
+                    "total_latency_ms": total_latency_ms,
+                    "ttft_ms": None,
+                    "tps": None,
+                    "status_code": 200,  # API succeeded but no content
+                    "cost_usd": 0,
+                    "success": False,
+                    "error_message": "[EMPTY_RESPONSE] API call succeeded but returned no text content",
+                    "error_type": "EMPTY_RESPONSE",
+                    "response_text": None,
+                }
+            
             logger.info(
                 "Google Gemini API call successful",
                 extra={
@@ -216,6 +274,7 @@ class GoogleProvider(BaseProvider):
                     "ttft_ms": ttft_ms,
                     "tps": tps,
                     "cost_usd": cost_usd,
+                    "response_length": len(response_text),
                 }
             )
             

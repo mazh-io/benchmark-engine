@@ -48,6 +48,7 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
             {"role": "user", "content": f"REQUEST ID: {request_id}\n\n{prompt}"}
         ],
         "temperature": 0.8,  # Higher temperature for more variation
+        "max_tokens": 1024,  # Limit output tokens (some models like Minimax have restrictions)
         "stream": True  # Enable streaming for TTFT measurement
     }
     
@@ -108,8 +109,12 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
                     # Get cost if available
                     if chunk_data.get('total_cost'):
                         total_cost = chunk_data['total_cost']
-                except:
-                    pass
+                except json.JSONDecodeError as e:
+                    print(f"Warning: Failed to parse SSE chunk: {e}")
+                    print(f"  Raw data: {data_str[:200]}")
+                except Exception as e:
+                    print(f"Warning: Error processing chunk: {e}")
+                    print(f"  Chunk data keys: {chunk_data.keys() if 'chunk_data' in locals() else 'N/A'}")
         
         # End time for total latency
         end_time = time.time()
@@ -129,6 +134,25 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
         
         # Combine response text
         response_text = "".join(response_text_parts)
+        
+        # Check if we got an empty response
+        if not response_text or len(response_text.strip()) == 0:
+            print(f"Warning: OpenRouter ({model}) returned empty response")
+            print(f"  Chunks received: {len(response_text_parts)}")
+            print(f"  First chunk received: {first_chunk_received}")
+            return {
+                "input_tokens": len(prompt.split()) // 0.75 or 1,
+                "output_tokens": 0,
+                "total_latency_ms": total_latency_ms,
+                "latency_ms": total_latency_ms,
+                "ttft_ms": None,
+                "tps": None,
+                "status_code": 200,
+                "cost_usd": 0,
+                "success": False,
+                "error_message": "[EMPTY_RESPONSE] API returned 200 but no text content",
+                "response_text": None
+            }
         
         # Use actual token counts if available, otherwise estimate
         if input_tokens == 0:

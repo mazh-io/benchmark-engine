@@ -1,7 +1,8 @@
 from benchmarking.run_manager import RunManager
-from database.supabase_client import save_benchmark, get_or_create_provider, get_or_create_model, save_price
+from database.db_connector import get_db_client
 
-from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG, PROVIDERS
+from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
+from utils.provider_service import get_providers
 
 def run_benchmark(run_name: str, triggered_by: str):
     """
@@ -20,6 +21,9 @@ def run_benchmark(run_name: str, triggered_by: str):
     print(f"Starting benchmark run: {run_name}")
     print(f"Triggered by: {triggered_by}\n")
 
+    # Get database client
+    db = get_db_client()
+
     # Create Runmanager to manage the lifecycle of the run
     run_manager = RunManager(run_name, triggered_by)
     run_manager.start()  # Create run in db and get its UUID
@@ -30,31 +34,80 @@ def run_benchmark(run_name: str, triggered_by: str):
         return
 
     # Test each provider sequentially without concurrency
-    for provider_name, func, model in PROVIDERS:
+    # Track success/failure for final summary
+    all_providers = get_providers()
+    total_providers = len(all_providers)
+    successful_providers = 0
+    failed_providers = 0
+    
+    for provider_name, func, model in all_providers:
         print("\n" + "=" * 60)
         print(f"Testing → {provider_name} / {model}")
         print("=" * 60)
         
-        # Get or create provider in database
-        provider_config = PROVIDER_CONFIG.get(provider_name, {"display_name": provider_name.title(), "base_url": None})
-        provider_id = get_or_create_provider(
-            name=provider_config["display_name"],
-            base_url=provider_config["base_url"],
-            logo_url=None
-        )
-        
-        # Get or create model in database (requires provider_id)
-        model_id = None
-        if provider_id:
-            model_id = get_or_create_model(
-                name=model,
-                provider_id=provider_id,
-                context_window=None  # Can be added later if needed
+        try:
+            # Get or create provider in database
+            provider_config = PROVIDER_CONFIG.get(provider_name, {"display_name": provider_name.title(), "base_url": None})
+            provider_id = db.get_or_create_provider(
+                name=provider_config["display_name"],
+                base_url=provider_config["base_url"],
+                logo_url=None
             )
+            
+            # Get or create model in database (requires provider_id)
+            model_id = None
+            if provider_id:
+                model_id = db.get_or_create_model(
+                    model_name=model,
+                    provider_id=provider_id,
+                    context_window=None  # Can be added later if needed
+                )
+            
+            # Call the provider function with the prompt and model to get a dictionary with the results
+            # This is wrapped in a try-catch to ensure one failing provider doesn't crash the whole run
+            result = func(BENCHMARK_PROMPT, model)
         
-        # Call the provider function with the prompt and model to get a dictionary with the results
-        # This will return a dictionary with the results
-        result = func(BENCHMARK_PROMPT, model)
+        except Exception as e:
+            # CRITICAL: If provider function crashes completely, log error and continue
+            error_message = f"Provider function crashed: {str(e)}"
+            print(f"CRITICAL ERROR ({provider_name}): {error_message}")
+            
+            # Save error to database
+            db.save_run_error(
+                run_id=run_manager.run_id,
+                provider=provider_name,
+                model=model,
+                error_type="PROVIDER_CRASH",
+                error_message=error_message,
+                status_code=None,
+                provider_id=provider_id if 'provider_id' in locals() else None,
+                model_id=model_id if 'model_id' in locals() else None
+            )
+            
+            failed_providers += 1
+            print(f" Continuing with next provider...")
+            continue  # IMPORTANT: Continue to next provider
+        
+        # Check if the call was successful or returned an error
+        if not result.get("success", False):
+            # Provider returned an error result (but didn't crash)
+            print(f"Failed: {result.get('error_message', 'Unknown error')}")
+            
+            # Save error to database
+            db.save_run_error(
+                run_id=run_manager.run_id,
+                provider=provider_name,
+                model=model,
+                error_type=result.get("error_type", "UNKNOWN_ERROR"),
+                error_message=result.get("error_message", "Unknown error"),
+                status_code=result.get("status_code"),
+                provider_id=provider_id,
+                model_id=model_id
+            )
+            
+            failed_providers += 1
+            print(f" Continuing with next provider...")
+            continue  # Continue to next provider
 
         # Save results to db
         # Prepare data for saving (only include fields that exist in schema)
@@ -88,33 +141,49 @@ def run_benchmark(run_name: str, triggered_by: str):
         
         benchmark_data = filtered_data
         
-        save_result = save_benchmark(**benchmark_data)
+        save_result = db.save_benchmark(**benchmark_data)
 
         # Print results to console
-        if result["success"]:
-            print(f" Success ({provider_name})")
-            latency = result.get("total_latency_ms") or result.get("latency_ms", 0)
-            print(f"   Total Latency: {latency:.2f} ms")
-            if result.get("ttft_ms"):
-                print(f"   TTFT: {result['ttft_ms']:.2f} ms")
-            if result.get("tps"):
-                print(f"   TPS: {result['tps']:.2f} tokens/sec")
-            print(f"   Tokens: {result['input_tokens']} in / {result['output_tokens']} out")
-            print(f"   Cost: ${result['cost_usd']:.6f}")
-            if result.get("status_code"):
-                print(f"   Status: {result['status_code']}")
-        else:
-            print(f"Failed: {result['error_message']}")
+        print(f"Success ({provider_name})")
+        latency = result.get("total_latency_ms") or result.get("latency_ms", 0)
+        print(f"   Total Latency: {latency:.2f} ms")
+        if result.get("ttft_ms"):
+            print(f"   TTFT: {result['ttft_ms']:.2f} ms")
+        if result.get("tps"):
+            print(f"   TPS: {result['tps']:.2f} tokens/sec")
+        print(f"   Tokens: {result['input_tokens']} in / {result['output_tokens']} out")
+        print(f"   Cost: ${result['cost_usd']:.6f}")
+        if result.get("status_code"):
+            print(f"   Status: {result['status_code']}")
 
         # Confirm if results were saved to db
         if save_result:
-            print(" Saved to DB")
+            print("Saved to DB")
+            successful_providers += 1
         else:
             print(" DB Error")
+            failed_providers += 1
 
     # End the run
     print("\n" + "=" * 60)
-    print("Benchmark DONE!")
+    print("Benchmark COMPLETE!")
+    print("=" * 60)
+    
+    # Print summary
+    print(f"\n📊 Summary:")
+    print(f"   Total Providers: {total_providers}")
+    print(f" Successful: {successful_providers}")
+    print(f" Failed: {failed_providers}")
+    
+    # Determine overall status
+    if failed_providers == 0:
+        status = "All providers succeeded"
+    elif successful_providers == 0:
+        status = "All providers failed"
+    else:
+        status = f"Completed with {failed_providers} error(s)"
+    
+    print(f"   Status: {status}")
     print("=" * 60)
 
     run_manager.end()

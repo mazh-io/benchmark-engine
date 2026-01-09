@@ -1,10 +1,21 @@
 # Core dependencies 
 python-dotenv
 supabase
+
+# OpenAI-compatible providers (Phase 0 & Phase 2)
 openai
 groq
 together
 openrouter
+
+# Custom SDK providers (Phase 3)
+anthropic
+google-genai
+
+# Utilities
 httpx
 requests
 beautifulsoup4
+
+# Local database (PostgreSQL)
+psycopg2-binary

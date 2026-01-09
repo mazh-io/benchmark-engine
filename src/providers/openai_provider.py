@@ -10,6 +10,10 @@ PRICING = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4-turbo": {"input": 10.00, "output": 30.00},
     "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
+    # O1 models (reasoning models)
+    "o1-preview": {"input": 15.00, "output": 60.00},
+    "o1-mini": {"input": 3.00, "output": 12.00},
+    "o1": {"input": 15.00, "output": 60.00},  # Alias for o1-preview
 }
 
 def call_openai(prompt: str, model: str = "gpt-4o-mini"):
@@ -50,20 +54,33 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
     status_code = 200
     
     try:
-        # Send streaming request to OpenAI API for TTFT measurement
-        stream = client.chat.completions.create(
-            model=model,
-            messages=[
+        # O-series models (reasoning models) only support temperature=1 and no top_p
+        # Check if this is an O-series model (o1, o3, o4-mini, etc.)
+        is_reasoning_model = model.startswith('o') and any(c.isdigit() for c in model)
+        
+        # Build request parameters based on model type
+        request_params = {
+            "model": model,
+            "messages": [
                 # System prompt: instruct the AI to summarize the provided text into exactly three concise bullet points
                 {"role": "system", "content": "You are a helpful assistant. Your task is to summarize the provided text into exactly three concise bullet points."},
                 # User prompt: add UUID for tracking + actual prompt
                 {"role": "user", "content": f"REQUEST ID: {request_id}\n\n{prompt}"}
             ],
-            temperature=0.8,  # Higher temperature for more variation in the response
-            top_p=0.9,        # Nucleus sampling for diversity in the response
-            user=request_id,  # OpenAI user parameter for tracking in the dashboard
-            stream=True       # Enable streaming for TTFT measurement
-        )
+            "user": request_id,
+            "stream": True
+        }
+        
+        # O-series models: only temperature=1, no top_p
+        # Regular models: temperature=0.8, top_p=0.9
+        if is_reasoning_model:
+            request_params["temperature"] = 1.0
+        else:
+            request_params["temperature"] = 0.8
+            request_params["top_p"] = 0.9
+        
+        # Send streaming request to OpenAI API for TTFT measurement
+        stream = client.chat.completions.create(**request_params)
         
         # Collect streaming response
         response_text_parts = []

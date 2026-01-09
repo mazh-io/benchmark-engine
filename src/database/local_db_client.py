@@ -3,16 +3,18 @@ Local PostgreSQL Database Client
 
 Alternative to supabase_client.py for local development/testing.
 Connects directly to PostgreSQL database using psycopg2.
+Implements BaseDatabaseClient interface.
 """
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
+from database.base_db_client import BaseDatabaseClient
 from utils.env_helper import get_env
 
 
-class LocalDBClient:
+class LocalDatabaseClient(BaseDatabaseClient):
     """PostgreSQL client for local database operations."""
     
     def __init__(self):
@@ -80,14 +82,12 @@ class LocalDBClient:
     def update_run_status(self, run_id: str, status: str = None) -> bool:
         """
         Mark run as finished by setting finished_at timestamp.
-        
-        Args:
-            run_id: UUID of the run
-            status: Ignored (kept for backward compatibility)
-            
-        Returns:
-            True if successful
+        Note: Renamed to finish_run in base interface for consistency.
         """
+        return self.finish_run(run_id)
+    
+    def finish_run(self, run_id: str) -> bool:
+        """Mark run as finished by setting finished_at timestamp."""
         try:
             conn = self._get_connection()
             cur = conn.cursor()
@@ -109,32 +109,30 @@ class LocalDBClient:
             print(f"DB Error (update_run_status): {e}")
             return False
     
-    def get_or_create_provider(self, provider_name: str) -> Optional[str]:
-        """
-        Get or create provider.
-        
-        Args:
-            provider_name: Name of provider
-            
-        Returns:
-            UUID of provider
-        """
+    def get_or_create_provider(self, name: str, base_url: str = None, logo_url: str = None) -> Optional[str]:
+        """Get or create provider."""
         try:
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
             # Try to get existing
-            cur.execute("SELECT id FROM providers WHERE name = %s", (provider_name,))
+            cur.execute("SELECT id FROM providers WHERE name = %s", (name,))
             result = cur.fetchone()
             
             if result:
                 provider_id = str(result['id'])
             else:
-                # Create new
-                cur.execute(
-                    "INSERT INTO providers (name) VALUES (%s) RETURNING id",
-                    (provider_name,)
-                )
+                # Create new with optional fields
+                if base_url or logo_url:
+                    cur.execute(
+                        "INSERT INTO providers (name, base_url, logo_url) VALUES (%s, %s, %s) RETURNING id",
+                        (name, base_url, logo_url)
+                    )
+                else:
+                    cur.execute(
+                        "INSERT INTO providers (name) VALUES (%s) RETURNING id",
+                        (name,)
+                    )
                 result = cur.fetchone()
                 provider_id = str(result['id'])
                 conn.commit()
@@ -148,17 +146,8 @@ class LocalDBClient:
             print(f"DB Error (get_or_create_provider): {e}")
             return None
     
-    def get_or_create_model(self, model_name: str, provider_id: str) -> Optional[str]:
-        """
-        Get or create model.
-        
-        Args:
-            model_name: Name of model
-            provider_id: UUID of provider
-            
-        Returns:
-            UUID of model
-        """
+    def get_or_create_model(self, model_name: str, provider_id: str, context_window: int = None) -> Optional[str]:
+        """Get or create model."""
         try:
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -173,11 +162,17 @@ class LocalDBClient:
             if result:
                 model_id = str(result['id'])
             else:
-                # Create new
-                cur.execute(
-                    "INSERT INTO models (name, provider_id) VALUES (%s, %s) RETURNING id",
-                    (model_name, provider_id)
-                )
+                # Create new with optional context_window
+                if context_window is not None:
+                    cur.execute(
+                        "INSERT INTO models (name, provider_id, context_window) VALUES (%s, %s, %s) RETURNING id",
+                        (model_name, provider_id, context_window)
+                    )
+                else:
+                    cur.execute(
+                        "INSERT INTO models (name, provider_id) VALUES (%s, %s) RETURNING id",
+                        (model_name, provider_id)
+                    )
                 result = cur.fetchone()
                 model_id = str(result['id'])
                 conn.commit()
@@ -192,18 +187,11 @@ class LocalDBClient:
             return None
     
     def save_pricing(self, provider_id: str, model_id: str, input_price: float, output_price: float) -> Optional[str]:
-        """
-        Save pricing data for a model.
-        
-        Args:
-            provider_id: UUID of provider
-            model_id: UUID of model
-            input_price: Input price per 1M tokens
-            output_price: Output price per 1M tokens
-            
-        Returns:
-            UUID of created pricing record
-        """
+        """Save pricing data for a model. Renamed to save_price in base interface."""
+        return self.save_price(provider_id, model_id, input_price, output_price)
+    
+    def save_price(self, provider_id: str, model_id: str, input_price: float, output_price: float) -> Optional[str]:
+        """Save pricing data for a model."""
         try:
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -372,16 +360,156 @@ class LocalDBClient:
         except Exception as e:
             print(f"DB Error (get_recent_results): {e}")
             return None
+    
+    # ============================================================================
+    # Additional methods to match BaseDatabaseClient interface
+    # ============================================================================
+    
+    def save_benchmark(self, **data) -> Optional[str]:
+        """Save benchmark result (alias for save_result)."""
+        return self.save_result(**data)
+    
+    def get_all_runs(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all runs."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM runs ORDER BY started_at DESC")
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"DB Error (get_all_runs): {e}")
+            return None
+    
+    def get_all_benchmark_results(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all benchmark results."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM benchmark_results ORDER BY created_at DESC")
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"DB Error (get_all_benchmark_results): {e}")
+            return None
+    
+    def get_benchmark_results_by_run_id(self, run_id: str) -> Optional[List[Dict[str, Any]]]:
+        """Get benchmark results for a specific run."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM benchmark_results WHERE run_id = %s ORDER BY created_at DESC", (run_id,))
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"DB Error (get_benchmark_results_by_run_id): {e}")
+            return None
+    
+    def get_all_providers(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all providers."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM providers ORDER BY name")
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"DB Error (get_all_providers): {e}")
+            return None
+    
+    def get_all_models(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all models."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM models ORDER BY name")
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"DB Error (get_all_models): {e}")
+            return None
+    
+    def get_last_price_timestamp(self, provider_id: str, model_id: str) -> Optional[str]:
+        """Get timestamp of last price update for a model."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute(
+                "SELECT timestamp FROM prices WHERE provider_id = %s AND model_id = %s ORDER BY timestamp DESC LIMIT 1",
+                (provider_id, model_id)
+            )
+            result = cur.fetchone()
+            cur.close()
+            conn.close()
+            if result:
+                return result['timestamp'].isoformat() if hasattr(result['timestamp'], 'isoformat') else str(result['timestamp'])
+            return None
+        except Exception as e:
+            print(f"DB Error (get_last_price_timestamp): {e}")
+            return None
+    
+    def get_model_pricing(self, provider_name: str, model_name: str) -> Optional[Dict[str, float]]:
+        """Get current pricing for a model."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get provider ID
+            cur.execute("SELECT id FROM providers WHERE name = %s", (provider_name,))
+            provider_result = cur.fetchone()
+            if not provider_result:
+                cur.close()
+                conn.close()
+                return None
+            provider_id = str(provider_result['id'])
+            
+            # Get model ID
+            cur.execute("SELECT id FROM models WHERE name = %s AND provider_id = %s", (model_name, provider_id))
+            model_result = cur.fetchone()
+            if not model_result:
+                cur.close()
+                conn.close()
+                return None
+            model_id = str(model_result['id'])
+            
+            # Get latest pricing
+            cur.execute(
+                "SELECT input_price_per_m, output_price_per_m FROM prices WHERE provider_id = %s AND model_id = %s ORDER BY timestamp DESC LIMIT 1",
+                (provider_id, model_id)
+            )
+            price_result = cur.fetchone()
+            cur.close()
+            conn.close()
+            
+            if price_result:
+                return {
+                    "input": float(price_result['input_price_per_m']),
+                    "output": float(price_result['output_price_per_m'])
+                }
+            return None
+        except Exception as e:
+            print(f"DB Error (get_model_pricing): {e}")
+            return None
 
 
 # Singleton instance
 _local_db_client = None
 
-def get_local_db_client() -> LocalDBClient:
+def get_local_db_client() -> LocalDatabaseClient:
     """Get or create local DB client instance."""
     global _local_db_client
     if _local_db_client is None:
-        _local_db_client = LocalDBClient()
+        _local_db_client = LocalDatabaseClient()
     return _local_db_client
 
 

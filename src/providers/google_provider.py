@@ -9,6 +9,7 @@ Key Models:
 - gemini-1.5-flash: Fast and cost-effective
 
 API Documentation: https://ai.google.dev/gemini-api/docs
+Pricing: Fetched dynamically from database (updated via pricing scraper)
 """
 
 import uuid
@@ -24,35 +25,11 @@ except ImportError:
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
+from database.db_connector import get_db_client
+from utils.constants import SYSTEM_PROMPT, PROVIDER_CONFIG
 
 # Configure module logger
 logger = logging.getLogger(__name__)
-
-# Model Pricing (USD per 1M tokens)
-# Source: https://ai.google.dev/pricing (as of Jan 2025)
-PRICING_TABLE: Dict[str, Dict[str, float]] = {
-    "models/gemini-2.5-pro": {
-        "input": 1.25,   # $1.25 per 1M input tokens
-        "output": 5.00,  # $5.00 per 1M output tokens
-    },
-    "models/gemini-2.5-flash": {
-        "input": 0.075,  # $0.075 per 1M input tokens
-        "output": 0.30,  # $0.30 per 1M output tokens
-    },
-    "models/gemini-2.0-flash": {
-        "input": 0.075,
-        "output": 0.30,
-    },
-}
-
-# Default fallback pricing
-DEFAULT_PRICING = {"input": 1.25, "output": 5.00}
-
-# System prompt for benchmarks
-SYSTEM_PROMPT = (
-    "You are a helpful assistant. Your task is to summarize the provided "
-    "text into exactly three concise bullet points."
-)
 
 
 class GoogleProvider(BaseProvider):
@@ -100,30 +77,38 @@ class GoogleProvider(BaseProvider):
         # Initialize Google GenAI client
         self.client = genai.Client(api_key=api_key)
         
-        logger.info(
-            "Google provider initialized with new SDK",
-            extra={"sdk": "google.genai", "models": list(PRICING_TABLE.keys())}
-        )
+        logger.info("Google provider initialized with new SDK")
     
     def get_pricing(self, model: str) -> Dict[str, float]:
         """
         Get pricing information for a specific Gemini model.
+        Tries database first, then falls back to default.
         
         Args:
-            model: Model identifier (e.g., "gemini-1.5-flash")
+            model: Model identifier (e.g., "models/gemini-2.5-pro")
             
         Returns:
             Dictionary with 'input' and 'output' prices per 1M tokens
         """
-        pricing = PRICING_TABLE.get(model, DEFAULT_PRICING)
+        # Try to get pricing from database
+        db_client = get_db_client()
+        db_pricing = db_client.get_model_pricing("Google", model)
         
-        if model not in PRICING_TABLE:
-            logger.warning(
-                "Unknown Gemini model, using default pricing",
-                extra={"model": model, "default_pricing": DEFAULT_PRICING}
+        if db_pricing:
+            logger.info(
+                f"Using database pricing for Google/{model}",
+                extra={"pricing": db_pricing}
             )
+            return db_pricing
         
-        return pricing
+        # Use default pricing as fallback
+        default = PROVIDER_CONFIG["google"]["default_pricing"]
+        logger.warning(
+            f"Database pricing not found for {model}, using default",
+            extra={"model": model, "default_pricing": default}
+        )
+        
+        return default
     
     def call(self, prompt: str, model: str) -> Dict[str, Any]:
         """

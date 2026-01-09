@@ -7,7 +7,8 @@ from database.supabase_client import (
     save_run_error
 )
 
-from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG, PROVIDERS
+from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
+from utils.provider_service import get_providers
 
 def run_benchmark(run_name: str, triggered_by: str):
     """
@@ -37,11 +38,12 @@ def run_benchmark(run_name: str, triggered_by: str):
 
     # Test each provider sequentially without concurrency
     # Track success/failure for final summary
-    total_providers = len(PROVIDERS)
+    all_providers = get_providers()
+    total_providers = len(all_providers)
     successful_providers = 0
     failed_providers = 0
     
-    for provider_name, func, model in PROVIDERS:
+    for provider_name, func, model in all_providers:
         print("\n" + "=" * 60)
         print(f"Testing → {provider_name} / {model}")
         print("=" * 60)

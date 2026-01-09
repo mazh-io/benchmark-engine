@@ -7,6 +7,7 @@ DeepSeek offers two main models:
 - deepseek-reasoner (R1): Advanced reasoning model for complex tasks
 
 API Documentation: https://platform.deepseek.com/api-docs
+Pricing: Fetched dynamically from database (updated via pricing scraper)
 """
 
 import uuid
@@ -18,35 +19,11 @@ from openai.types.chat import ChatCompletion
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
+from database.db_connector import get_db_client
+from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
 
 # Configure module logger
 logger = logging.getLogger(__name__)
-
-# API Configuration
-DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
-DEEPSEEK_API_VERSION = "v1"
-
-# Model Pricing (USD per 1M tokens)
-# Source: https://platform.deepseek.com/pricing 
-PRICING_TABLE: Dict[str, Dict[str, float]] = {
-    "deepseek-chat": {
-        "input": 0.14,   # $0.14 per 1M input tokens
-        "output": 0.28,  # $0.28 per 1M output tokens
-    },
-    "deepseek-reasoner": {
-        "input": 0.55,   # $0.55 per 1M input tokens
-        "output": 2.19,  # $2.19 per 1M output tokens
-    },
-}
-
-# Default fallback pricing for unknown models
-DEFAULT_PRICING = {"input": 0.14, "output": 0.28}
-
-# System prompt for consistent benchmark results
-SYSTEM_PROMPT = (
-    "You are a helpful assistant. Your task is to summarize the provided "
-    "text into exactly three concise bullet points."
-)
 
 
 class DeepSeekProvider(BaseProvider):
@@ -89,17 +66,15 @@ class DeepSeekProvider(BaseProvider):
         # Initialize OpenAI client with DeepSeek base URL
         self.client = OpenAI(
             api_key=api_key,
-            base_url=DEEPSEEK_BASE_URL,
+            base_url=PROVIDER_CONFIG["deepseek"]["base_url"],
         )
         
-        logger.info(
-            "DeepSeek provider initialized",
-            extra={"base_url": DEEPSEEK_BASE_URL}
-        )
+        logger.info("DeepSeek provider initialized")
     
     def get_pricing(self, model: str) -> Dict[str, float]:
         """
         Get pricing information for a specific DeepSeek model.
+        Tries database first, then falls back to default.
         
         Args:
             model: Model identifier (e.g., "deepseek-chat", "deepseek-reasoner")
@@ -111,13 +86,25 @@ class DeepSeekProvider(BaseProvider):
             >>> provider.get_pricing("deepseek-chat")
             {'input': 0.14, 'output': 0.28}
         """
-        pricing = PRICING_TABLE.get(model, DEFAULT_PRICING)
+        # Try to get pricing from database
+        db_client = get_db_client()
+        db_pricing = db_client.get_model_pricing("DeepSeek", model)
         
-        if model not in PRICING_TABLE:
-            logger.warning(
-                "Unknown model, using default pricing",
-                extra={"model": model, "pricing": DEFAULT_PRICING}
+        if db_pricing:
+            logger.info(
+                f"Using database pricing for DeepSeek/{model}",
+                extra={"pricing": db_pricing}
             )
+            return db_pricing
+        
+        # Use default pricing as fallback
+        default = PROVIDER_CONFIG["deepseek"]["default_pricing"]
+        logger.warning(
+            f"Database pricing not found for {model}, using default",
+            extra={"model": model, "default_pricing": default}
+        )
+        
+        return default
         
         return pricing
     

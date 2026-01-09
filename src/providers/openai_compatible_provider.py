@@ -23,14 +23,10 @@ from openai import OpenAI
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
+from database.db_connector import get_db_client
+from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
-
-# System prompt for benchmarks
-SYSTEM_PROMPT = (
-    "You are a helpful assistant. Your task is to summarize the provided "
-    "text into exactly three concise bullet points."
-)
 
 
 class OpenAICompatibleProvider(BaseProvider):
@@ -62,7 +58,7 @@ class OpenAICompatibleProvider(BaseProvider):
         provider_name: str,
         api_key: str,
         base_url: str,
-        pricing_table: Dict[str, Dict[str, float]],
+        pricing_table: Optional[Dict[str, Dict[str, float]]] = None,
         default_pricing: Optional[Dict[str, float]] = None
     ) -> None:
         """
@@ -72,8 +68,8 @@ class OpenAICompatibleProvider(BaseProvider):
             provider_name: Name of the provider (e.g., "mistral", "fireworks")
             api_key: API key for authentication
             base_url: Base URL for the API (e.g., "https://api.mistral.ai/v1")
-            pricing_table: Model pricing dict {model: {"input": X, "output": Y}}
-            default_pricing: Fallback pricing if model not in table
+            pricing_table: Model pricing dict {model: {"input": X, "output": Y}} (deprecated, use DB)
+            default_pricing: Fallback pricing if model not in table or DB
             
         Raises:
             ValueError: If required parameters are invalid
@@ -86,7 +82,7 @@ class OpenAICompatibleProvider(BaseProvider):
         super().__init__(provider_name=provider_name, api_key=api_key)
         
         self.base_url = base_url
-        self.pricing_table = pricing_table
+        self.pricing_table = pricing_table or {}  # Keep for backward compatibility
         self.default_pricing = default_pricing or {"input": 1.0, "output": 1.0}
         
         self.client = OpenAI(
@@ -96,20 +92,41 @@ class OpenAICompatibleProvider(BaseProvider):
         
         logger.info(
             f"{provider_name.title()} provider initialized",
-            extra={"base_url": base_url, "models": list(pricing_table.keys())}
+            extra={"base_url": base_url}
         )
     
     def get_pricing(self, model: str) -> Dict[str, float]:
-        """Get pricing for a specific model."""
-        pricing = self.pricing_table.get(model, self.default_pricing)
+        """
+        Get pricing for a specific model.
+        Tries database first, then falls back to hardcoded table, then default.
+        """
+        # Try to get pricing from database
+        provider_display_name = PROVIDER_CONFIG.get(self.provider_name, {}).get("display_name", self.provider_name.title())
+        db_client = get_db_client()
+        db_pricing = db_client.get_model_pricing(provider_display_name, model)
         
-        if model not in self.pricing_table:
-            logger.warning(
-                f"Unknown model for {self.provider_name}, using default pricing",
-                extra={"model": model, "default_pricing": self.default_pricing}
+        if db_pricing:
+            logger.info(
+                f"Using database pricing for {self.provider_name}/{model}",
+                extra={"pricing": db_pricing}
             )
+            return db_pricing
         
-        return pricing
+        # Fallback to hardcoded pricing table (deprecated)
+        if model in self.pricing_table:
+            logger.warning(
+                f"Using hardcoded pricing for {self.provider_name}/{model} (database lookup failed)",
+                extra={"pricing": self.pricing_table[model]}
+            )
+            return self.pricing_table[model]
+        
+        # Use default pricing as last resort
+        logger.warning(
+            f"Unknown model {model} for {self.provider_name}, using default pricing",
+            extra={"model": model, "default_pricing": self.default_pricing}
+        )
+        
+        return self.default_pricing
     
     def call(self, prompt: str, model: str) -> Dict[str, Any]:
         """
@@ -229,7 +246,7 @@ def create_openai_compatible_caller(
     provider_name: str,
     env_key_name: str,
     base_url: str,
-    pricing_table: Dict[str, Dict[str, float]],
+    pricing_table: Optional[Dict[str, Dict[str, float]]] = None,
     default_pricing: Optional[Dict[str, float]] = None
 ):
     """
@@ -242,7 +259,7 @@ def create_openai_compatible_caller(
         provider_name: Name of provider (lowercase)
         env_key_name: Environment variable name for API key
         base_url: API base URL
-        pricing_table: Model pricing information
+        pricing_table: Model pricing information (deprecated, use database instead)
         default_pricing: Fallback pricing
         
     Returns:
@@ -252,8 +269,7 @@ def create_openai_compatible_caller(
         >>> call_mistral = create_openai_compatible_caller(
         ...     provider_name="mistral",
         ...     env_key_name="MISTRAL_API_KEY",
-        ...     base_url="https://api.mistral.ai/v1",
-        ...     pricing_table={"mistral-large-latest": {"input": 2.0, "output": 6.0}}
+        ...     base_url="https://api.mistral.ai/v1"
         ... )
         >>> result = call_mistral("Test prompt", "mistral-large-latest")
     """

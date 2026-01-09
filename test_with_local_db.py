@@ -38,7 +38,7 @@ from dataclasses import dataclass
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from utils.constants import PROVIDERS
+from utils.provider_service import get_providers
 from database.local_db_client import (
     create_run, 
     update_run_status, 
@@ -175,7 +175,7 @@ class PhaseOrganizer:
             4: [],  # Model Updates
         }
         
-        for provider_name, func, model in PROVIDERS:
+        for provider_name, func, model in get_providers():
             # Phase 2: OpenAI Compatible (New providers)
             if provider_name in ["deepseek", "cerebras", "mistral", "fireworks", "sambanova"]:
                 phases[2].append((provider_name, func, model))
@@ -575,9 +575,10 @@ class TestRunner:
     
     def run_single_provider(self, provider_name: str):
         """Execute tests for a single provider (all models)."""
+        all_providers = get_providers()
         provider_models = [
             (prov, func, model) 
-            for prov, func, model in PROVIDERS 
+            for prov, func, model in all_providers 
             if prov.lower() == provider_name.lower()
         ]
         
@@ -585,7 +586,7 @@ class TestRunner:
             self.formatter.error(f"Provider '{provider_name}' not found!")
             self.formatter.info("\nAvailable providers:")
             seen = set()
-            for prov, _, _ in PROVIDERS:
+            for prov, _, _ in all_providers:
                 if prov not in seen:
                     print(f"  - {prov}")
                     seen.add(prov)

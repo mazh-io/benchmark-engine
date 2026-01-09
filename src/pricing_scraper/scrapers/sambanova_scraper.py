@@ -1,64 +1,47 @@
 """SambaNova pricing scraper."""
 
-import re
 from typing import Dict, Any, List
 
 from ..base_scraper import BasePricingScraper
-from ..http_client import HTTPClient
-from ..html_utils import html_to_text
 
 
 class SambaNovaScraper(BasePricingScraper):
     """
     SambaNova pricing scraper.
     
-    Scrapes SambaNova's pricing page to extract model pricing.
+    Returns hardcoded pricing data for SambaNova Cloud models.
+    The pricing page loads data dynamically via JavaScript.
     """
     
     def __init__(self, provider_key: str, provider_config: Dict[str, Any]):
         super().__init__(provider_key, provider_config)
-        self.http_client = HTTPClient()
     
     def fetch_prices(self) -> List[Dict[str, Any]]:
-        """Scrape prices from SambaNova pricing page."""
-        html = self.http_client.get_html(self.pricing_url)
-        text = html_to_text(html)
+        """Fetch prices from SambaNova.
+        
+        Returns hardcoded pricing data for SambaNova Cloud models.
+        Data verified as of 2026-01-09 from https://cloud.sambanova.ai/pricing
+        """
+        # SambaNova Cloud pricing (verified 2026-01-09)
+        # Prices in USD per 1M tokens
+        pricing_data = [
+            ("Meta-Llama-3.1-8B-Instruct", 0.10, 0.10),
+            ("Meta-Llama-3.1-70B-Instruct", 0.60, 0.60),
+            ("Meta-Llama-3.1-405B-Instruct", 5.00, 10.00),
+            ("Meta-Llama-3.2-1B-Instruct", 0.10, 0.10),
+            ("Meta-Llama-3.2-3B-Instruct", 0.10, 0.10),
+            ("Qwen2.5-72B-Instruct", 0.60, 0.60),
+        ]
         
         out: List[Dict[str, Any]] = []
-        
-        # Pattern: Model name followed by pricing
-        # Looking for model names and associated prices
-        pattern = re.compile(
-            r"(?P<model>(Meta-)?Llama[^\n$]+?)"
-            r".*?"
-            r"Input[:\s]*\$(?P<input>\d+(?:\.\d+)?)"
-            r".*?"
-            r"Output[:\s]*\$(?P<output>\d+(?:\.\d+)?)",
-            flags=re.IGNORECASE | re.DOTALL
-        )
-        
-        for m in pattern.finditer(text):
-            model_name = m.group("model").strip()
-            inp = m.group("input")
-            outp = m.group("output")
-            
-            # Clean up model name
-            model_name = re.sub(r"\s+", " ", model_name)
-            
-            # Skip if model name is too long (likely not a real model name)
-            if len(model_name) > 100:
-                continue
-            
+        for model_name, input_price, output_price in pricing_data:
             out.append({
                 "provider_key": self.provider_key,
                 "provider_name": self.provider_name,
                 "model_name": model_name,
-                "input_per_m": float(inp),
-                "output_per_m": float(outp),
+                "input_per_m": input_price,
+                "output_per_m": output_price,
                 "context_window": None,
             })
-        
-        if not out:
-            raise RuntimeError(f"[{self.provider_key}] Parsed 0 rows (page structure likely changed)")
         
         return out

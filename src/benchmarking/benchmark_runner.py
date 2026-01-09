@@ -1,11 +1,5 @@
 from benchmarking.run_manager import RunManager
-from database.supabase_client import (
-    save_benchmark, 
-    get_or_create_provider, 
-    get_or_create_model, 
-    save_price,
-    save_run_error
-)
+from database.db_connector import get_db_client
 
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
 from utils.provider_service import get_providers
@@ -26,6 +20,9 @@ def run_benchmark(run_name: str, triggered_by: str):
     """
     print(f"Starting benchmark run: {run_name}")
     print(f"Triggered by: {triggered_by}\n")
+
+    # Get database client
+    db = get_db_client()
 
     # Create Runmanager to manage the lifecycle of the run
     run_manager = RunManager(run_name, triggered_by)
@@ -51,7 +48,7 @@ def run_benchmark(run_name: str, triggered_by: str):
         try:
             # Get or create provider in database
             provider_config = PROVIDER_CONFIG.get(provider_name, {"display_name": provider_name.title(), "base_url": None})
-            provider_id = get_or_create_provider(
+            provider_id = db.get_or_create_provider(
                 name=provider_config["display_name"],
                 base_url=provider_config["base_url"],
                 logo_url=None
@@ -60,8 +57,8 @@ def run_benchmark(run_name: str, triggered_by: str):
             # Get or create model in database (requires provider_id)
             model_id = None
             if provider_id:
-                model_id = get_or_create_model(
-                    name=model,
+                model_id = db.get_or_create_model(
+                    model_name=model,
                     provider_id=provider_id,
                     context_window=None  # Can be added later if needed
                 )
@@ -76,7 +73,7 @@ def run_benchmark(run_name: str, triggered_by: str):
             print(f"CRITICAL ERROR ({provider_name}): {error_message}")
             
             # Save error to database
-            save_run_error(
+            db.save_run_error(
                 run_id=run_manager.run_id,
                 provider=provider_name,
                 model=model,
@@ -97,7 +94,7 @@ def run_benchmark(run_name: str, triggered_by: str):
             print(f"Failed: {result.get('error_message', 'Unknown error')}")
             
             # Save error to database
-            save_run_error(
+            db.save_run_error(
                 run_id=run_manager.run_id,
                 provider=provider_name,
                 model=model,
@@ -144,7 +141,7 @@ def run_benchmark(run_name: str, triggered_by: str):
         
         benchmark_data = filtered_data
         
-        save_result = save_benchmark(**benchmark_data)
+        save_result = db.save_benchmark(**benchmark_data)
 
         # Print results to console
         print(f"Success ({provider_name})")

@@ -1,4 +1,4 @@
-from database.supabase_client import create_run, finish_run
+from database.db_connector import get_db_client
 
 class RunManager:
     """
@@ -17,6 +17,7 @@ class RunManager:
         self.run_name = run_name
         self.triggered_by = triggered_by
         self.run_id = None  # set to None until start() is called
+        self.db = get_db_client()
 
     def start(self):
         """
@@ -26,7 +27,7 @@ class RunManager:
             UUID of the created run
         """
         # Create run in db and get the UUID of the created run
-        self.run_id = create_run(self.run_name, self.triggered_by)
+        self.run_id = self.db.create_run(self.run_name, self.triggered_by)
         print(f"Run started: {self.run_id}")
 
     def end(self):
@@ -34,5 +35,5 @@ class RunManager:
         End the run by setting the finished_at timestamp.
         """
         # Update the run by setting the finished_at timestamp to the current timestamp
-        finish_run(self.run_id)
+        self.db.finish_run(self.run_id)
         print(f"Run finished: {self.run_id}")

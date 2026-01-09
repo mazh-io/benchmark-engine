@@ -35,5 +35,11 @@ class RunManager:
         End the run by setting the finished_at timestamp.
         """
         # Update the run by setting the finished_at timestamp to the current timestamp
-        self.db.finish_run(self.run_id)
-        print(f"Run finished: {self.run_id}")
+        try:
+            success = self.db.finish_run(self.run_id)
+            if success:
+                print(f"Run finished: {self.run_id}")
+            else:
+                print(f"WARNING: Failed to finish run {self.run_id}")
+        except Exception as e:
+            print(f"ERROR finishing run {self.run_id}: {e}")

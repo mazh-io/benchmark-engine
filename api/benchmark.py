@@ -33,7 +33,11 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"status": "success", "message": "Benchmark completed successfully"}).encode())
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"ERROR in benchmark handler: {error_details}")
+            
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode())
+            self.wfile.write(json.dumps({"status": "error", "message": str(e), "details": error_details}).encode())

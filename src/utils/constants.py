@@ -25,7 +25,7 @@ PROVIDER_CONFIG = {
     "openai": {
         "display_name": "OpenAI",
         "base_url": "https://api.openai.com",
-        "pricing_url": "https://openai.com/api/pricing/",
+        "pricing_url": "https://platform.openai.com/docs/pricing",
         "default_pricing": {"input": 0.15, "output": 0.60},  # GPT-4o-mini rates
     },
     "groq": {

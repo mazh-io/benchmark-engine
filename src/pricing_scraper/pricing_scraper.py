@@ -36,7 +36,8 @@ def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
     
     for r in rows:
         provider_key = r["provider_key"]
-        provider_name = r["provider_name"]
+        # Use display_name from PROVIDER_CONFIG for consistency with benchmark
+        provider_display_name = PROVIDER_CONFIG[provider_key].get("display_name", r["provider_name"])
         base_url = PROVIDER_CONFIG[provider_key]["base_url"]
 
         model_name = r["model_name"]
@@ -46,7 +47,7 @@ def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
         if not model_name or input_per_m is None or output_per_m is None:
             continue
 
-        provider_id = db.get_or_create_provider(provider_name, base_url, None)
+        provider_id = db.get_or_create_provider(provider_display_name, base_url, None)
         if not provider_id:
             continue
 

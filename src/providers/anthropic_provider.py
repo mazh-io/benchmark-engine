@@ -21,6 +21,7 @@ import logging
 try:
     from anthropic import Anthropic, Stream
     from anthropic.types import MessageStreamEvent, ContentBlock, Message
+    from anthropic import APIError, APIConnectionError, APITimeoutError, RateLimitError, BadRequestError, AuthenticationError
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -237,7 +238,42 @@ class AnthropicProvider(BaseProvider):
                 "response_text": response_text,
             }
             
+        except BadRequestError as e:
+            # Specific handling for bad request errors (e.g., insufficient credits)
+            metrics.end()
+            
+            logger.error(
+                "Anthropic API bad request",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                    "status_code": e.status_code if hasattr(e, 'status_code') else 400,
+                },
+                exc_info=False  # Don't log full traceback for expected errors
+            )
+            
+            return self.handle_error(e, model)
+            
+        except (RateLimitError, APITimeoutError, APIConnectionError, AuthenticationError) as e:
+            # Specific handling for known Anthropic API errors
+            metrics.end()
+            
+            logger.error(
+                f"Anthropic API error: {type(e).__name__}",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=False
+            )
+            
+            return self.handle_error(e, model)
+            
         except Exception as e:
+            # Catch-all for any other unexpected errors
             metrics.end()
             
             logger.error(
@@ -248,7 +284,7 @@ class AnthropicProvider(BaseProvider):
                     "error": str(e),
                     "error_type": type(e).__name__,
                 },
-                exc_info=True
+                exc_info=True  # Log full traceback for unexpected errors
             )
             
             return self.handle_error(e, model)

@@ -94,6 +94,19 @@ class BaseDatabaseClient(ABC):
         """
         pass
     
+    @abstractmethod
+    def save_run_error(self, **data) -> Optional[str]:
+        """
+        Save run error.
+        
+        Args:
+            **data: Error data dictionary (run_id, provider, model, error_type, error_message, etc.)
+            
+        Returns:
+            UUID of created error record, or None if save failed
+        """
+        pass
+    
     # ============================================================================
     # PROVIDERS & MODELS
     # ============================================================================

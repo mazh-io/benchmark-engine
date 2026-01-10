@@ -107,6 +107,15 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
             print("DB Error (get_benchmark_results_by_run_id):", e)
             return None
     
+    def save_run_error(self, **data) -> Optional[str]:
+        """Save run error."""
+        try:
+            response = self.supabase.table("run_errors").insert(data).execute()
+            return response.data[0]["id"]
+        except Exception as e:
+            print("DB Error (save_run_error):", e)
+            return None
+    
     # ============================================================================
     # PROVIDERS & MODELS
     # ============================================================================

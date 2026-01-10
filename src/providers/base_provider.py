@@ -124,12 +124,18 @@ class BaseProvider(ABC):
         elif "401" in error_message or status_code == 401:
             error_type = "AUTH_ERROR"
             status_code = 401
+        elif "400" in error_message or status_code == 400:
+            error_type = "BAD_REQUEST"
+            status_code = 400
         elif "404" in error_message or status_code == 404:
             error_type = "NOT_FOUND"
             status_code = 404
         elif "timeout" in error_message.lower():
             error_type = "TIMEOUT"
             status_code = 504
+        elif "credit balance" in error_message.lower():
+            error_type = "INSUFFICIENT_CREDITS"
+            status_code = 402
         else:
             error_type = "UNKNOWN_ERROR"
         

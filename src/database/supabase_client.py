@@ -110,10 +110,22 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
     def save_run_error(self, **data) -> Optional[str]:
         """Save run error."""
         try:
+            # Ensure required fields are present
+            if 'run_id' not in data or 'error_type' not in data or 'error_message' not in data:
+                print(f"DB Error (save_run_error): Missing required fields. Data: {data}")
+                return None
+            
             response = self.supabase.table("run_errors").insert(data).execute()
-            return response.data[0]["id"]
+            if response.data:
+                return response.data[0]["id"]
+            else:
+                print(f"DB Error (save_run_error): No data returned from insert")
+                return None
         except Exception as e:
-            print("DB Error (save_run_error):", e)
+            print(f"DB Error (save_run_error): {e}")
+            print(f"Data attempted: {data}")
+            import traceback
+            traceback.print_exc()
             return None
     
     # ============================================================================

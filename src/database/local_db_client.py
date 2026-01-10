@@ -500,6 +500,183 @@ class LocalDatabaseClient(BaseDatabaseClient):
         except Exception as e:
             print(f"DB Error (get_model_pricing): {e}")
             return None
+    
+    # ============================================================================
+    # BENCHMARK QUEUE
+    # ============================================================================
+    
+    def enqueue_benchmarks(self, run_id: str, provider_models: List[tuple]) -> bool:
+        """Add provider/model combinations to the benchmark queue."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            
+            for provider_key, model_name in provider_models:
+                cur.execute(
+                    """
+                    INSERT INTO benchmark_queue (run_id, provider_key, model_name, status)
+                    VALUES (%s, %s, %s, 'pending')
+                    ON CONFLICT (run_id, provider_key, model_name) DO NOTHING
+                    """,
+                    (run_id, provider_key, model_name)
+                )
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (enqueue_benchmarks): {e}")
+            return False
+    
+    def get_pending_queue_items(self, limit: int = 5) -> Optional[List[Dict[str, Any]]]:
+        """Get pending items from the queue."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            cur.execute(
+                """
+                SELECT * FROM benchmark_queue 
+                WHERE status = 'pending' 
+                ORDER BY created_at 
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            # Convert to list of dicts with string UUIDs
+            return [dict(row) for row in results] if results else []
+        except Exception as e:
+            print(f"DB Error (get_pending_queue_items): {e}")
+            return None
+    
+    def mark_queue_item_processing(self, queue_id: str) -> bool:
+        """Mark a queue item as being processed."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            
+            cur.execute(
+                """
+                UPDATE benchmark_queue 
+                SET status = 'processing',
+                    started_at = NOW(),
+                    attempts = attempts + 1
+                WHERE id = %s
+                """,
+                (queue_id,)
+            )
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_processing): {e}")
+            return False
+    
+    def mark_queue_item_completed(self, queue_id: str) -> bool:
+        """Mark a queue item as completed."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            
+            cur.execute(
+                """
+                UPDATE benchmark_queue 
+                SET status = 'completed',
+                    completed_at = NOW()
+                WHERE id = %s
+                """,
+                (queue_id,)
+            )
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_completed): {e}")
+            return False
+    
+    def mark_queue_item_failed(self, queue_id: str, error_message: str) -> bool:
+        """Mark a queue item as failed and increment attempts."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get current attempts and max_attempts
+            cur.execute(
+                "SELECT attempts, max_attempts FROM benchmark_queue WHERE id = %s",
+                (queue_id,)
+            )
+            result = cur.fetchone()
+            if not result:
+                cur.close()
+                conn.close()
+                return False
+            
+            attempts = result['attempts'] + 1
+            max_attempts = result['max_attempts']
+            
+            # Update status to failed only if max attempts reached, otherwise back to pending
+            status = 'failed' if attempts >= max_attempts else 'pending'
+            completed_at = 'NOW()' if status == 'failed' else 'NULL'
+            
+            cur.execute(
+                f"""
+                UPDATE benchmark_queue 
+                SET status = %s,
+                    attempts = %s,
+                    error_message = %s,
+                    completed_at = {completed_at}
+                WHERE id = %s
+                """,
+                (status, attempts, error_message, queue_id)
+            )
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_failed): {e}")
+            return False
+    
+    def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
+        """Get statistics for a run's queue."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            cur.execute(
+                """
+                SELECT status, COUNT(*) as count 
+                FROM benchmark_queue 
+                WHERE run_id = %s 
+                GROUP BY status
+                """,
+                (run_id,)
+            )
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            stats = {"pending": 0, "processing": 0, "completed": 0, "failed": 0}
+            for row in results:
+                status = row['status']
+                if status in stats:
+                    stats[status] = int(row['count'])
+            
+            return stats
+        except Exception as e:
+            print(f"DB Error (get_queue_stats): {e}")
+            return None
+
 
 
 # Singleton instance

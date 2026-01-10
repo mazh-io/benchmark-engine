@@ -1,8 +1,12 @@
 {
     "crons": [
         {
-            "path": "/api/benchmark",
-            "schedule": "*/15 * * * *"
+            "path": "/api/benchmark?action=init",
+            "schedule": "0,15,30,45 * * * *"
+        },
+        {
+            "path": "/api/benchmark?action=process",
+            "schedule": "* * * * *"
         },
         {
             "path": "/api/pricing_scraper",

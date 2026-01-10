@@ -3,14 +3,17 @@ from database.db_connector import get_db_client
 
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
 from utils.provider_service import get_providers
+from typing import Optional, List
 
-def run_benchmark(run_name: str, triggered_by: str):
+def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[List[str]] = None):
     """
     Main function that executes the benchmark for all providers.
     
     Args:
         run_name: Name of the run (e.g. "mvp-validation-run")
         triggered_by: Who triggered the run (e.g. "system")
+        provider_filter: Optional list of provider keys to test (e.g., ["openai", "groq"])
+                        If None, tests all providers
     
     Process:
         1. Create a new run in db
@@ -19,7 +22,11 @@ def run_benchmark(run_name: str, triggered_by: str):
         4. End the run
     """
     print(f"Starting benchmark run: {run_name}")
-    print(f"Triggered by: {triggered_by}\n")
+    print(f"Triggered by: {triggered_by}")
+    if provider_filter:
+        print(f"Provider filter: {', '.join(provider_filter)}\n")
+    else:
+        print("Testing all providers\n")
 
     # Get database client
     db = get_db_client()
@@ -36,6 +43,16 @@ def run_benchmark(run_name: str, triggered_by: str):
     # Test each provider sequentially without concurrency
     # Track success/failure for final summary
     all_providers = get_providers()
+    
+    # Filter providers if filter is provided
+    if provider_filter:
+        all_providers = [
+            (prov, func, model) 
+            for prov, func, model in all_providers 
+            if prov in provider_filter
+        ]
+        print(f"Filtered to {len(all_providers)} provider(s)")
+    
     total_providers = len(all_providers)
     successful_providers = 0
     failed_providers = 0

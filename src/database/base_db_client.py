@@ -195,3 +195,88 @@ class BaseDatabaseClient(ABC):
             or None if pricing not found
         """
         pass
+    
+    # ============================================================================
+    # BENCHMARK QUEUE
+    # ============================================================================
+    
+    @abstractmethod
+    def enqueue_benchmarks(self, run_id: str, provider_models: List[tuple]) -> bool:
+        """
+        Add provider/model combinations to the benchmark queue.
+        
+        Args:
+            run_id: UUID of the run
+            provider_models: List of (provider_key, model_name) tuples
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def get_pending_queue_items(self, limit: int = 5) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get pending items from the queue.
+        
+        Args:
+            limit: Maximum number of items to retrieve
+            
+        Returns:
+            List of queue items with status 'pending', or None if query failed
+        """
+        pass
+    
+    @abstractmethod
+    def mark_queue_item_processing(self, queue_id: str) -> bool:
+        """
+        Mark a queue item as being processed.
+        
+        Args:
+            queue_id: UUID of the queue item
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def mark_queue_item_completed(self, queue_id: str) -> bool:
+        """
+        Mark a queue item as completed.
+        
+        Args:
+            queue_id: UUID of the queue item
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def mark_queue_item_failed(self, queue_id: str, error_message: str) -> bool:
+        """
+        Mark a queue item as failed and increment attempts.
+        
+        Args:
+            queue_id: UUID of the queue item
+            error_message: Error message to store
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
+        """
+        Get statistics for a run's queue.
+        
+        Args:
+            run_id: UUID of the run
+            
+        Returns:
+            Dictionary with counts: {'pending': N, 'processing': N, 'completed': N, 'failed': N}
+            or None if query failed
+        """
+        pass

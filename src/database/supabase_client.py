@@ -234,6 +234,107 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
         except Exception as e:
             print(f"DB Error (get_model_pricing): {e}")
             return None
+    
+    # ============================================================================
+    # BENCHMARK QUEUE
+    # ============================================================================
+    
+    def enqueue_benchmarks(self, run_id: str, provider_models: List[tuple]) -> bool:
+        """Add provider/model combinations to the benchmark queue."""
+        try:
+            queue_items = [
+                {
+                    "run_id": run_id,
+                    "provider_key": provider_key,
+                    "model_name": model_name,
+                    "status": "pending"
+                }
+                for provider_key, model_name in provider_models
+            ]
+            self.supabase.table("benchmark_queue").insert(queue_items).execute()
+            return True
+        except Exception as e:
+            print(f"DB Error (enqueue_benchmarks): {e}")
+            return False
+    
+    def get_pending_queue_items(self, limit: int = 5) -> Optional[List[Dict[str, Any]]]:
+        """Get pending items from the queue."""
+        try:
+            response = self.supabase.table("benchmark_queue").select(
+                "*"
+            ).eq("status", "pending").order("created_at").limit(limit).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"DB Error (get_pending_queue_items): {e}")
+            return None
+    
+    def mark_queue_item_processing(self, queue_id: str) -> bool:
+        """Mark a queue item as being processed."""
+        try:
+            self.supabase.table("benchmark_queue").update({
+                "status": "processing",
+                "started_at": datetime.utcnow().isoformat(),
+                "attempts": self.supabase.table("benchmark_queue").select("attempts").eq("id", queue_id).execute().data[0]["attempts"] + 1
+            }).eq("id", queue_id).execute()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_processing): {e}")
+            return False
+    
+    def mark_queue_item_completed(self, queue_id: str) -> bool:
+        """Mark a queue item as completed."""
+        try:
+            self.supabase.table("benchmark_queue").update({
+                "status": "completed",
+                "completed_at": datetime.utcnow().isoformat()
+            }).eq("id", queue_id).execute()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_completed): {e}")
+            return False
+    
+    def mark_queue_item_failed(self, queue_id: str, error_message: str) -> bool:
+        """Mark a queue item as failed and increment attempts."""
+        try:
+            # First get current attempts count
+            current = self.supabase.table("benchmark_queue").select("attempts, max_attempts").eq("id", queue_id).execute()
+            if not current.data:
+                return False
+            
+            attempts = current.data[0]["attempts"] + 1
+            max_attempts = current.data[0]["max_attempts"]
+            
+            # Update status to failed only if max attempts reached, otherwise back to pending
+            status = "failed" if attempts >= max_attempts else "pending"
+            
+            self.supabase.table("benchmark_queue").update({
+                "status": status,
+                "attempts": attempts,
+                "error_message": error_message,
+                "completed_at": datetime.utcnow().isoformat() if status == "failed" else None
+            }).eq("id", queue_id).execute()
+            return True
+        except Exception as e:
+            print(f"DB Error (mark_queue_item_failed): {e}")
+            return False
+    
+    def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
+        """Get statistics for a run's queue."""
+        try:
+            response = self.supabase.table("benchmark_queue").select("status").eq("run_id", run_id).execute()
+            if not response.data:
+                return {"pending": 0, "processing": 0, "completed": 0, "failed": 0}
+            
+            stats = {"pending": 0, "processing": 0, "completed": 0, "failed": 0}
+            for item in response.data:
+                status = item["status"]
+                if status in stats:
+                    stats[status] += 1
+            
+            return stats
+        except Exception as e:
+            print(f"DB Error (get_queue_stats): {e}")
+            return None
 
 
 # ============================================================================

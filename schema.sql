@@ -108,6 +108,34 @@ create table if not exists public.run_errors (
     timestamp timestamptz not null default now()
 );
 
+-- BENCHMARK QUEUE TABLE
+-- Queue system for processing benchmarks in batches to avoid timeouts
+-- Each queue item represents one provider+model combination to test
+create table if not exists public.benchmark_queue (
+    id uuid primary key default gen_random_uuid(),
+    run_id uuid not null references public.runs(id) on delete cascade,
+    
+    -- Provider and model to test
+    provider_key text not null,  -- e.g., "openai", "groq"
+    model_name text not null,
+    
+    -- Queue status
+    status text not null default 'pending',  -- 'pending', 'processing', 'completed', 'failed'
+    attempts integer not null default 0,     -- Number of processing attempts
+    max_attempts integer not null default 3,  -- Maximum retry attempts
+    
+    -- Error tracking (for failed items)
+    error_message text,
+    
+    -- Timing
+    created_at timestamptz not null default now(),
+    started_at timestamptz,     -- When processing started
+    completed_at timestamptz,   -- When completed or failed
+    
+    -- Ensure no duplicates in same run
+    unique(run_id, provider_key, model_name)
+);
+
 -- Indexes for query performance
 create index if not exists idx_providers_name on public.providers(name);
 create index if not exists idx_models_provider_id on public.models(provider_id);
@@ -126,3 +154,6 @@ create index if not exists idx_run_errors_run_id on public.run_errors(run_id);
 create index if not exists idx_run_errors_provider_id on public.run_errors(provider_id);
 create index if not exists idx_run_errors_error_type on public.run_errors(error_type);
 create index if not exists idx_run_errors_timestamp on public.run_errors(timestamp);
+create index if not exists idx_benchmark_queue_run_id on public.benchmark_queue(run_id);
+create index if not exists idx_benchmark_queue_status on public.benchmark_queue(status);
+create index if not exists idx_benchmark_queue_created_at on public.benchmark_queue(created_at);

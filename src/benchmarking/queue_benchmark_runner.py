@@ -53,6 +53,10 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
         # Mark as processing
         db.mark_queue_item_processing(queue_id)
         
+        # Initialize variables for exception handler
+        provider_id = None
+        model_id = None
+        
         try:
             # Get provider config
             provider_config = PROVIDER_CONFIG.get(provider_key, {
@@ -68,7 +72,6 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
             )
             
             # Get or create model
-            model_id = None
             if provider_id:
                 model_id = db.get_or_create_model(
                     model_name=model_name,
@@ -161,20 +164,27 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
             error_msg = f"Exception during benchmark: {str(e)}"
             print(f"❌ CRITICAL ERROR: {error_msg}")
             
-            # Save error
-            db.save_run_error(
-                run_id=run_id,
-                provider=provider_key,
-                model=model_name,
-                error_type="PROVIDER_CRASH",
-                error_message=error_msg,
-                status_code=None,
-                provider_id=provider_id if 'provider_id' in locals() else None,
-                model_id=model_id if 'model_id' in locals() else None
-            )
+            # Save error (use try-except to ensure we always update queue status)
+            try:
+                db.save_run_error(
+                    run_id=run_id,
+                    provider=provider_key,
+                    model=model_name,
+                    error_type="PROVIDER_CRASH",
+                    error_message=error_msg,
+                    status_code=None,
+                    provider_id=provider_id,
+                    model_id=model_id
+                )
+            except Exception as save_error:
+                print(f"⚠️  Failed to save error: {save_error}")
             
-            # Mark queue item as failed
-            db.mark_queue_item_failed(queue_id, error_msg)
+            # Always mark queue item as failed
+            try:
+                db.mark_queue_item_failed(queue_id, error_msg)
+            except Exception as mark_error:
+                print(f"⚠️  Failed to mark queue item as failed: {mark_error}")
+            
             failed += 1
             processed += 1
     

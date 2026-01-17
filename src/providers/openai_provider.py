@@ -1,7 +1,7 @@
 import time
 import uuid
 import requests
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError
 from utils.env_helper import get_env
 
 
@@ -149,14 +149,55 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
             "error_message": None,
             "response_text": response_text
         }
-        
-    except Exception as e:
-        # If there is an error, calculate latency and return error result with all the request data
+    
+    except RateLimitError as e:
+        # Rate limit error - will be retried by call_with_retry
         end_time = time.time()
         total_latency_ms = (end_time - start_time) * 1000
         
-        # Try to extract status code from error if available
-        status_code = 500  # Default error code
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_latency_ms": total_latency_ms,
+            "latency_ms": total_latency_ms,
+            "ttft_ms": None,
+            "tps": None,
+            "status_code": 429,
+            "cost_usd": 0,
+            "success": False,
+            "error_message": f"[RATE_LIMIT] {str(e)}",
+            "response_text": None
+        }
+    
+    except (APIError, APIConnectionError, APITimeoutError) as e:
+        # OpenAI API specific errors
+        end_time = time.time()
+        total_latency_ms = (end_time - start_time) * 1000
+        
+        status_code = 500
+        if hasattr(e, 'status_code'):
+            status_code = e.status_code
+        
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_latency_ms": total_latency_ms,
+            "latency_ms": total_latency_ms,
+            "ttft_ms": None,
+            "tps": None,
+            "status_code": status_code,
+            "cost_usd": 0,
+            "success": False,
+            "error_message": f"[{type(e).__name__}] {str(e)}",
+            "response_text": None
+        }
+        
+    except Exception as e:
+        # Generic error handling
+        end_time = time.time()
+        total_latency_ms = (end_time - start_time) * 1000
+        
+        status_code = 500
         if hasattr(e, 'status_code'):
             status_code = e.status_code
         elif hasattr(e, 'response') and hasattr(e.response, 'status_code'):
@@ -166,7 +207,7 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
             "input_tokens": 0,
             "output_tokens": 0,
             "total_latency_ms": total_latency_ms,
-            "latency_ms": total_latency_ms,  # Backward compatibility
+            "latency_ms": total_latency_ms,
             "ttft_ms": None,
             "tps": None,
             "status_code": status_code,

@@ -133,10 +133,16 @@ class BaseProvider(ABC):
         # Try to extract status code from error
         status_code = 500  # Default to internal server error
         
+        # Check for status_code attribute (OpenAI SDK errors)
         if hasattr(error, 'status_code'):
             status_code = error.status_code
         elif hasattr(error, 'response') and hasattr(error.response, 'status_code'):
             status_code = error.response.status_code
+        
+        # Check error type name for rate limit errors
+        error_type_name = type(error).__name__
+        if 'RateLimitError' in error_type_name:
+            status_code = 429
         
         # Check for specific error types
         error_message = str(error)

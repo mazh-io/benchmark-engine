@@ -19,7 +19,7 @@ import uuid
 from typing import Dict, Any, Optional
 import logging
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
@@ -220,6 +220,32 @@ class OpenAICompatibleProvider(BaseProvider):
                 "error_message": None,
                 "response_text": response_text,
             }
+            
+        except RateLimitError as e:
+            metrics.end()
+            logger.warning(
+                f"{self.provider_name.title()} rate limit exceeded",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                }
+            )
+            # Return error dict with 429 status so retry logic kicks in
+            return self.handle_error(e, model)
+            
+        except (APIError, APIConnectionError, APITimeoutError) as e:
+            metrics.end()
+            logger.error(
+                f"{self.provider_name.title()} API error",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                },
+                exc_info=True
+            )
+            return self.handle_error(e, model)
             
         except Exception as e:
             metrics.end()

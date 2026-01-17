@@ -439,6 +439,104 @@ class LocalDatabaseClient(BaseDatabaseClient):
             print(f"DB Error (get_all_models): {e}")
             return None
     
+    def upsert_models_from_discovery(self, provider_name: str, model_names: List[str]) -> bool:
+        """Upsert models discovered from provider API."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get provider ID
+            cur.execute("SELECT id FROM providers WHERE name = %s", (provider_name,))
+            provider = cur.fetchone()
+            
+            if not provider:
+                print(f"DB Error: Provider '{provider_name}' not found")
+                cur.close()
+                conn.close()
+                return False
+            
+            provider_id = provider['id']
+            now = datetime.now()
+            
+            # Upsert each model
+            for model_name in model_names:
+                cur.execute("""
+                    INSERT INTO models (name, provider_id, active, last_seen_at)
+                    VALUES (%s, %s, false, %s)
+                    ON CONFLICT (name, provider_id) 
+                    DO UPDATE SET last_seen_at = EXCLUDED.last_seen_at
+                """, (model_name, provider_id, now))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (upsert_models_from_discovery): {e}")
+            return False
+    
+    def set_models_active(self, provider_name: str, model_names: List[str]) -> bool:
+        """Mark specific models as active."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get provider ID
+            cur.execute("SELECT id FROM providers WHERE name = %s", (provider_name,))
+            provider = cur.fetchone()
+            
+            if not provider:
+                print(f"DB Error: Provider '{provider_name}' not found")
+                cur.close()
+                conn.close()
+                return False
+            
+            provider_id = provider['id']
+            
+            # First, set all models for this provider to inactive
+            cur.execute(
+                "UPDATE models SET active = false WHERE provider_id = %s",
+                (provider_id,)
+            )
+            
+            # Then set specified models to active
+            for model_name in model_names:
+                cur.execute(
+                    "UPDATE models SET active = true WHERE name = %s AND provider_id = %s",
+                    (model_name, provider_id)
+                )
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"DB Error (set_models_active): {e}")
+            return False
+    
+    def get_active_models(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all active models."""
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            cur.execute("""
+                SELECT m.*, p.name as provider_name
+                FROM models m
+                JOIN providers p ON m.provider_id = p.id
+                WHERE m.active = true
+                ORDER BY p.name, m.name
+            """)
+            
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            return [dict(row) for row in results]
+        except Exception as e:
+            print(f"DB Error (get_active_models): {e}")
+            return None
+    
     def get_last_price_timestamp(self, provider_id: str, model_id: str) -> Optional[str]:
         """Get timestamp of last price update for a model."""
         try:

@@ -123,74 +123,67 @@ def get_provider_service() -> ProviderService:
     return _provider_service
 
 
+# ============================================================================
+# ACTIVE MODELS - Currently Used for Benchmarking
+# ============================================================================
+# These models are actively benchmarked in each run.
+# Format: (provider, model_id, category, notes)
+#
+# Categories: flagship, budget, reasoning, speed, heavyweight, specialist
+# ============================================================================
+
+ACTIVE_MODELS = [
+    # OpenAI - Industry Standard
+    ("openai", "gpt-4o-mini", "budget", "Baseline budget model"),
+    ("openai", "gpt-4o", "flagship", "GPT-4 Optimized flagship"),
+    ("openai", "o3", "reasoning", "Latest reasoning model"),
+    ("openai", "o4-mini", "reasoning", "Budget reasoning model"),
+    
+    # Anthropic - Developer Favorite
+    ("anthropic", "claude-sonnet-4-5-20250929", "flagship", "Sonnet 4.5 flagship"),
+    ("anthropic", "claude-haiku-4-5-20251001", "budget", "Haiku 4.5 fast & cheap"),
+    ("anthropic", "claude-sonnet-4-20250514", "flagship", "Celebrity benchmark"),
+    
+    # Google - Gemini Latest
+    ("google", "models/gemini-2.5-pro", "flagship", "Best quality"),
+    ("google", "models/gemini-2.5-flash", "speed", "Fast & cheap"),
+    
+    # DeepSeek - Disruptive Pricing
+    ("deepseek", "deepseek-chat", "budget", "V3 - Ultra budget"),
+    ("deepseek", "deepseek-reasoner", "reasoning", "R1 - Reasoning"),
+    
+    # Groq - LPU Speed Champion
+    ("groq", "llama-3.3-70b-versatile", "speed", "Latest Llama 3.3 on LPU"),
+    ("groq", "llama-3.1-8b-instant", "speed", "Ultra-fast 8B"),
+    
+    # Together AI - GPU Cloud
+    ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", "Mixtral MoE"),
+    ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", "Llama 3.3"),
+    ("together", "Qwen/Qwen2.5-72B-Instruct-Turbo", "flagship", "Chinese model"),
+    ("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "heavyweight", "405B giant"),
+    
+    # Infrastructure Providers
+    ("cerebras", "llama-3.3-70b", "speed", "Wafer-scale engine"),
+    ("mistral", "mistral-large-latest", "flagship", "European flagship"),
+    ("mistral", "codestral-latest", "specialist", "Code specialist"),
+    ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", "Low latency"),
+    ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", "RDU chip"),
+    
+    # OpenRouter - Aggregator (Router Tax Analysis)
+    ("openrouter", "openai/gpt-4o-mini", "budget", "Compare vs direct"),
+    ("openrouter", "openai/gpt-4o", "flagship", "Compare vs direct"),
+    ("openrouter", "meta-llama/llama-3.3-70b-instruct", "flagship", "Llama via router"),
+    ("openrouter", "minimax/minimax-01", "flagship", "Chinese Claude challenger"),
+    ("openrouter", "x-ai/grok-3", "flagship", "xAI Grok 3"),
+    ("openrouter", "deepseek/deepseek-chat", "budget", "Compare vs direct"),
+]
+
 def _initialize_default_models():
-    """Initialize default model configurations."""
+    """Initialize models from ACTIVE_MODELS table."""
     service = _provider_service
-
-    # Phase 0 - MVP (Existing providers with updates)
-    # OpenAI - Industry standard
-    service.register_model("openai", "gpt-4o-mini")          # Baseline budget model
-    service.register_model("openai", "gpt-4o")               # Flagship
-    service.register_model("openai", "o3")                   # New reasoning model
-    service.register_model("openai", "o4-mini")              # New budget reasoning model
     
-    # Groq - LPU benchmark (updated to latest)
-    service.register_model("groq", "llama-3.3-70b-versatile")  # Latest Llama 3.3
-    
-    # Together AI - GPU cloud
-    service.register_model("together", "mistralai/Mixtral-8x7B-Instruct-v0.1")  # Existing
-    service.register_model("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo")  # Infrastructure War
-    
-    # OpenRouter - Aggregator
-    service.register_model("openrouter", "openai/gpt-4o-mini")  # Baseline
-    service.register_model("openrouter", "meta-llama/llama-3.3-70b-instruct")  # Infrastructure War
-    service.register_model("openrouter", "minimax/minimax-01")  # Challenger to Claude
-    
-    # Phase 2 - OpenAI Compatible
-    # DeepSeek - Budget champion with disruptive pricing
-    service.register_model("deepseek", "deepseek-chat")      # V3 - Budget model
-    service.register_model("deepseek", "deepseek-reasoner")  # R1 - Reasoning model
-    
-    # Cerebras - Infrastructure War competitor (Groq challenger)
-    service.register_model("cerebras", "llama-3.3-70b")
-    
-    # Mistral - European flagship
-    service.register_model("mistral", "mistral-large-latest")
-    
-    # Fireworks - Low latency on standard GPUs
-    service.register_model("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct")
-    
-    # SambaNova - Custom chip architecture
-    service.register_model("sambanova", "Meta-Llama-3.3-70B-Instruct")
-    
-    # Phase 3 - Custom SDK Providers
-    # Anthropic Claude 4.5 - NEW VERSION (3.5 retired Oct 2025)
-    service.register_model("anthropic", "claude-sonnet-4-5-20250929")  # Flagship (Sonnet 4.5)
-    service.register_model("anthropic", "claude-haiku-4-5-20251001")   # Budget (Haiku 4.5)
-    
-    # Google Gemini - NEW SDK with Gemini 2.5
-    service.register_model("google", "models/gemini-2.5-pro")    # Latest Pro - best quality
-    service.register_model("google", "models/gemini-2.5-flash")  # Latest Flash - fast & cheap
-
-    # ============================================================
-    # BATTLE MAP ADDITIONS
-    # ============================================================
-    
-    # 1. "East vs. West" Front (China Models)
-    service.register_model("together", "Qwen/Qwen2.5-72B-Instruct-Turbo")  # CRITICAL
-    
-    # 2. "Heavyweight" Division (405B Giants) 
-    service.register_model("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")  # CRITICAL
-    
-    # # 3. "Celebrity & Specialist" Class 
-    service.register_model("openrouter", "x-ai/grok-3")  # xAI Grok 3 flagship - $3/$15 per 1M tokens
-    service.register_model("anthropic", "claude-sonnet-4-20250514")  # Celebrity benchmark
-    service.register_model("mistral", "codestral-latest")  # Mistral code specialist
-    service.register_model("groq", "llama-3.1-8b-instant")  # Replacement for deprecated gemma2-9b-it
-    
-    # # 4. "Router Tax" Proof (B2B)  - Compare OpenRouter vs Direct
-    service.register_model("openrouter", "deepseek/deepseek-chat")  # vs Direct DeepSeek
-    service.register_model("openrouter", "openai/gpt-4o")  # vs Direct OpenAI
+    for provider, model, category, notes in ACTIVE_MODELS:
+        service.register_model(provider, model)
 
 
 def get_providers() -> List[Tuple[str, Callable, str]]:

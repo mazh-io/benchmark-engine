@@ -22,3 +22,25 @@ call_mistral = create_openai_compatible_caller(
     default_pricing=PROVIDER_CONFIG["mistral"]["default_pricing"]
 )
 
+
+def fetch_models_mistral():
+    """
+    Return known Mistral models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "mistral-large-latest",
+        "mistral-medium-latest",
+        "mistral-small-latest",
+        "codestral-latest",
+        "open-mistral-nemo",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Mistral AI models"
+    }
+

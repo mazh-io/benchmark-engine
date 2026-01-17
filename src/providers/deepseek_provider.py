@@ -26,6 +26,25 @@ from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
 logger = logging.getLogger(__name__)
 
 
+def fetch_models_deepseek():
+    """
+    Return known DeepSeek models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "deepseek-chat",      # V3
+        "deepseek-reasoner",  # R1
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Check https://platform.deepseek.com/api-docs/ for updates"
+    }
+
+
 class DeepSeekProvider(BaseProvider):
     """
     DeepSeek API provider implementation.

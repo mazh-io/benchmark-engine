@@ -103,6 +103,97 @@ class ProviderService:
     def clear_models(self):
         """Clear registered models."""
         self._models_config.clear()
+    
+    def fetch_available_models(self, provider_key: str) -> Dict[str, Any]:
+        """
+        Fetch available models from a provider by calling its fetch_models function.
+        
+        Args:
+            provider_key: Provider key (e.g., "openai", "together")
+            
+        Returns:
+            Dictionary with:
+                - success: bool
+                - models: List[str] (model IDs)
+                - error: Optional[str]
+                - note: Optional[str]
+        """
+        # Dynamic import to get provider's fetch_models function
+        module_name = f"providers.{provider_key}_provider"
+        function_name = f"fetch_models_{provider_key}"
+        
+        try:
+            # Import the provider module
+            module = __import__(module_name, fromlist=[function_name])
+            # Get the fetch_models function
+            fetch_function = getattr(module, function_name)
+            # Call it and return result
+            return fetch_function()
+        except (ImportError, AttributeError) as e:
+            return {
+                "success": False,
+                "models": [],
+                "error": f"Failed to load fetch_models for '{provider_key}': {e}",
+                "note": None
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "models": [],
+                "error": f"Error fetching models from '{provider_key}': {e}",
+                "note": None
+            }
+
+
+# ============================================================================
+# AVAILABLE MODELS - Cached from Provider APIs
+# ============================================================================
+# This dictionary stores models fetched from provider APIs.
+# Updated by calling refresh_available_models()
+# ============================================================================
+
+AVAILABLE_MODELS: Dict[str, List[str]] = {}
+
+
+def refresh_available_models(provider_key: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+    """
+    Fetch and cache available models from provider APIs.
+    
+    Args:
+        provider_key: Optional provider to refresh. If None, refreshes all providers.
+        
+    Returns:
+        Dictionary mapping provider keys to fetch results
+    """
+    service = get_provider_service()
+    results = {}
+    
+    providers_to_fetch = [provider_key] if provider_key else list(PROVIDER_CONFIG.keys())
+    
+    for provider in providers_to_fetch:
+        result = service.fetch_available_models(provider)
+        
+        if result["success"]:
+            AVAILABLE_MODELS[provider] = result["models"]
+        
+        results[provider] = result
+    
+    return results
+
+
+def get_available_models(provider_key: Optional[str] = None) -> Dict[str, List[str]]:
+    """
+    Get cached available models.
+    
+    Args:
+        provider_key: Optional provider key. If None, returns all providers.
+        
+    Returns:
+        Dictionary mapping provider keys to model lists
+    """
+    if provider_key:
+        return {provider_key: AVAILABLE_MODELS.get(provider_key, [])}
+    return AVAILABLE_MODELS.copy()
 
 
 # Singleton instance

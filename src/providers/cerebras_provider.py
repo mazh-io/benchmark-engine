@@ -29,6 +29,27 @@ from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
 logger = logging.getLogger(__name__)
 
 
+def fetch_models_cerebras():
+    """
+    Return known Cerebras models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "llama-3.3-70b",
+        "llama-3.1-70b",
+        "llama-3.1-8b",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Cerebras models on Wafer-Scale Engine"
+    }
+
+
+
 class CerebrasProvider(BaseProvider):
     """
     Cerebras Cloud API provider implementation.

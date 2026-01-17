@@ -370,3 +370,24 @@ def call_google(prompt: str, model: str) -> Dict[str, Any]:
             "error_type": "INIT_ERROR",
             "response_text": None,
         }
+
+def fetch_models_google():
+    """
+    Return known Google Gemini models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "models/gemini-2.5-pro",
+        "models/gemini-2.5-flash",
+        "models/gemini-2.0-flash-exp",
+        "models/gemini-1.5-pro",
+        "models/gemini-1.5-flash",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Use Google AI Studio for latest Gemini models"
+    }

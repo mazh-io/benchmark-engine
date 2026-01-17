@@ -22,3 +22,23 @@ call_sambanova = create_openai_compatible_caller(
     default_pricing=PROVIDER_CONFIG["sambanova"]["default_pricing"]
 )
 
+
+def fetch_models_sambanova():
+    """
+    Return known SambaNova models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "Meta-Llama-3.3-70B-Instruct",
+        "Meta-Llama-3.1-70B-Instruct",
+        "Meta-Llama-3.1-8B-Instruct",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - SambaNova RDU models"
+    }
+

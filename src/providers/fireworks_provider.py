@@ -22,3 +22,23 @@ call_fireworks = create_openai_compatible_caller(
     default_pricing=PROVIDER_CONFIG["fireworks"]["default_pricing"]
 )
 
+
+def fetch_models_fireworks():
+    """
+    Return known Fireworks models.
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "accounts/fireworks/models/llama-v3p3-70b-instruct",
+        "accounts/fireworks/models/llama-v3p1-405b-instruct",
+        "accounts/fireworks/models/qwen2p5-72b-instruct",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Fireworks AI models"
+    }
+

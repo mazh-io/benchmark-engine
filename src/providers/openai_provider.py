@@ -1,5 +1,6 @@
 import time
 import uuid
+import requests
 from openai import OpenAI
 from utils.env_helper import get_env
 
@@ -173,5 +174,51 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
             "success": False,
             "error_message": str(e),
             "response_text": None
+        }
+
+
+def fetch_models_openai():
+    """
+    Fetch available models from OpenAI API.
+    
+    Returns:
+        Dictionary with:
+            - success: bool
+            - models: List[str] (model IDs)
+            - error: Optional[str]
+    """
+    api_key = get_env("OPENAI_API_KEY")
+    if not api_key:
+        return {
+            "success": False,
+            "models": [],
+            "error": "OPENAI_API_KEY not found in environment"
+        }
+    
+    try:
+        response = requests.get(
+            "https://api.openai.com/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        # Filter for chat/completion models only
+        models = [
+            model["id"] for model in data.get("data", [])
+            if any(prefix in model["id"] for prefix in ["gpt-", "o1", "o3", "o4"])
+        ]
+        
+        return {
+            "success": True,
+            "models": sorted(models),
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "models": [],
+            "error": str(e)
         }
 

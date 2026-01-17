@@ -222,3 +222,33 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
             "response_text": None
         }
 
+
+def fetch_models_openrouter():
+    """
+    Fetch available models from OpenRouter API (public endpoint).
+    
+    Returns:
+        Dictionary with success, models, and error
+    """
+    try:
+        response = requests.get(
+            "https://openrouter.ai/api/v1/models",
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        models = [model["id"] for model in data.get("data", [])]
+        
+        return {
+            "success": True,
+            "models": sorted(models),
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "models": [],
+            "error": str(e)
+        }
+

@@ -77,6 +77,28 @@ class BaseProvider(ABC):
         """
         pass
     
+    def fetch_models(self) -> Dict[str, Any]:
+        """
+        Fetch available models from the provider.
+        
+        This is an optional method that providers can implement to support
+        dynamic model discovery. Providers without API support should return
+        a curated list.
+        
+        Returns:
+            Dict with keys:
+                - success: bool
+                - models: List[str] (model IDs)
+                - error: Optional[str]
+                - note: Optional[str] (additional info)
+        """
+        return {
+            "success": False,
+            "models": [],
+            "error": f"fetch_models not implemented for {self.provider_name}",
+            "note": None
+        }
+    
     def calculate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
         """
         Calculate the cost of a request.

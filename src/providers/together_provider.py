@@ -199,3 +199,46 @@ def call_together(prompt: str, model: str = "meta-llama/Llama-3-8b-chat-hf"):
             "error_message": str(e),
             "response_text": None
         }
+
+
+def fetch_models_together():
+    """
+    Fetch available models from Together AI API.
+    
+    Returns:
+        Dictionary with success, models, and error
+    """
+    api_key = get_env("TOGETHER_API_KEY")
+    if not api_key:
+        return {
+            "success": False,
+            "models": [],
+            "error": "TOGETHER_API_KEY not found in environment"
+        }
+    
+    try:
+        response = requests.get(
+            "https://api.together.xyz/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        # Filter for chat/instruct models
+        models = [
+            model["id"] for model in data
+            if model.get("type") == "chat" or "instruct" in model["id"].lower()
+        ]
+        
+        return {
+            "success": True,
+            "models": sorted(models),
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "models": [],
+            "error": str(e)
+        }

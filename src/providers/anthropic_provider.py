@@ -368,3 +368,26 @@ def call_anthropic(prompt: str, model: str) -> Dict[str, Any]:
             "response_text": None,
         }
 
+
+def fetch_models_anthropic():
+    """
+    Return known Anthropic models (no public API available).
+    
+    Returns:
+        Dictionary with success, models, and note
+    """
+    models = [
+        "claude-3-5-sonnet-latest",
+        "claude-3-5-haiku-latest",
+        "claude-3-opus-latest",
+        "claude-sonnet-4-5-20250929",
+        "claude-haiku-4-5-20251001",
+        "claude-sonnet-4-20250514",
+    ]
+    return {
+        "success": True,
+        "models": models,
+        "error": None,
+        "note": "Curated list - Anthropic has no public models API"
+    }
+

@@ -1,5 +1,6 @@
 import time
 import uuid
+import requests
 from groq import Groq
 from utils.env_helper import get_env
 
@@ -134,5 +135,44 @@ def call_groq(prompt: str, model: str = "llama-3.1-8b-instant"):
             "success": False,
             "error_message": str(e),
             "response_text": None
+        }
+
+
+def fetch_models_groq():
+    """
+    Fetch available models from Groq API.
+    
+    Returns:
+        Dictionary with success, models, and error
+    """
+    api_key = get_env("GROQ_API_KEY")
+    if not api_key:
+        return {
+            "success": False,
+            "models": [],
+            "error": "GROQ_API_KEY not found in environment"
+        }
+    
+    try:
+        response = requests.get(
+            "https://api.groq.com/openai/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        models = [model["id"] for model in data.get("data", [])]
+        
+        return {
+            "success": True,
+            "models": sorted(models),
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "models": [],
+            "error": str(e)
         }
 

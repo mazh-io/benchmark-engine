@@ -11,6 +11,10 @@
         {
             "path": "/api/pricing_scraper",
             "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/sync_models",
+            "schedule": "0 2 * * 0"
         }
     ]
 }

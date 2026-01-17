@@ -190,8 +190,87 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
             return response.data
         except Exception as e:
             print("DB Error (get_all_models):", e)
-            return None
+            return None    
+    def upsert_models_from_discovery(self, provider_name: str, model_names: List[str]) -> bool:
+        """Upsert models discovered from provider API."""
+        try:
+            # Get provider ID
+            provider = self.get_or_create_provider(provider_name)
+            if not provider:
+                print(f"DB Error: Provider '{provider_name}' not found")
+                return False
+            
+            provider_id = provider["id"]
+            now = datetime.now().isoformat()
+            
+            # Prepare upsert data
+            models_data = []
+            for model_name in model_names:
+                models_data.append({
+                    "name": model_name,
+                    "provider_id": provider_id,
+                    "active": False,  # New discoveries default to inactive
+                    "last_seen_at": now
+                })
+            
+            # Upsert models (on conflict, only update last_seen_at)
+            for model_data in models_data:
+                # Check if exists
+                existing = self.supabase.table("models").select("id").eq(
+                    "name", model_data["name"]
+                ).eq("provider_id", provider_id).execute()
+                
+                if existing.data:
+                    # Update last_seen_at
+                    self.supabase.table("models").update({
+                        "last_seen_at": now
+                    }).eq("id", existing.data[0]["id"]).execute()
+                else:
+                    # Insert new
+                    self.supabase.table("models").insert(model_data).execute()
+            
+            return True
+        except Exception as e:
+            print(f"DB Error (upsert_models_from_discovery): {e}")
+            return False
     
+    def set_models_active(self, provider_name: str, model_names: List[str]) -> bool:
+        """Mark specific models as active."""
+        try:
+            # Get provider ID
+            provider = self.get_or_create_provider(provider_name)
+            if not provider:
+                print(f"DB Error: Provider '{provider_name}' not found")
+                return False
+            
+            provider_id = provider["id"]
+            
+            # First, set all models for this provider to inactive
+            self.supabase.table("models").update({
+                "active": False
+            }).eq("provider_id", provider_id).execute()
+            
+            # Then set specified models to active
+            for model_name in model_names:
+                self.supabase.table("models").update({
+                    "active": True
+                }).eq("name", model_name).eq("provider_id", provider_id).execute()
+            
+            return True
+        except Exception as e:
+            print(f"DB Error (set_models_active): {e}")
+            return False
+    
+    def get_active_models(self) -> Optional[List[Dict[str, Any]]]:
+        """Get all active models."""
+        try:
+            response = self.supabase.table("models").select(
+                "*, providers(name)"
+            ).eq("active", True).execute()
+            return response.data
+        except Exception as e:
+            print(f"DB Error (get_active_models): {e}")
+            return None    
     # ============================================================================
     # PRICING
     # ============================================================================

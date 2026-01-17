@@ -287,3 +287,80 @@ def get_providers() -> List[Tuple[str, Callable, str]]:
         List of tuples: (provider_key, call_function, model_name)
     """
     return get_provider_service().get_providers()
+
+
+def sync_models_to_database() -> Dict[str, Any]:
+    """
+    Sync available models to database.
+    
+    This function:
+    1. Fetches available models from all provider APIs
+    2. Upserts them to database with active=false
+    3. Marks models from ACTIVE_MODELS as active=true
+    
+    Returns:
+        Dictionary with sync results
+    """
+    from database.db_connector import get_db_client
+    
+    db = get_db_client()
+    results = {
+        "success": True,
+        "providers_synced": 0,
+        "models_discovered": 0,
+        "models_activated": 0,
+        "errors": []
+    }
+    
+    service = get_provider_service()
+    
+    # Fetch models from each provider
+    for provider_key in PROVIDER_CONFIG.keys():
+        try:
+            print(f"Fetching models from {provider_key}...")
+            fetch_result = service.fetch_available_models(provider_key)
+            
+            if fetch_result["success"]:
+                model_names = fetch_result["models"]
+                
+                # Upsert models to database (active=false by default)
+                success = db.upsert_models_from_discovery(provider_key, model_names)
+                
+                if success:
+                    results["providers_synced"] += 1
+                    results["models_discovered"] += len(model_names)
+                    print(f"  ✓ {len(model_names)} models from {provider_key}")
+                else:
+                    results["errors"].append(f"{provider_key}: Database upsert failed")
+            else:
+                error_msg = fetch_result.get("error", "Unknown error")
+                results["errors"].append(f"{provider_key}: {error_msg}")
+                print(f"  ✗ {provider_key}: {error_msg}")
+                
+        except Exception as e:
+            results["errors"].append(f"{provider_key}: {str(e)}")
+            print(f"  ✗ {provider_key}: {str(e)}")
+    
+    # Mark active models from ACTIVE_MODELS config
+    print("\nActivating models from ACTIVE_MODELS config...")
+    active_by_provider = {}
+    for provider_key, model_id, _, _ in ACTIVE_MODELS:
+        if provider_key not in active_by_provider:
+            active_by_provider[provider_key] = []
+        active_by_provider[provider_key].append(model_id)
+    
+    for provider_key, model_names in active_by_provider.items():
+        try:
+            success = db.set_models_active(provider_key, model_names)
+            if success:
+                results["models_activated"] += len(model_names)
+                print(f"  ✓ Activated {len(model_names)} models for {provider_key}")
+            else:
+                results["errors"].append(f"Failed to activate models for {provider_key}")
+        except Exception as e:
+            results["errors"].append(f"Activation error for {provider_key}: {str(e)}")
+    
+    if results["errors"]:
+        results["success"] = False
+    
+    return results

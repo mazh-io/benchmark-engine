@@ -25,6 +25,11 @@ The Benchmark Engine is designed to continuously monitor and compare AI inferenc
   - **Status Codes**: HTTP status tracking (200, 500, 429, etc.)
 - **Streaming Support**: All providers use streaming for accurate TTFT and TPS measurement
 - **Database Integration**: Store all benchmark results in Supabase with full history
+- **Automatic Model Discovery**: Weekly sync of available models from provider APIs
+  - Fetches models from each provider's API automatically
+  - Tracks active models (used in benchmarks) vs available models
+  - Runs via Vercel cron every Sunday at 2 AM UTC
+  - Manual sync available: `python scripts/sync_models.py`
 - **Simple & Linear**: Sequential execution (no async complexity) - perfect for MVP
 - **Error Handling**: Graceful failure handling with detailed error messages and logging
 - **Error Logging**: Automatic logging to `logs/` directory for debugging

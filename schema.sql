@@ -15,6 +15,8 @@ create table if not exists public.models (
     name text not null,
     provider_id uuid not null references public.providers(id) on delete cascade,
     context_window integer,
+    active boolean not null default false,  -- TRUE if used in active benchmarks
+    last_seen_at timestamptz not null default now(),  -- Last time model was discovered from API
     created_at timestamptz not null default now(),
     unique(name, provider_id)
 );
@@ -140,6 +142,8 @@ create table if not exists public.benchmark_queue (
 create index if not exists idx_providers_name on public.providers(name);
 create index if not exists idx_models_provider_id on public.models(provider_id);
 create index if not exists idx_models_name on public.models(name);
+create index if not exists idx_models_active on public.models(active);
+create index if not exists idx_models_last_seen on public.models(last_seen_at);
 create index if not exists idx_prices_provider_id on public.prices(provider_id);
 create index if not exists idx_prices_model_id on public.prices(model_id);
 create index if not exists idx_prices_timestamp on public.prices(timestamp);

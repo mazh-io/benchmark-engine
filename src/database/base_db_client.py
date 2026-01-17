@@ -160,6 +160,46 @@ class BaseDatabaseClient(ABC):
         """
         pass
     
+    @abstractmethod
+    def upsert_models_from_discovery(self, provider_name: str, model_names: List[str]) -> bool:
+        """
+        Upsert models discovered from provider API.
+        Sets active=false for newly discovered models.
+        Updates last_seen_at for existing models.
+        
+        Args:
+            provider_name: Name of the provider
+            model_names: List of model names from API
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def set_models_active(self, provider_name: str, model_names: List[str]) -> bool:
+        """
+        Mark specific models as active (used in benchmarks).
+        
+        Args:
+            provider_name: Name of the provider
+            model_names: List of model names to mark as active
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    def get_active_models(self) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get all active models (used in benchmarks).
+        
+        Returns:
+            List of active models with provider info, or None if query failed
+        """
+        pass
+    
     # ============================================================================
     # PRICING
     # ============================================================================

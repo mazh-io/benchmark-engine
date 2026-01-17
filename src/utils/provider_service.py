@@ -126,7 +126,7 @@ def get_provider_service() -> ProviderService:
 def _initialize_default_models():
     """Initialize default model configurations."""
     service = _provider_service
-    
+
     # Phase 0 - MVP (Existing providers with updates)
     # OpenAI - Industry standard
     service.register_model("openai", "gpt-4o-mini")          # Baseline budget model
@@ -171,6 +171,26 @@ def _initialize_default_models():
     # Google Gemini - NEW SDK with Gemini 2.5
     service.register_model("google", "models/gemini-2.5-pro")    # Latest Pro - best quality
     service.register_model("google", "models/gemini-2.5-flash")  # Latest Flash - fast & cheap
+
+    # ============================================================
+    # BATTLE MAP ADDITIONS
+    # ============================================================
+    
+    # 1. "East vs. West" Front (China Models)
+    service.register_model("together", "Qwen/Qwen2.5-72B-Instruct-Turbo")  # CRITICAL
+    
+    # 2. "Heavyweight" Division (405B Giants) 
+    service.register_model("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")  # CRITICAL
+    
+    # # 3. "Celebrity & Specialist" Class 
+    service.register_model("openrouter", "x-ai/grok-3")  # xAI Grok 3 flagship - $3/$15 per 1M tokens
+    service.register_model("anthropic", "claude-sonnet-4-20250514")  # Celebrity benchmark
+    service.register_model("mistral", "codestral-latest")  # Mistral code specialist
+    service.register_model("groq", "llama-3.1-8b-instant")  # Replacement for deprecated gemma2-9b-it
+    
+    # # 4. "Router Tax" Proof (B2B)  - Compare OpenRouter vs Direct
+    service.register_model("openrouter", "deepseek/deepseek-chat")  # vs Direct DeepSeek
+    service.register_model("openrouter", "openai/gpt-4o")  # vs Direct OpenAI
 
 
 def get_providers() -> List[Tuple[str, Callable, str]]:

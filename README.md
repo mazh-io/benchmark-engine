@@ -1,6 +1,22 @@
 # Benchmark Engine
 
-A production-ready Python tool for benchmarking AI model providers. Test multiple providers sequentially, measure advanced performance metrics (latency, TTFT, TPS, cost), and store results in Supabase PostgreSQL database for comprehensive analysis.
+A production-ready full-stack application for benchmarking AI model providers. Test multiple providers sequentially, measure advanced performance metrics (latency, TTFT, TPS, cost), and visualize results in a professional dashboard.
+
+## 📁 Project Structure
+
+```
+benchmark-engine/
+├── backend/          # Python backend
+│   ├── api/         # API endpoints
+│   ├── src/         # Source code
+│   ├── scripts/     # Utility scripts
+│   └── main.py      # Entry point
+├── frontend/        # Next.js frontend
+│   ├── app/         # Next.js app router
+│   ├── components/  # React components
+│   └── lib/         # Utilities
+└── README.md        # This file
+```
 
 ## Overview
 
@@ -39,10 +55,11 @@ The Benchmark Engine is designed to continuously monitor and compare AI inferenc
 
 ## Installation
 
-1. **Clone the repository**
+### Backend Setup
+
+1. **Navigate to backend**
    ```bash
-   git clone <repository-url>
-   cd benchmark-engine
+   cd backend
    ```
 
 2. **Create virtual environment**
@@ -56,9 +73,34 @@ The Benchmark Engine is designed to continuously monitor and compare AI inferenc
    pip install -r requirements.txt
    ```
 
+### Frontend Setup
+
+1. **Navigate to frontend**
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Create `.env.local` file**
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   ```
+
+4. **Run development server**
+   ```bash
+   npm run dev
+   ```
+
 ## Configuration
 
-1. **Create `.env` file** in the project root:
+### Backend Configuration
+
+1. **Create `.env` file** in the `backend/` directory:
    ```env
    # Supabase
    SUPABASE_URL=your_supabase_url
@@ -74,7 +116,7 @@ The Benchmark Engine is designed to continuously monitor and compare AI inferenc
 2. **Set up database**:
    - Create a Supabase project at [supabase.com](https://supabase.com)
    - Go to SQL Editor in your Supabase dashboard
-   - Copy and paste the contents of `schema.sql`
+   - Copy and paste the contents of `backend/schema.sql`
    - Execute the SQL to create all tables and indexes
    - Verify tables are created: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';`
 
@@ -776,3 +818,468 @@ This is a production-ready MVP designed for continuous monitoring of AI inferenc
 - **Maintainability**: Clean separation of concerns and modular design
 
 Perfect for validating market need and scaling to production workloads.
+
+---
+
+# 🎨 Frontend Dashboard Implementation Plan
+
+## Overview
+
+Visual dashboard to display real-time benchmarking results with Acid Theme (dark mode + neon accents).
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      USER                                    │
+│                   (Web Browser)                              │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│          FRONTEND (Next.js 14 + TypeScript)                  │
+│  • SSR for performance (< 1s)                               │
+│  • React Query for caching                                  │
+│  • Recharts for visualizations                              │
+│  • Acid Theme (dark mode)                                   │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 SUPABASE (PostgreSQL)                        │
+│  Same tables used by Python backend                        │
+└────────────────────┬────────────────────────────────────────┘
+                     ▲
+                     │
+┌────────────────────┴────────────────────────────────────────┐
+│              BACKEND (Python + Vercel)                       │
+│  /api/benchmark → Executes benchmarks                       │
+│  /api/pricing_scraper → Updates prices                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📊 Metrics Displayed
+
+### 1. **Speed (TTFT - Time to First Token)**
+- **Source:** `benchmark_results.ttft_ms`
+- **Visualization:** Bar Chart (Recharts)
+- **Interpretation:** Lower = better
+
+### 2. **Stability (Jitter)**
+- **Calculation:** Standard Deviation of `total_latency_ms`
+- **Formula:**
+  ```javascript
+  const avg = mean(latencies);
+  const variance = mean(latencies.map(x => (x - avg) ** 2));
+  const jitter = Math.sqrt(variance);
+  ```
+- **Visualization:** Traffic Light Indicator
+  - 🟢 Green: Jitter < 200ms
+  - 🟡 Yellow: Jitter 200-500ms
+  - 🔴 Red: Jitter > 500ms
+
+### 3. **Value Score**
+- **Calculation:** TPS / Cost Per Million
+- **Formula:**
+  ```javascript
+  const costPerMillion = (cost_usd / total_tokens) * 1_000_000;
+  const safeCPM = costPerMillion > 0 ? costPerMillion : 0.01;
+  const valueScore = Math.round(tps / safeCPM);
+  ```
+- **Visualization:** Integer display with formatting
+- **Interpretation:** Higher = better (bang for buck)
+
+## 🚀 Implementation Plan - Detailed Steps
+
+### **PHASE 1: Setup & Configuration (Steps 1-5)**
+
+#### ✅ Step 1: Git Branch Setup
+```bash
+git checkout -b feature/frontend-dashboard
+```
+**Status:** ✅ **COMPLETED**
+
+---
+
+#### 📦 Step 2: Next.js Project Initialization
+**Goal:** Create basic Next.js project structure
+
+**Command:**
+```bash
+cd frontend
+npm install
+```
+
+**Files created:**
+- `package.json` - Dependencies (React, Next.js, Supabase, Recharts)
+- `tsconfig.json` - TypeScript configuration
+- `next.config.js` - Next.js settings
+- `tailwind.config.ts` - Acid Theme colors
+- `postcss.config.js` - CSS processing
+
+**What it does:** Installs all required libraries
+
+---
+
+#### 🎨 Step 3: Acid Theme Setup
+**Goal:** Create dark mode theme with neon accents
+
+**Files:**
+- `styles/globals.css` - Global styles
+- `tailwind.config.ts` - Color palette
+
+**Color Palette:**
+```typescript
+colors: {
+  acid: {
+    bg: '#0A0E14',           // Dark navy background
+    surface: '#1A1F29',      // Card backgrounds
+    border: '#2D3748',       // Border colors
+    text: '#E2E8F0',         // Primary text
+    muted: '#94A3B8',        // Secondary text
+    primary: '#3B82F6',      // Electric blue
+    success: '#10B981',      // Neon green
+    warning: '#F59E0B',      // Neon yellow
+    danger: '#EF4444',       // Neon red
+  }
+}
+```
+
+---
+
+#### 🔐 Step 4: Environment Variables
+**Goal:** Configure Supabase connection
+
+**File:** `frontend/.env.local`
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
+
+**NOTE:** Same credentials as Python backend
+
+---
+
+#### 📁 Step 5: Folder Structure Creation
+**Goal:** Organize code structure
+
+```
+frontend/
+├── app/
+│   ├── layout.tsx           # Root layout (Acid Theme)
+│   ├── page.tsx             # Dashboard homepage
+│   └── api/
+│       └── benchmark/route.ts
+├── components/
+│   ├── charts/              # Chart components
+│   ├── metrics/             # Metric displays
+│   ├── filters/             # Filter components
+│   └── ui/                  # Reusable UI components
+├── lib/
+│   ├── supabase.ts          # Supabase client
+│   ├── calculations.ts      # Formula logic
+│   ├── types.ts             # TypeScript interfaces
+│   └── utils.ts             # Helper functions
+└── hooks/
+    └── useBenchmarkData.ts  # Data fetching hook
+```
+
+---
+
+### **PHASE 2: Core Logic & Data Layer (Steps 6-9)**
+
+#### 📊 Step 6: TypeScript Types
+**Goal:** Type safety for all data
+
+**Dosja:** `lib/types.ts`
+```typescript
+export interface BenchmarkResult {
+  id: string;
+  run_id: string;
+  provider: string;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_latency_ms: number;
+  ttft_ms: number | null;
+  tps: number | null;
+  cost_usd: number;
+  created_at: string;
+}
+
+export interface ProviderMetrics {
+  provider: string;
+  avgTTFT: number;
+  jitter: number;
+  valueScore: number;
+  sampleSize: number;
+}
+```
+
+---
+
+#### 🔌 Step 7: Supabase Client Setup
+**Goal:** Connect to database
+
+**Dosja:** `lib/supabase.ts`
+```typescript
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+```
+
+---
+
+#### 🧮 Step 8: Calculation Functions
+**Goal:** Implement formulas for Value Score and Jitter
+
+**Dosja:** `lib/calculations.ts`
+
+**8.1 - Value Score Formula:**
+```typescript
+export function calculateValueScore(result: BenchmarkResult): number | null {
+  if (!result.tps || result.tps <= 0) return null;
+  
+  const totalTokens = result.input_tokens + result.output_tokens;
+  if (totalTokens === 0) return null;
+  
+  const costPerMillion = (result.cost_usd / totalTokens) * 1_000_000;
+  const safeCPM = costPerMillion > 0 ? costPerMillion : 0.01;
+  
+  return Math.round(result.tps / safeCPM);
+}
+```
+
+**8.2 - Jitter (Standard Deviation):**
+```typescript
+export function calculateJitter(latencies: number[]): number {
+  if (latencies.length < 2) return 0;
+  
+  const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+  const variance = latencies
+    .map(x => Math.pow(x - avg, 2))
+    .reduce((a, b) => a + b, 0) / latencies.length;
+  
+  return Math.sqrt(variance);
+}
+```
+
+**8.3 - Jitter Color (Traffic Light):**
+```typescript
+export function getJitterColor(jitter: number): 'green' | 'yellow' | 'red' {
+  if (jitter < 200) return 'green';
+  if (jitter < 500) return 'yellow';
+  return 'red';
+}
+```
+
+---
+
+#### 🎣 Step 9: Data Fetching Hook
+**Goal:** React Query hook to fetch data from Supabase
+
+**Dosja:** `hooks/useBenchmarkData.ts`
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+
+export function useBenchmarkData() {
+  return useQuery({
+    queryKey: ['benchmark-results'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('benchmark_results')
+        .select(`
+          *,
+          providers (name),
+          models (name)
+        `)
+        .eq('success', true)
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+    refetchInterval: 60000, // Refresh every 60 seconds
+  })
+}
+```
+
+---
+
+### **PHASE 3: UI Components (Steps 10-14)**
+
+#### 📈 Step 10: Speed Chart Component
+**Goal:** Bar chart for TTFT
+
+**File:** `components/charts/SpeedChart.tsx`
+- Uses Recharts library
+- Bars for each provider
+- Tooltip with details
+- Responsive design
+
+---
+
+#### 🚦 Step 11: Stability Indicator
+**Goal:** Traffic light for jitter
+
+**File:** `components/charts/StabilityIndicator.tsx`
+- Circle with dynamic color (green/yellow/red)
+- Tooltip with jitter values
+- Null-safe (shows locked state)
+
+---
+
+#### 💰 Step 12: Value Score Display
+**Goal:** Display Value Score
+
+**File:** `components/metrics/ValueScore.tsx`
+- Integer with formatting (e.g., "2,500")
+- Null-safe (locked state for freemium)
+- Subtle animation
+
+---
+
+#### 🔍 Step 13: Provider Filter
+**Goal:** Toggle for Direct vs Proxy
+
+**File:** `components/filters/ProviderFilter.tsx`
+- Toggle button group
+- Filter logic:
+  - **Direct:** openai, anthropic, google, groq, together, etc.
+  - **Proxy:** openrouter
+
+---
+
+#### 🎨 Step 14: Locked State Component
+**Goal:** Placeholder for freemium logic
+
+**File:** `components/ui/LockedState.tsx`
+```tsx
+<LockedState>
+  🔒 Upgrade to Pro
+</LockedState>
+```
+
+---
+
+### **PHASE 4: Dashboard Page (Steps 15-17)**
+
+#### 🏠 Step 15: Layout Component
+**Goal:** Root layout with Acid Theme
+
+**File:** `app/layout.tsx`
+- Dark background
+- Font setup (Inter, JetBrains Mono)
+- Meta tags for SEO
+
+---
+
+#### 📄 Step 16: Dashboard Page (SSR)
+**Goal:** Homepage that renders the dashboard
+
+**File:** `app/page.tsx`
+```typescript
+export default async function Dashboard() {
+  // SSR: Fetch data on server
+  const results = await fetchBenchmarkResults()
+  
+  return (
+    <div>
+      <h1>Benchmark Dashboard</h1>
+      <ProviderFilter />
+      <SpeedChart data={results} />
+      <StabilityIndicator data={results} />
+      <ValueScore data={results} />
+    </div>
+  )
+}
+```
+
+---
+
+#### 🔧 Step 17: API Route (Optional)
+**Goal:** Proxy for Supabase queries
+
+**File:** `app/api/benchmark/route.ts`
+- Edge function for caching
+- Aggregate queries
+
+---
+
+### **PHASE 5: Optimization & Testing (Steps 18-20)**
+
+#### ⚡ Step 18: SSR Optimization
+**Goal:** Achieve < 1s load time
+
+**Techniques:**
+- Server-side data fetching
+- Parallel queries
+- Minimal JavaScript bundle
+- Edge caching
+
+---
+
+#### 🔄 Step 19: React Query Caching
+**Goal:** Reduce database queries
+
+```typescript
+staleTime: 30000,      // 30 seconds before refetch
+cacheTime: 300000,     // 5 minutes in cache
+refetchInterval: 60000 // Auto-refresh every 60 seconds
+```
+
+---
+
+#### 🧪 Step 20: Testing & Validation
+**Goal:** Verify everything works
+
+**Tests:**
+1. ✅ SSR load time < 1s
+2. ✅ Value Score calculated correctly
+3. ✅ Jitter calculated correctly
+4. ✅ Charts render without crash
+5. ✅ Null values don't cause errors
+6. ✅ Filter works
+7. ✅ Responsive design (mobile, tablet, desktop)
+
+---
+
+## 🎯 Definition of Done
+
+- [x] Git branch created: `feature/frontend-dashboard`
+- [ ] Next.js 14 project initialized
+- [ ] Acid Theme applied
+- [ ] Supabase integration works
+- [ ] Speed Chart shows TTFT data
+- [ ] Stability Indicator shows Jitter with traffic light colors
+- [ ] Value Score calculates and displays correctly
+- [ ] Direct vs Proxy filter works
+- [ ] Null-safe components (no crashes with null values)
+- [ ] SSR load time < 1 second
+- [ ] Responsive design (works on mobile, tablet, desktop)
+- [ ] Code merged to main branch
+
+---
+
+## 🚦 Status
+
+**Current Branch:** `feature/frontend-dashboard`
+**Status:** 🟡 In Progress
+**Completed:** 1/20 hapa (5%)
+
+**Next Step:** Hapi 2 - Next.js Project Initialization
+
+---
+
+## 📝 Notes
+
+- Frontend uses the same Supabase database as Python backend
+- All calculations are done in frontend (Value Score, Jitter)
+- SSR ensures initial load is fast (< 1s)
+- React Query caching reduces load on database
+- Components are null-safe for future freemium logic

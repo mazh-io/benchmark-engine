@@ -16,6 +16,7 @@ google-genai
 httpx
 requests
 beautifulsoup4
+tiktoken  # Token count estimation and validation
 
 # Local database (PostgreSQL)
 psycopg2-binary

@@ -83,6 +83,28 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
                 print("Warning: total_latency_ms not provided")
                 return None
             
+            # Validate and correct token counts
+            validation = validate_token_counts(
+                input_tokens=data.get("input_tokens"),
+                output_tokens=data.get("output_tokens"),
+                prompt=None,  # We don't store prompt, can't estimate without it
+                response=data.get("response_text")
+            )
+            
+            # Update token counts with validated/estimated values
+            data["input_tokens"] = validation["input_tokens"]
+            data["output_tokens"] = validation["output_tokens"]
+            
+            # Mark benchmark as failed if token counts are suspicious
+            if should_fail_benchmark(validation):
+                data["success"] = False
+                error_msg = f"Token validation failed: {get_validation_summary(validation)}"
+                data["error_message"] = error_msg
+                print(f"⚠️  {error_msg}")
+            elif not validation["is_valid"]:
+                # Log warning but don't fail the benchmark
+                print(f"⚠️  Token count warning: {get_validation_summary(validation)}")
+            
             # Optimize storage: truncate response_text for successful runs
             if "response_text" in data and data.get("response_text"):
                 success = data.get("success", True)

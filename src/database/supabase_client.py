@@ -83,6 +83,15 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
                 print("Warning: total_latency_ms not provided")
                 return None
             
+            # Optimize storage: truncate response_text for successful runs
+            if "response_text" in data and data.get("response_text"):
+                success = data.get("success", True)
+                data["response_text"] = truncate_response_text(
+                    data["response_text"],
+                    success=success,
+                    max_length=100
+                )
+            
             response = self.supabase.table("benchmark_results").insert(data).execute()
             return response.data[0]["id"]
         except Exception as e:

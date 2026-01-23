@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from database.base_db_client import BaseDatabaseClient
 from utils.env_helper import get_env
+from utils.model_name_normalizer import normalize_model_name
+from utils.response_optimizer import truncate_response_text
 
 
 class LocalDatabaseClient(BaseDatabaseClient):
@@ -235,6 +237,16 @@ class LocalDatabaseClient(BaseDatabaseClient):
             UUID of created result
         """
         try:
+            # Optimize storage: truncate response_text for successful runs
+            response_text = data.get('response_text')
+            if response_text:
+                success = data.get('success', True)
+                response_text = truncate_response_text(
+                    response_text,
+                    success=success,
+                    max_length=100
+                )
+            
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
@@ -264,7 +276,7 @@ class LocalDatabaseClient(BaseDatabaseClient):
                 data.get('cost_usd'),
                 data.get('status_code'),
                 data.get('success'),
-                data.get('response_text')
+                response_text
             )
             
             cur.execute(query, values)

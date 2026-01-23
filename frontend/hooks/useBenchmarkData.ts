@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData, type UseQueryResult } from '@tanstack/react-query';
 import { getBenchmarkResults, getProviders, getRecentRuns } from '@/lib/supabase';
 import { aggregateAllProviderMetrics } from '@/lib/calculations';
 import { TIME_RANGES, type DashboardFilters, type ProviderMetrics } from '@/lib/types';
@@ -119,6 +119,9 @@ export function useBenchmarkData(
     refetchInterval: autoRefresh ? 60_000 : false,  // Auto-refresh every 60s
     refetchOnWindowFocus: true,  // Refresh when tab regains focus
     refetchOnReconnect: true,    // Refresh when internet reconnects
+    
+    // Keep previous data while fetching new data (smooth transitions)
+    placeholderData: keepPreviousData,
     
     // Retry strategy
     retry: 3,                    // Retry failed requests 3 times

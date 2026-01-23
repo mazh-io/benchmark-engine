@@ -125,33 +125,38 @@ export function SpeedChart({
   }
   
   return (
-    <div className={cn('card', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-acid-text flex items-center gap-2">
-            <Zap className="text-acid-warning" size={20} />
-            Speed (Time to First Token)
+    <div className={cn('card p-4 sm:p-6', className)}>
+      {/* Header - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-acid-text flex items-center gap-2">
+            <Zap className="text-acid-warning w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="truncate">Speed (Time to First Token)</span>
           </h3>
-          <p className="text-sm text-acid-text-muted mt-1">
+          <p className="text-xs sm:text-sm text-acid-text-muted mt-1">
             Lower is better · Measured in milliseconds
           </p>
         </div>
         
-        <div className="flex items-center gap-2 text-acid-success">
-          <TrendingDown size={16} />
-          <span className="text-xs font-medium">
+        <div className="flex items-center gap-2 text-acid-success flex-shrink-0">
+          <TrendingDown size={14} className="sm:w-4 sm:h-4" />
+          <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap">
             Fastest: {Math.min(...chartData.map(d => d.ttft))}ms
           </span>
         </div>
       </div>
       
-      {/* Chart */}
-      <div style={{ width: '100%', height }}>
-        <ResponsiveContainer width="100%" height="100%">
+      {/* Chart - Mobile Responsive */}
+      <div style={{ width: '100%', height, minHeight: '250px' }} className="overflow-x-auto">
+        <ResponsiveContainer width="100%" height="100%" minHeight={250}>
           <BarChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+            margin={{ 
+              top: 10, 
+              right: 5, 
+              left: -10, 
+              bottom: chartData.length > 5 ? 60 : 40 
+            }}
           >
             <CartesianGrid 
               strokeDasharray="3 3" 
@@ -162,22 +167,24 @@ export function SpeedChart({
             <XAxis
               dataKey="name"
               stroke="#94A3B8"
-              fontSize={12}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              tick={{ fill: '#94A3B8' }}
+              fontSize={10}
+              angle={chartData.length > 5 ? -45 : 0}
+              textAnchor={chartData.length > 5 ? "end" : "middle"}
+              height={chartData.length > 5 ? 70 : 40}
+              tick={{ fill: '#94A3B8', fontSize: 10 }}
+              interval={0}
             />
             
             <YAxis
               stroke="#94A3B8"
-              fontSize={12}
-              tick={{ fill: '#94A3B8' }}
+              fontSize={10}
+              tick={{ fill: '#94A3B8', fontSize: 10 }}
+              width={40}
               label={{
                 value: 'TTFT (ms)',
                 angle: -90,
                 position: 'insideLeft',
-                style: { fill: '#94A3B8', fontSize: 12 },
+                style: { fill: '#94A3B8', fontSize: 10 },
               }}
             />
             
@@ -185,7 +192,7 @@ export function SpeedChart({
             
             {showLegend && (
               <Legend
-                wrapperStyle={{ paddingTop: '20px' }}
+                wrapperStyle={{ paddingTop: '10px', fontSize: '10px' }}
                 iconType="circle"
                 formatter={() => 'Time to First Token'}
               />
@@ -193,7 +200,7 @@ export function SpeedChart({
             
             <Bar
               dataKey="ttft"
-              radius={[8, 8, 0, 0]}
+              radius={[6, 6, 0, 0]}
               animationDuration={1000}
               animationEasing="ease-out"
             >
@@ -209,20 +216,20 @@ export function SpeedChart({
         </ResponsiveContainer>
       </div>
       
-      {/* Footer Legend */}
-      <div className="mt-4 pt-4 border-t border-acid-border">
-        <div className="flex items-center justify-center gap-6 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-acid-success" />
-            <span className="text-acid-text-muted">&lt; 500ms (Fast)</span>
+      {/* Footer Legend - Mobile Responsive */}
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-acid-border">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center gap-2 sm:gap-4 lg:gap-6 text-[10px] sm:text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-acid-success flex-shrink-0" />
+            <span className="text-acid-text-muted whitespace-nowrap">&lt; 500ms (Fast)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-acid-warning" />
-            <span className="text-acid-text-muted">500-1000ms (Medium)</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-acid-warning flex-shrink-0" />
+            <span className="text-acid-text-muted whitespace-nowrap">500-1000ms (Medium)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-acid-danger" />
-            <span className="text-acid-text-muted">&gt; 1000ms (Slow)</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-acid-danger flex-shrink-0" />
+            <span className="text-acid-text-muted whitespace-nowrap">&gt; 1000ms (Slow)</span>
           </div>
         </div>
       </div>

@@ -72,26 +72,63 @@
    ============================================================================ */
 
 @layer components {
-  /* Card component - Ultra Professional */
+  /* Card component - Ultra Professional with Enhanced Structure */
   .card {
-    @apply relative bg-gradient-to-br from-acid-surface via-acid-surface/95 to-acid-surface rounded-xl;
-    @apply border border-acid-border/40 backdrop-blur-sm;
-    @apply shadow-2xl hover:shadow-[0_20px_50px_rgba(59,130,246,0.15)] transition-all duration-300;
+    @apply relative bg-gradient-to-br from-acid-surface via-acid-surface/98 to-acid-surface/95;
+    @apply border border-acid-border/50 backdrop-blur-xl;
+    @apply shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3),0_2px_4px_-1px_rgba(0,0,0,0.2),0_0_0_1px_rgba(255,255,255,0.05)];
+    @apply hover:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.4),0_4px_6px_-2px_rgba(0,0,0,0.3),0_0_0_1px_rgba(59,130,246,0.2)] transition-all duration-500;
+    @apply rounded-2xl overflow-hidden;
     @apply p-6;
   }
   
+  /* Enhanced card inner glow */
   .card::before {
     content: '';
-    @apply absolute inset-0 rounded-xl bg-gradient-to-br from-acid-primary/5 via-transparent to-acid-accent/5 opacity-0;
-    @apply transition-opacity duration-300 pointer-events-none;
+    @apply absolute inset-0 rounded-2xl;
+    @apply bg-gradient-to-br from-acid-primary/8 via-transparent to-acid-accent/8 opacity-0;
+    @apply transition-opacity duration-500 pointer-events-none;
+    @apply blur-xl;
   }
   
   .card:hover::before {
     @apply opacity-100;
   }
   
+  /* Card inner border highlight */
+  .card::after {
+    content: '';
+    @apply absolute inset-[1px] rounded-2xl;
+    @apply bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0;
+    @apply transition-opacity duration-500 pointer-events-none;
+  }
+  
+  .card:hover::after {
+    @apply opacity-100;
+  }
+  
+  /* Card section divider */
+  .card-section {
+    @apply border-t border-acid-border/30 pt-4 mt-4;
+  }
+  
   .card-hover {
     @apply hover:bg-acid-surface-hover cursor-pointer transition-colors;
+  }
+  
+  /* Card header styling */
+  .card-header {
+    @apply flex items-center justify-between mb-6 pb-4 border-b border-acid-border/30;
+  }
+  
+  /* Card title */
+  .card-title {
+    @apply text-lg font-bold text-acid-text flex items-center gap-2;
+  }
+  
+  /* Card subtitle */
+  .card-subtitle {
+    @apply text-sm text-acid-text-muted mt-1;
   }
   
   /* Button variants */
@@ -209,6 +246,26 @@
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-acid-text-muted;
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    /* Prevent text size adjustment on iOS */
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    /* Better tap targets */
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }
 

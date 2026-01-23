@@ -8,6 +8,7 @@ Each invocation processes a batch of items from the queue.
 from database.db_connector import get_db_client
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
 from utils.provider_service import get_providers
+from utils.budget_breaker import BudgetCircuitBreaker, BudgetExceededException
 from typing import Optional
 
 def run_benchmark_batch(batch_size: int = 5) -> dict:
@@ -21,6 +22,31 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
         Dictionary with processing statistics
     """
     db = get_db_client()
+    
+    # 🚨 BUDGET CHECK: Prevent runaway costs
+    try:
+        breaker = BudgetCircuitBreaker()
+        budget_status = breaker.check_budget(db, hours=24)
+        
+        if budget_status["should_abort"]:
+            print("\n" + "="*60)
+            print("🚨 BUDGET EXCEEDED - ABORTING BATCH")
+            print("="*60)
+            print(breaker.get_status_message(db, hours=24))
+            print("\nTo increase budget, set BENCHMARK_BUDGET_CAP environment variable.")
+            return {
+                "status": "aborted",
+                "reason": "budget_exceeded",
+                "processed": 0,
+                "successful": 0,
+                "failed": 0,
+                "budget_status": budget_status
+            }
+        else:
+            print(f"💰 Budget OK: ${budget_status['current_spend']:.2f} / ${budget_status['budget_cap']:.2f} ({budget_status['percent_used']}%)")
+    except Exception as e:
+        print(f"⚠️  Budget check failed: {e}")
+        print("Continuing with batch (fail-open safety)...")
     
     # Get pending queue items
     queue_items = db.get_pending_queue_items(limit=batch_size)

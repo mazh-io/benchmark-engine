@@ -72,6 +72,8 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
             )
             
             # Get or create model in database (requires provider_id)
+            # Model name is automatically normalized by get_or_create_model()
+            # e.g., "accounts/fireworks/models/llama-v3p3-70b" → "llama-3.3-70b"
             model_id = None
             if provider_id:
                 model_id = db.get_or_create_model(

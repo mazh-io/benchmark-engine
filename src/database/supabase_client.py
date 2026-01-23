@@ -165,15 +165,18 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
     def get_or_create_model(self, model_name: str, provider_id: str, context_window: int = None) -> Optional[str]:
         """Get existing model or create new one."""
         try:
+            # Normalize model name before saving/querying
+            normalized_name = normalize_model_name(model_name)
+            
             # Try to get existing model
-            response = self.supabase.table("models").select("id").eq("name", model_name).eq("provider_id", provider_id).execute()
+            response = self.supabase.table("models").select("id").eq("name", normalized_name).eq("provider_id", provider_id).execute()
             
             if response.data:
                 return response.data[0]["id"]
             
             # Create new model if it doesn't exist
             response = self.supabase.table("models").insert({
-                "name": model_name,
+                "name": normalized_name,
                 "provider_id": provider_id,
                 "context_window": context_window
             }).execute()

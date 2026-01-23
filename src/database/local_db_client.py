@@ -149,13 +149,16 @@ class LocalDatabaseClient(BaseDatabaseClient):
     def get_or_create_model(self, model_name: str, provider_id: str, context_window: int = None) -> Optional[str]:
         """Get or create model."""
         try:
+            # Normalize model name before saving/querying
+            normalized_name = normalize_model_name(model_name)
+            
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
             # Try to get existing
             cur.execute(
                 "SELECT id FROM models WHERE name = %s AND provider_id = %s",
-                (model_name, provider_id)
+                (normalized_name, provider_id)
             )
             result = cur.fetchone()
             
@@ -166,12 +169,12 @@ class LocalDatabaseClient(BaseDatabaseClient):
                 if context_window is not None:
                     cur.execute(
                         "INSERT INTO models (name, provider_id, context_window) VALUES (%s, %s, %s) RETURNING id",
-                        (model_name, provider_id, context_window)
+                        (normalized_name, provider_id, context_window)
                     )
                 else:
                     cur.execute(
                         "INSERT INTO models (name, provider_id) VALUES (%s, %s) RETURNING id",
-                        (model_name, provider_id)
+                        (normalized_name, provider_id)
                     )
                 result = cur.fetchone()
                 model_id = str(result['id'])

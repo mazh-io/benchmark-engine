@@ -3,6 +3,7 @@ import uuid
 import requests
 from groq import Groq
 from utils.env_helper import get_env
+from utils.retry_logic import with_retry, RetryConfig
 
 # Pricing per 1M tokens (approximate, check Groq website for latest)
 PRICING = {
@@ -13,6 +14,7 @@ PRICING = {
     "gemma-7b-it": {"input": 0.07, "output": 0.07},
 }
 
+@with_retry(RetryConfig(max_retries=3, initial_delay=1.0, exponential_base=2.0))
 def call_groq(prompt: str, model: str = "llama-3.1-8b-instant"):
     """
     Call Groq API and return benchmark results.

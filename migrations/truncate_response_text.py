@@ -36,7 +36,7 @@ def analyze_response_text_storage(db) -> dict:
             response = db.supabase.table("benchmark_results").select(
                 "id, success, response_text"
             ).execute()
-            results = response.data
+            results = response.data if response and response.data else []
         else:
             # Local PostgreSQL
             conn = db._get_connection()
@@ -53,6 +53,9 @@ def analyze_response_text_storage(db) -> dict:
             cur.close()
             conn.close()
         
+        if results is None:
+            results = []
+        
         stats = {
             "total_records": len(results),
             "successful_runs": 0,
@@ -65,9 +68,13 @@ def analyze_response_text_storage(db) -> dict:
         
         for record in results:
             success = record.get("success", True)
-            text_length = record.get("text_length") or (
-                len(record.get("response_text", "")) if hasattr(db, 'supabase') else 0
-            )
+            
+            # Handle response_text being None
+            if hasattr(db, 'supabase'):
+                response_text = record.get("response_text") or ""
+                text_length = len(response_text)
+            else:
+                text_length = record.get("text_length") or 0
             
             if success:
                 stats["successful_runs"] += 1
@@ -107,52 +114,39 @@ def truncate_existing_response_text(db, record_ids: list) -> tuple:
     
     try:
         if hasattr(db, 'supabase'):
-            # Supabase - use SQL function for efficient batch update
-            # This executes as a single SQL query on Supabase's PostgreSQL
-            try:
-                # Supabase also supports raw SQL for better performance
-                # Use the same PostgreSQL query as local
-                from supabase import create_client
+            # Supabase - process in small batches to avoid JSON size limits
+            print(f"  Processing {len(record_ids)} records in small batches...")
+            
+            batch_size = 10  # Small batches to avoid JSON serialization issues
+            
+            for i in range(0, len(record_ids), batch_size):
+                batch = record_ids[i:i + batch_size]
                 
-                # Execute as single batch operation using RPC or direct SQL
-                # Note: Supabase's Python client handles UUID strings correctly
-                batch_size = 1000
-                for i in range(0, len(record_ids), batch_size):
-                    batch = record_ids[i:i + batch_size]
+                try:
+                    # Fetch records in this batch
+                    response = db.supabase.table("benchmark_results").select(
+                        "id, response_text"
+                    ).in_("id", batch).execute()
                     
-                    # Update using Supabase's .in_() filter
-                    response = db.supabase.table("benchmark_results").update({
-                        "response_text": db.supabase.rpc(
-                            "left",
-                            {"string": "response_text", "n": 100}
-                        )
-                    }).in_("id", batch).execute()
-                    
-                    success_count += len(batch)
-                    
-            except Exception as e:
-                # Fallback to individual updates if batch fails
-                print(f"  Batch update failed, falling back to individual updates: {e}")
-                for record_id in record_ids:
-                    try:
-                        # Fetch record
-                        response = db.supabase.table("benchmark_results").select(
-                            "response_text"
-                        ).eq("id", record_id).execute()
+                    if response.data:
+                        for record in response.data:
+                            if record.get("response_text") and len(record["response_text"]) > 100:
+                                truncated_text = record["response_text"][:100] + "..."
+                                
+                                db.supabase.table("benchmark_results").update({
+                                    "response_text": truncated_text
+                                }).eq("id", record["id"]).execute()
+                                
+                                success_count += 1
                         
-                        if response.data and response.data[0].get("response_text"):
-                            full_text = response.data[0]["response_text"]
-                            truncated_text = full_text[:100] + "..."
+                        # Progress update every 100 records
+                        if (i + batch_size) % 100 == 0 or (i + batch_size) >= len(record_ids):
+                            print(f"  ✓ Processed {min(i + batch_size, len(record_ids))}/{len(record_ids)}")
                             
-                            # Update record
-                            db.supabase.table("benchmark_results").update({
-                                "response_text": truncated_text
-                            }).eq("id", record_id).execute()
-                            
-                            success_count += 1
-                    except Exception as e:
-                        print(f"  Error updating {record_id}: {e}")
-                        error_count += 1
+                except Exception as batch_error:
+                    print(f"  Error in batch {i}-{i+batch_size}: {batch_error}")
+                    error_count += len(batch)
+                    
         else:
             # Local PostgreSQL - single query
             conn = db._get_connection()

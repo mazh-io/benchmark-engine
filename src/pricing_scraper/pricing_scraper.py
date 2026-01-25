@@ -51,6 +51,8 @@ def save_prices_to_db(rows: List[Dict[str, Any]]) -> None:
         if not provider_id:
             continue
 
+        # Model name is automatically normalized by get_or_create_model()
+        # e.g., "accounts/fireworks/models/llama-v3p3-70b" → "llama-3.3-70b"
         model_id = db.get_or_create_model(model_name, provider_id)
         if not model_id:
             continue

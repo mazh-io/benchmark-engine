@@ -83,6 +83,37 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
                 print("Warning: total_latency_ms not provided")
                 return None
             
+            # Validate and correct token counts
+            validation = validate_token_counts(
+                input_tokens=data.get("input_tokens"),
+                output_tokens=data.get("output_tokens"),
+                prompt=None,  # We don't store prompt, can't estimate without it
+                response=data.get("response_text")
+            )
+            
+            # Update token counts with validated/estimated values
+            data["input_tokens"] = validation["input_tokens"]
+            data["output_tokens"] = validation["output_tokens"]
+            
+            # Mark benchmark as failed if token counts are suspicious
+            if should_fail_benchmark(validation):
+                data["success"] = False
+                error_msg = f"Token validation failed: {get_validation_summary(validation)}"
+                data["error_message"] = error_msg
+                print(f"⚠️  {error_msg}")
+            elif not validation["is_valid"]:
+                # Log warning but don't fail the benchmark
+                print(f"⚠️  Token count warning: {get_validation_summary(validation)}")
+            
+            # Optimize storage: truncate response_text for successful runs
+            if "response_text" in data and data.get("response_text"):
+                success = data.get("success", True)
+                data["response_text"] = truncate_response_text(
+                    data["response_text"],
+                    success=success,
+                    max_length=100
+                )
+            
             response = self.supabase.table("benchmark_results").insert(data).execute()
             return response.data[0]["id"]
         except Exception as e:
@@ -165,15 +196,18 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
     def get_or_create_model(self, model_name: str, provider_id: str, context_window: int = None) -> Optional[str]:
         """Get existing model or create new one."""
         try:
+            # Normalize model name before saving/querying
+            normalized_name = normalize_model_name(model_name)
+            
             # Try to get existing model
-            response = self.supabase.table("models").select("id").eq("name", model_name).eq("provider_id", provider_id).execute()
+            response = self.supabase.table("models").select("id").eq("name", normalized_name).eq("provider_id", provider_id).execute()
             
             if response.data:
                 return response.data[0]["id"]
             
             # Create new model if it doesn't exist
             response = self.supabase.table("models").insert({
-                "name": model_name,
+                "name": normalized_name,
                 "provider_id": provider_id,
                 "context_window": context_window
             }).execute()

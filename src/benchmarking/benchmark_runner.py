@@ -3,6 +3,7 @@ from database.db_connector import get_db_client
 
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
 from utils.provider_service import get_providers
+from utils.budget_breaker import BudgetCircuitBreaker, BudgetExceededException
 from typing import Optional, List
 
 def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[List[str]] = None):
@@ -16,10 +17,11 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
                         If None, tests all providers
     
     Process:
-        1. Create a new run in db
-        2. Test each provider sequentially without concurrency
-        3. Save results to db
-        4. End the run
+        1. Check budget (abort if exceeded)
+        2. Create a new run in db
+        3. Test each provider sequentially without concurrency
+        4. Save results to db
+        5. End the run
     """
     print(f"Starting benchmark run: {run_name}")
     print(f"Triggered by: {triggered_by}")
@@ -30,6 +32,26 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
 
     # Get database client
     db = get_db_client()
+    
+    # 🚨 BUDGET CHECK: Prevent runaway costs
+    print("\n" + "="*60)
+    print("BUDGET CHECK")
+    print("="*60)
+    try:
+        breaker = BudgetCircuitBreaker()
+        budget_status = breaker.check_budget(db, hours=24)
+        print(breaker.get_status_message(db, hours=24))
+        
+        if budget_status["should_abort"]:
+            print("\n🚨 ABORTING: Budget exceeded!")
+            print("To increase budget, set BENCHMARK_BUDGET_CAP environment variable.")
+            print("Example: export BENCHMARK_BUDGET_CAP=25.0")
+            return
+    except Exception as e:
+        print(f"⚠️  Budget check failed: {e}")
+        print("Continuing with benchmark (fail-open safety)...")
+    
+    print("="*60 + "\n")
 
     # Create Runmanager to manage the lifecycle of the run
     run_manager = RunManager(run_name, triggered_by)
@@ -72,6 +94,8 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
             )
             
             # Get or create model in database (requires provider_id)
+            # Model name is automatically normalized by get_or_create_model()
+            # e.g., "accounts/fireworks/models/llama-v3p3-70b" → "llama-3.3-70b"
             model_id = None
             if provider_id:
                 model_id = db.get_or_create_model(

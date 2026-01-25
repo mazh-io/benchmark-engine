@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from database.base_db_client import BaseDatabaseClient
 from utils.env_helper import get_env
+from utils.model_name_normalizer import normalize_model_name
+from utils.response_optimizer import truncate_response_text
+from utils.token_validator import validate_token_counts, should_fail_benchmark, get_validation_summary
 
 
 class LocalDatabaseClient(BaseDatabaseClient):
@@ -149,13 +152,16 @@ class LocalDatabaseClient(BaseDatabaseClient):
     def get_or_create_model(self, model_name: str, provider_id: str, context_window: int = None) -> Optional[str]:
         """Get or create model."""
         try:
+            # Normalize model name before saving/querying
+            normalized_name = normalize_model_name(model_name)
+            
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
             # Try to get existing
             cur.execute(
                 "SELECT id FROM models WHERE name = %s AND provider_id = %s",
-                (model_name, provider_id)
+                (normalized_name, provider_id)
             )
             result = cur.fetchone()
             
@@ -166,12 +172,12 @@ class LocalDatabaseClient(BaseDatabaseClient):
                 if context_window is not None:
                     cur.execute(
                         "INSERT INTO models (name, provider_id, context_window) VALUES (%s, %s, %s) RETURNING id",
-                        (model_name, provider_id, context_window)
+                        (normalized_name, provider_id, context_window)
                     )
                 else:
                     cur.execute(
                         "INSERT INTO models (name, provider_id) VALUES (%s, %s) RETURNING id",
-                        (model_name, provider_id)
+                        (normalized_name, provider_id)
                     )
                 result = cur.fetchone()
                 model_id = str(result['id'])
@@ -232,6 +238,38 @@ class LocalDatabaseClient(BaseDatabaseClient):
             UUID of created result
         """
         try:
+            # Validate and correct token counts
+            validation = validate_token_counts(
+                input_tokens=data.get('input_tokens'),
+                output_tokens=data.get('output_tokens'),
+                prompt=None,  # We don't store prompt, can't estimate without it
+                response=data.get('response_text')
+            )
+            
+            # Update token counts with validated/estimated values
+            data['input_tokens'] = validation['input_tokens']
+            data['output_tokens'] = validation['output_tokens']
+            
+            # Mark benchmark as failed if token counts are suspicious
+            if should_fail_benchmark(validation):
+                data['success'] = False
+                error_msg = f"Token validation failed: {get_validation_summary(validation)}"
+                data['error_message'] = error_msg
+                print(f"⚠️  {error_msg}")
+            elif not validation['is_valid']:
+                # Log warning but don't fail the benchmark
+                print(f"⚠️  Token count warning: {get_validation_summary(validation)}")
+            
+            # Optimize storage: truncate response_text for successful runs
+            response_text = data.get('response_text')
+            if response_text:
+                success = data.get('success', True)
+                response_text = truncate_response_text(
+                    response_text,
+                    success=success,
+                    max_length=100
+                )
+            
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
@@ -261,7 +299,7 @@ class LocalDatabaseClient(BaseDatabaseClient):
                 data.get('cost_usd'),
                 data.get('status_code'),
                 data.get('success'),
-                data.get('response_text')
+                response_text
             )
             
             cur.execute(query, values)

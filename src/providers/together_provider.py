@@ -3,6 +3,7 @@ import uuid
 import json
 import requests
 from utils.env_helper import get_env
+from utils.retry_logic import with_retry, RetryConfig
 
 # Pricing per 1M tokens (approximate, check Together.ai website for latest)
 PRICING = {
@@ -12,6 +13,7 @@ PRICING = {
     "mistralai/Mixtral-8x7B-Instruct-v0.1": {"input": 0.24, "output": 0.24},
 }
 
+@with_retry(RetryConfig(max_retries=3, initial_delay=1.0, exponential_base=2.0))
 def call_together(prompt: str, model: str = "meta-llama/Llama-3-8b-chat-hf"):
     """
     Call Together AI API and return benchmark results.

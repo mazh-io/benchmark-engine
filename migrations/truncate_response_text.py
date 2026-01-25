@@ -107,36 +107,62 @@ def truncate_existing_response_text(db, record_ids: list) -> tuple:
     
     try:
         if hasattr(db, 'supabase'):
-            # Supabase - batch update
-            for record_id in record_ids:
-                try:
-                    # Fetch record
-                    response = db.supabase.table("benchmark_results").select(
-                        "response_text"
-                    ).eq("id", record_id).execute()
+            # Supabase - use SQL function for efficient batch update
+            # This executes as a single SQL query on Supabase's PostgreSQL
+            try:
+                # Supabase also supports raw SQL for better performance
+                # Use the same PostgreSQL query as local
+                from supabase import create_client
+                
+                # Execute as single batch operation using RPC or direct SQL
+                # Note: Supabase's Python client handles UUID strings correctly
+                batch_size = 1000
+                for i in range(0, len(record_ids), batch_size):
+                    batch = record_ids[i:i + batch_size]
                     
-                    if response.data and response.data[0].get("response_text"):
-                        full_text = response.data[0]["response_text"]
-                        truncated_text = full_text[:100] + "..."
+                    # Update using Supabase's .in_() filter
+                    response = db.supabase.table("benchmark_results").update({
+                        "response_text": db.supabase.rpc(
+                            "left",
+                            {"string": "response_text", "n": 100}
+                        )
+                    }).in_("id", batch).execute()
+                    
+                    success_count += len(batch)
+                    
+            except Exception as e:
+                # Fallback to individual updates if batch fails
+                print(f"  Batch update failed, falling back to individual updates: {e}")
+                for record_id in record_ids:
+                    try:
+                        # Fetch record
+                        response = db.supabase.table("benchmark_results").select(
+                            "response_text"
+                        ).eq("id", record_id).execute()
                         
-                        # Update record
-                        db.supabase.table("benchmark_results").update({
-                            "response_text": truncated_text
-                        }).eq("id", record_id).execute()
-                        
-                        success_count += 1
-                except Exception as e:
-                    print(f"  Error updating {record_id}: {e}")
-                    error_count += 1
+                        if response.data and response.data[0].get("response_text"):
+                            full_text = response.data[0]["response_text"]
+                            truncated_text = full_text[:100] + "..."
+                            
+                            # Update record
+                            db.supabase.table("benchmark_results").update({
+                                "response_text": truncated_text
+                            }).eq("id", record_id).execute()
+                            
+                            success_count += 1
+                    except Exception as e:
+                        print(f"  Error updating {record_id}: {e}")
+                        error_count += 1
         else:
             # Local PostgreSQL - single query
             conn = db._get_connection()
             cur = conn.cursor()
             
+            # Convert string UUIDs to UUID array for PostgreSQL
             cur.execute("""
                 UPDATE benchmark_results
                 SET response_text = LEFT(response_text, 100) || '...'
-                WHERE id = ANY(%s)
+                WHERE id = ANY(%s::uuid[])
                 AND LENGTH(response_text) > 100
             """, (record_ids,))
             

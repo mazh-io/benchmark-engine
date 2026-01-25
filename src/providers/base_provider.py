@@ -36,12 +36,14 @@ class BaseProvider(ABC):
         self.max_retries = 3
         self.base_backoff = 2  # seconds
         
-        # Configure smart retry logic for 5xx errors
+        # Configure smart retry logic for 5xx errors only
+        # Rate limits (429) should NOT be retried here - they're handled by 
+        # the benchmark runner's retry queue (60s delay + retry all at once)
         self.retry_config = RetryConfig(
             max_retries=3,
-            initial_delay=1.0,
+            initial_delay=1.0,  # 1s → 2s → 4s for 5xx errors
             exponential_base=2.0,
-            retry_on_status_codes=list(range(500, 600))  # All 5xx errors
+            retry_on_status_codes=list(range(500, 600))  # Only 5xx errors
         )
     
     @abstractmethod

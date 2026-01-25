@@ -71,12 +71,23 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
         run_id = str(item['run_id'])
         provider_key = item['provider_key']
         model_name = item['model_name']
+        attempts = item.get('attempts', 0)
+        max_attempts = item.get('max_attempts', 3)
         
         print(f"\n{'='*60}")
         print(f"Queue Item {queue_id[:8]}... → {provider_key} / {model_name}")
+        print(f"Attempt {attempts + 1}/{max_attempts}")
         print(f"{'='*60}")
         
-        # Mark as processing
+        # Check if max attempts reached
+        if attempts >= max_attempts:
+            print(f"⚠️  Max attempts ({max_attempts}) reached - marking as failed")
+            db.mark_queue_item_failed(queue_id, f"Max retry attempts ({max_attempts}) exceeded")
+            failed += 1
+            processed += 1
+            continue
+        
+        # Mark as processing (increments attempts counter)
         db.mark_queue_item_processing(queue_id)
         
         # Initialize variables for exception handler

@@ -250,7 +250,7 @@ ACTIVE_MODELS = [
     # Together AI - GPU Cloud
     ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", "Mixtral MoE"),
     ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", "Llama 3.3"),
-    ("together", "Qwen/Qwen2.5-72B-Instruct-Turbo", "flagship", "Chinese model"),
+    ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", "Chinese model"),
     ("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "heavyweight", "405B giant"),
     
     # Infrastructure Providers

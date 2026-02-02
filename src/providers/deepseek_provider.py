@@ -22,6 +22,7 @@ from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
 from database.db_connector import get_db_client
 from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
+from utils.provider_service import get_timeout_for_model, is_reasoning_model
 
 # Configure module logger
 logger = logging.getLogger(__name__)

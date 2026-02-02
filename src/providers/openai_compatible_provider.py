@@ -19,7 +19,7 @@ import uuid
 from typing import Dict, Any, Optional
 import logging
 
-from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError
+from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError, AuthenticationError
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
@@ -59,7 +59,8 @@ class OpenAICompatibleProvider(BaseProvider):
         api_key: str,
         base_url: str,
         pricing_table: Optional[Dict[str, Dict[str, float]]] = None,
-        default_pricing: Optional[Dict[str, float]] = None
+        default_pricing: Optional[Dict[str, float]] = None,
+        env_key_name: Optional[str] = None
     ) -> None:
         """
         Initialize generic OpenAI-compatible provider.
@@ -84,6 +85,7 @@ class OpenAICompatibleProvider(BaseProvider):
         self.base_url = base_url
         self.pricing_table = pricing_table or {}  # Keep for backward compatibility
         self.default_pricing = default_pricing or {"input": 1.0, "output": 1.0}
+        self.env_key_name = env_key_name
         
         self.client = OpenAI(
             api_key=api_key,
@@ -221,6 +223,27 @@ class OpenAICompatibleProvider(BaseProvider):
                 "response_text": response_text,
             }
             
+        except AuthenticationError as e:
+            metrics.end()
+            logger.warning(
+                f"{self.provider_name.title()} authentication failed",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                }
+            )
+            error_result = self.handle_error(e, model)
+            env_hint = f" Check {self.env_key_name}." if self.env_key_name else ""
+            error_result.update(
+                {
+                    "status_code": 401,
+                    "error_type": "AUTH_ERROR",
+                    "error_message": f"[AUTH_ERROR] {self.provider_name} unauthorized.{env_hint}",
+                }
+            )
+            return error_result
+
         except RateLimitError as e:
             metrics.end()
             logger.warning(
@@ -325,7 +348,8 @@ def create_openai_compatible_caller(
                 api_key=api_key,
                 base_url=base_url,
                 pricing_table=pricing_table,
-                default_pricing=default_pricing
+                default_pricing=default_pricing,
+                env_key_name=env_key_name
             )
             return provider.call_with_retry(prompt, model)
         except Exception as e:

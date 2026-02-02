@@ -276,11 +276,11 @@ class LocalDatabaseClient(BaseDatabaseClient):
             query = """
                 INSERT INTO benchmark_results (
                     run_id, provider_id, model_id, provider, model,
-                    input_tokens, output_tokens, total_latency_ms, ttft_ms, tps,
+                    input_tokens, output_tokens, reasoning_tokens, total_latency_ms, ttft_ms, tps,
                     cost_usd, status_code, success, response_text
                 ) VALUES (
                     %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s
                 ) RETURNING id
             """
@@ -293,6 +293,7 @@ class LocalDatabaseClient(BaseDatabaseClient):
                 data.get('model'),
                 data.get('input_tokens'),
                 data.get('output_tokens'),
+                data.get('reasoning_tokens'),  # Thinking tokens for reasoning models
                 data.get('total_latency_ms'),
                 data.get('ttft_ms'),
                 data.get('tps'),

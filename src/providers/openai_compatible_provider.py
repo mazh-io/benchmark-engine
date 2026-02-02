@@ -200,15 +200,22 @@ class OpenAICompatibleProvider(BaseProvider):
                         "prompt_tokens": chunk.usage.prompt_tokens,
                         "completion_tokens": chunk.usage.completion_tokens,
                     }
+                    # Capture reasoning tokens if available (for reasoning models)
+                    if hasattr(chunk.usage, 'completion_tokens_details'):
+                        details = chunk.usage.completion_tokens_details
+                        if hasattr(details, 'reasoning_tokens'):
+                            usage_data["reasoning_tokens"] = details.reasoning_tokens
             
             metrics.end()
             
             response_text = "".join(response_chunks)
             
             # Token counting
+            reasoning_tokens = None
             if usage_data:
                 input_tokens = usage_data["prompt_tokens"]
                 output_tokens = usage_data["completion_tokens"]
+                reasoning_tokens = usage_data.get("reasoning_tokens")  # Available for reasoning models
             else:
                 logger.warning(
                     f"Usage data not provided by {self.provider_name}",
@@ -224,6 +231,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 extra={
                     "request_id": request_id,
                     "model": model,
+                    "reasoning_tokens": reasoning_tokens,
                     "total_latency_ms": metrics.get_total_latency_ms(),
                     "ttft_ms": metrics.get_ttft_ms(),
                 }
@@ -232,6 +240,7 @@ class OpenAICompatibleProvider(BaseProvider):
             return {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "reasoning_tokens": reasoning_tokens,  # Thinking tokens for reasoning models
                 "total_latency_ms": metrics.get_total_latency_ms(),
                 "ttft_ms": metrics.get_ttft_ms(),
                 "tps": metrics.get_tps(output_tokens),

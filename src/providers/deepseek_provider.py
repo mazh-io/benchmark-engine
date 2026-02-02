@@ -221,6 +221,15 @@ class DeepSeekProvider(BaseProvider):
                         "completion_tokens": chunk.usage.completion_tokens,
                         "total_tokens": chunk.usage.total_tokens,
                     }
+                    # Capture reasoning tokens if available (DeepSeek R1 provides this)
+                    if hasattr(chunk.usage, 'prompt_tokens_details'):
+                        details = chunk.usage.prompt_tokens_details
+                        if hasattr(details, 'cached_tokens'):
+                            usage_data["cached_tokens"] = details.cached_tokens
+                    if hasattr(chunk.usage, 'completion_tokens_details'):
+                        details = chunk.usage.completion_tokens_details
+                        if hasattr(details, 'reasoning_tokens'):
+                            usage_data["reasoning_tokens"] = details.reasoning_tokens
             
             metrics.end()
             
@@ -228,9 +237,11 @@ class DeepSeekProvider(BaseProvider):
             response_text = "".join(response_chunks)
             
             # Extract token counts
+            reasoning_tokens = None
             if usage_data:
                 input_tokens = usage_data["prompt_tokens"]
                 output_tokens = usage_data["completion_tokens"]
+                reasoning_tokens = usage_data.get("reasoning_tokens")  # DeepSeek R1 provides this
             else:
                 # Fallback: estimate token counts
                 logger.warning(
@@ -255,6 +266,7 @@ class DeepSeekProvider(BaseProvider):
                     "model": model,
                     "input_tokens": input_tokens,
                     "output_tokens": output_tokens,
+                    "reasoning_tokens": reasoning_tokens,
                     "total_latency_ms": total_latency_ms,
                     "ttft_ms": ttft_ms,
                     "tps": tps,
@@ -265,6 +277,7 @@ class DeepSeekProvider(BaseProvider):
             return {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "reasoning_tokens": reasoning_tokens,  # Separate thinking tokens for R1
                 "total_latency_ms": total_latency_ms,
                 "ttft_ms": ttft_ms,
                 "tps": tps,

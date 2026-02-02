@@ -13,6 +13,7 @@ Pricing: Fetched dynamically from database (updated via pricing scraper)
 import uuid
 from typing import Dict, Any, Optional
 import logging
+import httpx
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -82,10 +83,17 @@ class DeepSeekProvider(BaseProvider):
             
         super().__init__(provider_name="deepseek", api_key=api_key)
         
+        # Configure HTTP client with extended timeout for reasoning models
+        # DeepSeek R1 can take 10-20s to think before first token
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(120.0, connect=10.0)  # 120s request, 10s connect
+        )
+        
         # Initialize OpenAI client with DeepSeek base URL
         self.client = OpenAI(
             api_key=api_key,
             base_url=PROVIDER_CONFIG["deepseek"]["base_url"],
+            http_client=http_client,
         )
         
         logger.info("DeepSeek provider initialized")
@@ -171,6 +179,15 @@ class DeepSeekProvider(BaseProvider):
         metrics = StreamingMetrics()
         metrics.start()
         
+        # Get timeout based on model type (centralized logic)
+        timeout_seconds = get_timeout_for_model(model)
+        
+        if is_reasoning_model(model):
+            logger.info(
+                "Using extended timeout for DeepSeek reasoning model (R1)",
+                extra={"model": model, "timeout_seconds": timeout_seconds}
+            )
+        
         try:
             # Create streaming chat completion
             stream = self.client.chat.completions.create(
@@ -182,6 +199,7 @@ class DeepSeekProvider(BaseProvider):
                 temperature=0.7,
                 stream=True,
                 stream_options={"include_usage": True},  # Request token usage in stream
+                timeout=timeout_seconds,
             )
             
             # Collect streaming response

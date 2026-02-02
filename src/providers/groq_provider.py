@@ -1,6 +1,7 @@
 import time
 import uuid
 import requests
+import httpx
 from groq import Groq
 from utils.env_helper import get_env
 from utils.retry_logic import with_retry, RetryConfig
@@ -32,7 +33,13 @@ def call_groq(prompt: str, model: str = "llama-3.1-8b-instant"):
             "response_text": None
         }
     
-    client = Groq(api_key=api_key)
+    # Configure HTTP client with extended timeout for reasoning models
+    # Groq primarily serves standard models, but can route reasoning models
+    http_client = httpx.Client(
+        timeout=httpx.Timeout(120.0, connect=10.0)  # 120s request, 10s connect
+    )
+    
+    client = Groq(api_key=api_key, http_client=http_client)
     
     # Generate unique UUID for this request
     request_id = str(uuid.uuid4())

@@ -1,8 +1,10 @@
 import time
 import uuid
 import requests
+import httpx
 from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError
 from utils.env_helper import get_env
+from utils.provider_service import is_reasoning_model, get_timeout_for_model
 
 
 
@@ -43,8 +45,14 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
             "response_text": None
         }
     
+    # Configure HTTP client with extended timeout for reasoning models
+    # O-series models (o1, o3, o4-mini) can take 10-20s to think before first token
+    http_client = httpx.Client(
+        timeout=httpx.Timeout(120.0, connect=10.0)  # 120s request, 10s connect
+    )
+    
     # Create OpenAI client to interact with the API
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, http_client=http_client)
     
     # Generate unique UUID for this request (for tracking)
     request_id = str(uuid.uuid4())
@@ -74,11 +82,17 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
         
         # O-series models: only temperature=1, no top_p
         # Regular models: temperature=0.8, top_p=0.9
+        # Get timeout from centralized function
+        timeout_seconds = get_timeout_for_model(model)
+        
         if is_reasoning_model:
             request_params["temperature"] = 1.0
+            request_params["timeout"] = timeout_seconds
+            print(f"⏱️  Using extended {timeout_seconds:.0f}s timeout for reasoning model: {model}")
         else:
             request_params["temperature"] = 0.8
             request_params["top_p"] = 0.9
+            request_params["timeout"] = timeout_seconds
         
         # Send streaming request to OpenAI API for TTFT measurement
         stream = client.chat.completions.create(**request_params)

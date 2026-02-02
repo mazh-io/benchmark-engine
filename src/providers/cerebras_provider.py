@@ -17,6 +17,7 @@ Pricing: Fetched dynamically from database (updated via pricing scraper)
 import uuid
 from typing import Dict, Any, Optional
 import logging
+import httpx
 
 from openai import OpenAI
 
@@ -88,9 +89,15 @@ class CerebrasProvider(BaseProvider):
             
         super().__init__(provider_name="cerebras", api_key=api_key)
         
+        # Configure HTTP client with extended timeout for reasoning models
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(120.0, connect=10.0)  # 120s request, 10s connect
+        )
+        
         self.client = OpenAI(
             api_key=api_key,
             base_url=PROVIDER_CONFIG["cerebras"]["base_url"],
+            http_client=http_client,
         )
         
         logger.info("Cerebras provider initialized")

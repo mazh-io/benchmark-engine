@@ -18,6 +18,7 @@ Supported Providers:
 import uuid
 from typing import Dict, Any, Optional
 import logging
+import httpx
 
 from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError, AuthenticationError
 
@@ -25,6 +26,7 @@ from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
 from database.db_connector import get_db_client
 from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
+from utils.provider_service import is_reasoning_model, get_timeout_for_model
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +89,16 @@ class OpenAICompatibleProvider(BaseProvider):
         self.default_pricing = default_pricing or {"input": 1.0, "output": 1.0}
         self.env_key_name = env_key_name
         
+        # Configure HTTP client with reasonable timeout (can be overridden per-request)
+        # Default: 60s for regular models, 120s for reasoning models
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(60.0, connect=10.0)  # 60s request, 10s connect
+        )
+        
         self.client = OpenAI(
             api_key=api_key,
             base_url=base_url,
+            http_client=http_client,
         )
         
         logger.info(
@@ -155,6 +164,15 @@ class OpenAICompatibleProvider(BaseProvider):
         metrics = StreamingMetrics()
         metrics.start()
         
+        # Get timeout based on model type (centralized logic)
+        timeout_seconds = get_timeout_for_model(model)
+        
+        if is_reasoning_model(model):
+            logger.info(
+                f"Using extended timeout for reasoning model",
+                extra={"model": model, "timeout_seconds": timeout_seconds}
+            )
+        
         try:
             stream = self.client.chat.completions.create(
                 model=model,
@@ -165,6 +183,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 temperature=0.7,
                 stream=True,
                 stream_options={"include_usage": True},
+                timeout=timeout_seconds,
             )
             
             response_chunks = []

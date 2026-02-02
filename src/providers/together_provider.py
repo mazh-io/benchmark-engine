@@ -3,6 +3,7 @@ import uuid
 import json
 import requests
 from utils.env_helper import get_env
+from utils.provider_service import is_reasoning_model, get_timeout_for_model
 from utils.retry_logic import with_retry, RetryConfig
 
 # Pricing per 1M tokens (approximate, check Together.ai website for latest)
@@ -31,6 +32,12 @@ def call_together(prompt: str, model: str = "meta-llama/Llama-3-8b-chat-hf"):
             "response_text": None
         }
     
+    # Get timeout based on model type (centralized logic)
+    timeout_seconds = get_timeout_for_model(model)
+    
+    if is_reasoning_model(model):
+        print(f"⏱️  Using extended {timeout_seconds:.0f}s timeout for reasoning model: {model}")
+    
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -56,7 +63,7 @@ def call_together(prompt: str, model: str = "meta-llama/Llama-3-8b-chat-hf"):
     
     try:
         # Send streaming request to Together AI API
-        response = requests.post(url, json=payload, headers=headers, timeout=60, stream=True)
+        response = requests.post(url, json=payload, headers=headers, timeout=timeout_seconds, stream=True)
         status_code = response.status_code
         
         if response.status_code != 200:

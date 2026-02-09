@@ -1,19 +1,47 @@
 {
+    "builds": [
+        {
+            "src": "api/index.py",
+            "use": "@vercel/python"
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index"
+        },
+        {
+            "source": "/",
+            "destination": "/api/index"
+        },
+        {
+            "source": "/docs",
+            "destination": "/api/index"
+        },
+        {
+            "source": "/redoc",
+            "destination": "/api/index"
+        },
+        {
+            "source": "/openapi.json",
+            "destination": "/api/index"
+        }
+    ],
     "crons": [
         {
-            "path": "/api/benchmark?action=init",
+            "path": "/api/benchmark/init",
             "schedule": "0,15,30,45 * * * *"
         },
         {
-            "path": "/api/benchmark?action=process",
+            "path": "/api/benchmark/process",
             "schedule": "* * * * *"
         },
         {
-            "path": "/api/pricing_scraper",
+            "path": "/api/pricing/scrape",
             "schedule": "0 0 * * *"
         },
         {
-            "path": "/api/sync_models",
+            "path": "/api/sync/models",
             "schedule": "0 2 * * 0"
         }
     ]

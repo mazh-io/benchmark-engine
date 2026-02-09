@@ -238,6 +238,10 @@ class LocalDatabaseClient(BaseDatabaseClient):
             UUID of created result
         """
         try:
+            # Normalize the legacy 'model' text field
+            if "model" in data and data["model"]:
+                data["model"] = normalize_model_name(data["model"])
+
             # Validate and correct token counts
             validation = validate_token_counts(
                 input_tokens=data.get('input_tokens'),
@@ -338,6 +342,10 @@ class LocalDatabaseClient(BaseDatabaseClient):
             UUID of created error record
         """
         try:
+            # Normalize the legacy 'model' text field
+            if "model" in data and data["model"]:
+                data["model"] = normalize_model_name(data["model"])
+
             conn = self._get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
             

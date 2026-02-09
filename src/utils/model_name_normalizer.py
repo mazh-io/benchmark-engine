@@ -127,6 +127,12 @@ def normalize_model_name(raw_model_name: str, provider_name: str = None) -> str:
     normalized = re.sub(r"(\d+)B-", r"\1b-", normalized)
     normalized = re.sub(r"(\d+)B$", r"\1b", normalized)
     
+    # Step 8: Lowercase the entire name
+    # Model identifiers are case-insensitive across all providers.
+    # This catches any remaining uppercase left by earlier steps
+    # (e.g., "Meta-", "Turbo", "Next", "A3B").
+    normalized = normalized.lower()
+    
     return normalized.strip()
 
 

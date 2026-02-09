@@ -77,6 +77,10 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
     def save_benchmark(self, **data) -> Optional[str]:
         """Save benchmark result."""
         try:
+            # Normalize the legacy 'model' text field
+            if "model" in data and data["model"]:
+                data["model"] = normalize_model_name(data["model"])
+
             # Remove latency_ms if present (we only use total_latency_ms)
             if "latency_ms" in data:
                 del data["latency_ms"]
@@ -144,6 +148,10 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
     def save_run_error(self, **data) -> Optional[str]:
         """Save run error."""
         try:
+            # Normalize the legacy 'model' text field
+            if "model" in data and data["model"]:
+                data["model"] = normalize_model_name(data["model"])
+
             # Ensure required fields are present
             if 'run_id' not in data or 'error_type' not in data or 'error_message' not in data:
                 print(f"DB Error (save_run_error): Missing required fields. Data: {data}")

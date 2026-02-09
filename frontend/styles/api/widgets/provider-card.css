@@ -1,0 +1,68 @@
+/**
+ * Provider Card Widget
+ * Single provider stats at a glance
+ */
+
+  /* Provider Card Widget */
+  .w-provider-card {
+    text-align: center;
+  }
+
+  .w-provider-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+
+  .w-provider-model {
+    font-size: 0.65rem;
+    color: var(--text-3);
+    margin-bottom: 16px;
+  }
+
+  .w-provider-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .w-provider-stat {
+    text-align: center;
+  }
+
+  .w-provider-stat-value {
+    font-family: var(--mono);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--acid);
+  }
+
+  .w-provider-stat-value.green {
+    color: var(--green);
+  }
+
+  .w-provider-stat-label {
+    font-size: 0.55rem;
+    color: var(--text-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  .w-sparkline {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    height: 32px;
+    margin-top: 16px;
+  }
+
+  .w-spark-bar {
+    width: 4px;
+    background: var(--acid);
+    border-radius: 1px;
+    opacity: 0.5;
+  }
+

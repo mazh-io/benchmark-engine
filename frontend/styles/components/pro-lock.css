@@ -1,0 +1,66 @@
+/**
+ * Pro Lock Overlay
+ * Premium feature lock overlay
+ */
+
+/* ================= PRO LOCK OVERLAY - IDENTICAL TO HTML ================= */
+
+.pro-overlay-section {
+  position: relative;
+}
+
+.pro-overlay-section .detail-content {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.pro-overlay {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10;
+}
+
+.pro-overlay-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.pro-overlay-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.pro-overlay-text {
+  font-size: 0.7rem;
+  color: var(--text-3);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.pro-overlay-btn {
+  padding: 10px 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #000;
+  background: var(--acid);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pro-overlay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(202, 255, 0, 0.3);
+}
+

@@ -1,0 +1,109 @@
+/**
+ * Footer
+ * Index footer styles
+ */
+
+/* ================= INDEX FOOTER (NEW)  ================= */
+
+.index-footer {
+  padding: 24px 24px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 24px;
+}
+
+.index-footer-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 60px;
+}
+
+/* LEFT - Brand */
+.index-footer-brand {
+  max-width: 280px;
+}
+
+.index-footer-logo {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+
+.index-footer-tagline {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* RIGHT - Links Grid */
+.index-footer-links {
+  display: flex;
+  gap: 36px;
+}
+
+.index-footer-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.index-footer-column-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.index-footer-link {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text);
+  text-decoration: none;
+  padding: 2px 0;
+  transition: color 0.1s;
+}
+
+.index-footer-link:hover {
+  color: var(--acid);
+}
+
+/* BOTTOM - Copyright & Social (INSIDE footer-inner, full width) */
+.index-footer-bottom {
+  width: 100%;
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
+  color: var(--text-4);
+}
+
+.index-footer-copyright {
+  font-size: 0.65rem;
+  color: var(--text-3);
+}
+
+.index-footer-social-wrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.index-footer-social {
+  font-size: 0.65rem;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color 0.1s;
+}
+
+.index-footer-social:hover {
+  color: var(--acid);
+}
+

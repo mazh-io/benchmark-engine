@@ -1,0 +1,58 @@
+/**
+ * Index Table Styles
+ * Main table layout for provider benchmarks
+ */
+
+  /* ======================
+     INDEX TABLE
+     ====================== */
+
+  .index-shell {
+    @apply rounded-2xl border border-[var(--acid-border)] bg-[#050505] overflow-hidden;
+  }
+
+  .index-header-row {
+    @apply flex items-center justify-between px-6 py-3
+      border-b border-[var(--acid-border)]
+      text-[11px] uppercase tracking-wide text-[var(--acid-muted)];
+  }
+
+  .index-title {
+    @apply font-bold text-white normal-case;
+    font-size: 0.75rem;
+  }
+
+  .index-title-link {
+    @apply text-[var(--acid-muted)] hover:text-[var(--acid)] transition-colors normal-case;
+    font-size: 0.65rem;
+    text-decoration: none;
+  }
+
+  .index-meta {
+    @apply flex items-center gap-4 text-[var(--acid-muted)] normal-case;
+    font-size: 0.6rem;
+  }
+
+  .index-header-cols {
+    @apply hidden md:grid px-6 py-2 bg-black
+      border-b border-[#111111]
+      text-[11px] uppercase tracking-wide text-[var(--acid-muted)];
+  }
+  
+  .index-header-cols > div {
+    @apply transition-colors duration-150;
+  }
+  
+  .index-header-cols > div:hover {
+    background: rgba(200, 255, 0, 0.015);
+  }
+
+  .index-row-main {
+    @apply px-6 py-3 text-[13px] text-white cursor-pointer
+      hover:bg-[#0b0b0b];
+  }
+
+  .index-expand-row {
+    @apply px-6 py-5 bg-[#050505]
+      border-t border-[#111111];
+  }

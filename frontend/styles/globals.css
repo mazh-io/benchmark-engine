@@ -21,6 +21,7 @@
   @import './components/pro-lock.css';
   @import './components/legal.css';
   @import './components/not-found.css';
+  @import './components/early-access.css';
 
   /* API page */
   @import './api/api-page.css';

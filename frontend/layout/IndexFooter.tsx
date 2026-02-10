@@ -1,49 +1,42 @@
+import Link from 'next/link';
+
 export function IndexFooter() {
   return (
-    <footer className="index-footer">
-      <div className="index-footer-inner">
-        {/* LEFT — Brand & Description */}
-        <div className="index-footer-brand">
-          <div className="index-footer-logo">MAZH</div>
-          <p className="index-footer-tagline">
-            The Inference Index. Live LLM latency benchmarks for AI infrastructure teams.
-          </p>
-        </div>
-
-        {/* RIGHT — Links Grid */}
-        <div className="index-footer-links">
-          <div className="index-footer-column">
-            <h4 className="index-footer-column-title">PRODUCT</h4>
-            <a href="#" className="index-footer-link">The Grid</a>
-            <a href="#" className="index-footer-link">Insights</a>
-            <a href="#" className="index-footer-link">API</a>
-            <a href="#" className="index-footer-link">Pricing</a>
-          </div>
-
-          <div className="index-footer-column">
-            <h4 className="index-footer-column-title">RESOURCES</h4>
-            <a href="#" className="index-footer-link">Documentation</a>
-            <a href="#" className="index-footer-link">Changelog</a>
-            <a href="#" className="index-footer-link">Status</a>
-          </div>
-
-          <div className="index-footer-column">
-            <h4 className="index-footer-column-title">COMPANY</h4>
-            <a href="#" className="index-footer-link">About</a>
-            <a href="#" className="index-footer-link">Blog</a>
-            <a href="#" className="index-footer-link">Contact</a>
+    <footer className="ea-footer">
+      <div className="ea-footer-inner">
+        <div className="ea-footer-brand">
+          <div className="ea-footer-logo">MAZH</div>
+          <div className="ea-footer-tagline">
+            Independent LLM latency benchmarks. Real data, no marketing fluff.
           </div>
         </div>
 
-        {/* BOTTOM — Copyright & Social */}
-        <div className="index-footer-bottom">
-          <span className="index-footer-copyright">
-            © {new Date().getFullYear()} mazh. All rights reserved.
-          </span>
-          <div className="index-footer-social-wrapper">
-            <a href="https://x.com/mazh_io" target="_blank" rel="noreferrer" className="index-footer-social">
-              𝕏 @mazh_io
-            </a>
+        <div className="ea-footer-links">
+          <div className="ea-footer-col">
+            <h4>Product</h4>
+            <Link href="/">Index</Link>
+            <Link href="/">Insights</Link>
+            <Link href="/">API</Link>
+          </div>
+          <div className="ea-footer-col">
+            <h4>Company</h4>
+            <Link href="/">About</Link>
+            <Link href="/">Methodology</Link>
+            <Link href="/">Contact</Link>
+          </div>
+          <div className="ea-footer-col">
+            <h4>Legal</h4>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/imprint">Imprint</Link>
+          </div>
+        </div>
+
+        <div className="ea-footer-bottom">
+          <span>&copy; {new Date().getFullYear()} mazh.io</span>
+          <div className="ea-footer-social">
+            <a href="https://x.com/mazh_io" target="_blank" rel="noreferrer">𝕏</a>
+            <a href="https://github.com/mazh-io" target="_blank" rel="noreferrer">GitHub</a>
           </div>
         </div>
       </div>

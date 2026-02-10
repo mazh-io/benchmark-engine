@@ -135,10 +135,9 @@
   }
 
   .insights-grid .insight-icon-large {
-    font-size: 1.8rem !important;
+    font-size: 1.6rem !important;
     line-height: 1;
     margin-top: -2px;
-    margin-left: -2px;
   }
 
   .index-expand-label {

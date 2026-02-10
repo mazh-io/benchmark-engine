@@ -9,7 +9,7 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 interface Props {
-  activeTab: Tab;
+  activeTab: Tab | null;
   onTabChange: (tab: Tab) => void;
 }
 

@@ -1,4 +1,4 @@
-import { StatCard } from '@/templates/stats/StatCard';
+import { HighlightCard } from '@/templates/highlights/HighlightCard';
 
 type Color = 'acid' | 'green' | 'red' | 'white';
 
@@ -24,7 +24,7 @@ export function InsightCard({
   const cls = large ? `insight-metric-large-${color}` : 'insight-metric-medium';
 
   return (
-    <StatCard
+    <HighlightCard
       title={title}
       featured={featured}
       pro={pro}
@@ -43,7 +43,7 @@ export function InsightCard({
         </div>
         <div className="insight-description">{description}</div>
       </div>
-    </StatCard>
+    </HighlightCard>
   );
 }
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Header } from '@/layout/Header';
 import { useBenchmarkData } from '@/hooks/useBenchmarkData';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetric';
-import { StatsHighlightsGrid } from '@/templates/stats/StatsHighlightsGrid';
+import { HighlightsGrid } from '@/templates/highlights/HighlightsGrid';
 import { FilterBar } from '@/templates/filters/FilterBar';
 import { IndexTable } from '@/templates/IndexTable/IndexTable';
 import { MainNav, type Tab } from '@/templates/navigation/MainNav';
@@ -55,7 +55,7 @@ export default function DashboardPage() {
       <div className="h-px bg-[#0f0f0f]" />
 
       <div className="px-4 pt-6 pb-4">
-        <StatsHighlightsGrid
+        <HighlightsGrid
           expandedCard={expandedCard}
           setExpandedCard={setExpandedCard}
           topSpeed={dashboard.topSpeed}

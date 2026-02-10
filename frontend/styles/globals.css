@@ -19,6 +19,8 @@
   @import './components/detail-panels.css';
   @import './components/head-to-head.css';
   @import './components/pro-lock.css';
+  @import './components/legal.css';
+  @import './components/not-found.css';
 
   /* API page */
   @import './api/api-page.css';

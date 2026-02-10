@@ -20,15 +20,14 @@ interface Props {
   results?: BenchmarkResultWithRelations[];
 }
 
-/* ── shared action buttons ── */
+/* ── shared buttons ── */
 
 function CardActions({ children }: { children: ReactNode }) {
   return <div className="flex gap-2 w-full px-2">{children}</div>;
 }
 
-const btnGrid = 'flex-1 inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold';
 const Btn = ({ label, accent }: { label: string; accent?: boolean }) => (
-  <button className={`${btnGrid} ${accent ? 'border border-[#CAFF00] bg-[#1a1f0a] text-[#CAFF00]' : 'border border-[#262626] bg-[#050505] text-white'}`}>
+  <button className={`highlight-btn ${accent ? 'highlight-btn-accent' : 'highlight-btn-default'}`}>
     {label}
   </button>
 );
@@ -62,42 +61,42 @@ function InsightCard({
 
   return (
     <HighlightCard title="💡 INSIGHT" isExpanded={isExpanded} onToggle={onToggle}>
-      <div className="text-[13px] font-semibold leading-tight">
-        <span className="text-[#CAFF00]">{fName}</span>
+      <div className="highlight-insight-text">
+        <span className="text-acid">{fName}</span>
         <span className="text-white"> is </span>
-        <span className="text-[#CAFF00]">{mul}× faster</span>
+        <span className="text-acid">{mul}× faster</span>
         <span className="text-white"> than </span>
-        <span className="text-[#CAFF00]">{sName}</span>
-        {sModel && <> <span className="text-[#CAFF00]">{sModel}</span></>}
+        <span className="text-acid">{sName}</span>
+        {sModel && <> <span className="text-acid">{sModel}</span></>}
       </div>
 
       {isExpanded && (
         <>
-          <div className="my-5 h-px bg-[#111111]" />
+          <div className="highlight-divider" />
 
           <div className="mb-3">
-            <div className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-3">DATA COMPARISON</div>
-            <div className="bg-black border border-[#1f1f1f] rounded-md px-3 py-3 space-y-2">
+            <div className="highlight-section-label">DATA COMPARISON</div>
+            <div className="highlight-comparison-box">
               {[
-                { name: fName, model: fModel, ms: fastest.avgTTFT, cls: 'text-[#CAFF00]' },
+                { name: fName, model: fModel, ms: fastest.avgTTFT, cls: 'text-acid' },
                 { name: sName, model: sModel, ms: slowest.avgTTFT, cls: 'text-red-500' },
               ].map((p) => (
-                <div key={p.name} className="flex justify-between items-center text-[12px]">
+                <div key={p.name} className="highlight-ranking-row">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-white">{p.name}</span>
-                    {p.model && <span className="text-[11px] text-[#9CA3AF]">{p.model}</span>}
+                    <span className="highlight-provider-name">{p.name}</span>
+                    {p.model && <span className="highlight-model">{p.model}</span>}
                   </div>
                   <span className={`${p.cls} font-semibold`}>{Math.round(p.ms).toLocaleString()}ms</span>
                 </div>
               ))}
 
-              <div className="my-2 h-px border-t border-dashed border-[#1f1f1f]" />
-              <div className="text-[11px] flex items-center justify-center gap-2">
-                <span className="text-[#9CA3AF]">Difference:</span>
-                <span className="text-[#CAFF00] font-semibold">{mul}×</span>
-                <span className="text-[#9CA3AF]">faster</span>
-                <span className="text-[#9CA3AF]">/</span>
-                <span className="text-[#CAFF00] font-semibold">{diff.toLocaleString()}ms</span>
+              <div className="highlight-dashed-divider" />
+              <div className="highlight-diff-row">
+                <span className="highlight-model">Difference:</span>
+                <span className="text-acid font-semibold">{mul}×</span>
+                <span className="highlight-model">faster</span>
+                <span className="highlight-model">/</span>
+                <span className="text-acid font-semibold">{diff.toLocaleString()}ms</span>
               </div>
             </div>
           </div>

@@ -5,8 +5,6 @@ import type { ProviderMetrics, BenchmarkResultWithRelations } from '@/api/types'
 import { resolveModelName } from '@/api/utils';
 import { HighlightCard } from './HighlightCard';
 
-/* ── sub-components ── */
-
 function PrimaryValue({
   value, suffix, provider, model, colorClass, blurred,
 }: {
@@ -15,13 +13,13 @@ function PrimaryValue({
 }) {
   return (
     <div className={blurred ? 'blur-locked' : ''}>
-      <div className={`text-[24px] font-semibold leading-none ${colorClass ?? 'text-white'}`}>
+      <div className={`highlight-primary-value ${colorClass ?? 'text-white'}`}>
         {value}{suffix}
       </div>
       {(provider || model) && (
-        <div className="mt-1 flex items-center gap-1.5">
-          {provider && <span className="text-[11px] font-semibold text-white">{provider}</span>}
-          {model && <span className="text-[11px] text-[#9CA3AF]">{model}</span>}
+        <div className="highlight-provider-row">
+          {provider && <span className="highlight-provider-name">{provider}</span>}
+          {model && <span className="highlight-model">{model}</span>}
         </div>
       )}
     </div>
@@ -44,10 +42,10 @@ function RankingList({
         {items.map((m, i) => {
           const model = resolveModelName(m.provider, results);
           return (
-            <div key={m.provider} className="flex justify-between items-center text-[12px]">
+            <div key={m.provider} className="highlight-ranking-row">
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-white">{m.providerDisplayName || m.provider}</span>
-                {model && <span className="text-[11px] text-[#9CA3AF]">{model}</span>}
+                <span className="highlight-provider-name">{m.providerDisplayName || m.provider}</span>
+                {model && <span className="highlight-model">{model}</span>}
               </div>
               <span className={i === 0 ? (accentClass || 'text-acid') : 'text-white'}>
                 {formatter(m)}
@@ -59,8 +57,6 @@ function RankingList({
     </div>
   );
 }
-
-/* ── main card ── */
 
 interface Props {
   title: string;
@@ -97,7 +93,7 @@ export function MetricCard({
 
       {isExpanded && (
         <>
-          <div className="my-5 h-px bg-[#111111]" />
+          <div className="highlight-divider" />
           {listTitle && formatter && (
             <RankingList title={listTitle} items={list} formatter={formatter}
               blurred={isBlurred} results={results} accentClass={colorClass} />

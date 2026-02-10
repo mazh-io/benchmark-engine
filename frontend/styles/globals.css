@@ -1,38 +1,27 @@
-/**
- * Global Styles – Modular Architecture
- * 
- * This file imports all modular CSS files for better maintainability.
- * Each module is self-contained and focused on a specific component or feature.
- */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================================
-   BASE STYLES
-   ============================================================================ */
 @import './base/variables.css';
 
-/* ============================================================================
-   COMPONENTS
-   ============================================================================ */
 @layer components {
-  @import './components/index-table.css';
-  @import './components/metric-card.css';
-  @import './components/buttons.css';
-  @import './components/insights.css';
-  @import './components/pro-lock.css';
+  /* Layout */
+  @import './components/header.css';
+  @import './components/navigation.css';
   @import './components/footer.css';
 
-  /* ==========================================================================
-     API DOCUMENTATION
-     ========================================================================== */
-  @import './api/api-page.css';
+  /* Core components */
+  @import './components/buttons.css';
+  @import './components/filters.css';
+  @import './components/highlights.css';
+  @import './components/index-table.css';
+  @import './components/insights.css';
+  @import './components/detail-panels.css';
+  @import './components/head-to-head.css';
+  @import './components/pro-lock.css';
 
-  /* ==========================================================================
-     API WIDGETS
-     ========================================================================== */
+  /* API page */
+  @import './api/api-page.css';
   @import './api/widgets/widget-base.css';
   @import './api/widgets/provider-card.css';
   @import './api/widgets/comparison.css';

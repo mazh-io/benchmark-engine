@@ -1,12 +1,6 @@
-/**
- * Index Table Styles
- * Main table layout for provider benchmarks
- */
+/* Index Table — shell, header, rows, expanded row, footer */
 
-  /* ======================
-     INDEX TABLE
-     ====================== */
-
+  /* Shell */
   .index-shell {
     @apply rounded-2xl border border-[var(--acid-border)] bg-[#050505] overflow-hidden;
   }
@@ -38,21 +32,99 @@
       border-b border-[#111111]
       text-[11px] uppercase tracking-wide text-[var(--acid-muted)];
   }
-  
-  .index-header-cols > div {
-    @apply transition-colors duration-150;
-  }
-  
-  .index-header-cols > div:hover {
-    background: rgba(200, 255, 0, 0.015);
-  }
+
+  .index-header-cols > div { @apply transition-colors duration-150; }
+  .index-header-cols > div:hover { background: rgba(200, 255, 0, 0.015); }
 
   .index-row-main {
-    @apply px-6 py-3 text-[13px] text-white cursor-pointer
-      hover:bg-[#0b0b0b];
+    @apply px-6 py-3 text-[13px] text-white cursor-pointer hover:bg-[#0b0b0b];
   }
 
   .index-expand-row {
-    @apply px-6 py-5 bg-[#050505]
-      border-t border-[#111111];
+    @apply px-6 py-5 bg-[#050505] border-t border-[#111111];
   }
+
+  /* Column headers */
+  .index-col-header {
+    @apply relative inline-flex items-center gap-1 cursor-pointer;
+  }
+
+  .index-col-tooltip {
+    @apply pointer-events-none absolute left-0 top-full z-40 mt-2
+      hidden rounded-lg border border-[#232323] bg-[#161616]
+      px-3.5 py-3 text-[11px] leading-relaxed text-[#b8b8b8]
+      shadow-[0_12px_32px_rgba(0,0,0,0.6)] group-hover:block text-center;
+  }
+
+  .index-col-tooltip-title {
+    @apply font-bold mb-1.5 text-[#c8ff00] text-[10px];
+  }
+
+  /* Row cells */
+  .index-row-expand { @apply text-[#6B7280] select-none; }
+  .index-row-rank { @apply pl-1 text-[#d1d5db] font-semibold; }
+  .index-row-status { @apply flex items-center pl-1; }
+  .index-status-dot { @apply inline-flex h-2 w-2 rounded-full; }
+  .index-row-provider { @apply font-semibold truncate; }
+  .index-row-model { @apply truncate text-[#9CA3AF] text-[12px] font-mono; }
+  .index-row-type { @apply flex items-center justify-center pl-6; }
+  .index-type-badge { @apply inline-flex items-center rounded-md border border-[#262626] px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#9CA3AF]; }
+  .index-row-metric { @apply text-[12px] flex items-center; }
+  .index-metric-value { @apply font-semibold mr-1 text-[#d1d5db]; }
+  .index-metric-unit { @apply text-[10px] text-[#6B7280]; }
+  .index-metric-empty { @apply text-[#6B7280]; }
+  .index-row-jitter { @apply flex items-center gap-2; }
+  .index-jitter-blur { @apply blur-[4px] opacity-40; }
+  .index-lock-icon { @apply text-[9px] text-[#6B7280]; }
+  .index-row-price { @apply text-[12px]; }
+  .index-price-value { @apply font-semibold; }
+  .index-price-unit { @apply text-[10px] text-[#6B7280]; }
+  .index-row-value { @apply flex items-center justify-end gap-2; }
+  .index-value-blur { @apply text-[12px] text-[#9CA3AF] blur-[4px] opacity-40; }
+  .index-header-trend { @apply text-right pl-2; }
+  .index-rows-container { @apply pb-3; position: relative; }
+  .index-row-trend { @apply flex items-end justify-end; }
+  .index-trend-delta { @apply text-[10px]; }
+
+  /* Expanded row */
+  .index-expand-metric-grid { @apply grid grid-cols-1 md:grid-cols-5 gap-3; }
+
+  .index-expand-metric-card {
+    padding: 4px 8px;
+    background: black;
+    border: 1px solid #111111;
+    border-radius: 10px;
+    position: relative;
+    overflow: visible;
+    min-height: 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    cursor: default;
+  }
+
+  .index-expand-metric-label { @apply text-center mb-1; }
+  .index-expand-metric-label-text { @apply text-[11px] uppercase tracking-wide text-[#6B7280]; }
+  .index-expand-metric-value-wrapper { @apply text-center; }
+  .index-expand-metric-value { @apply text-[24px] font-bold leading-[0.95] text-[#E5E7EB]; }
+  .index-expand-metric-value.acid { color: var(--acid); }
+  .index-expand-metric-value.green { color: #22c55e; }
+  .index-expand-metric-value.locked { @apply blur-[6px] opacity-20 select-none; }
+  .index-expand-metric-unit { @apply mt-3 text-[11px] text-[#6B7280]; }
+  .index-expand-metric-divider { @apply my-6 h-px bg-[#111111]; }
+  .index-expand-metric-comparison { @apply space-y-2 text-[11px] text-[#6B7280]; }
+  .index-expand-comparison-row { @apply flex items-center justify-between; }
+  .index-expand-comparison-value { @apply text-[10px]; }
+  .index-expand-comparison-value.up { @apply text-[#22c55e]; }
+  .index-expand-comparison-value.down { @apply text-red-500; }
+  .index-expand-comparison-value.locked { @apply text-[#6B7280]; }
+  .index-expand-comparison-value.blur { @apply blur-[3px] opacity-40; }
+  .index-expand-metric-footer { @apply mt-6 pt-4 border-t border-[#111111] text-[11px] text-[#6B7280]; }
+  .index-expand-footer-row { @apply flex justify-between opacity-40; }
+  .index-expand-actions { @apply mt-4 grid grid-cols-1 md:grid-cols-3 gap-2; }
+  .index-expand-btn { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[#262626] bg-[#050505] px-2 py-2 text-[#e5e7eb] text-[11px]; }
+  .index-expand-btn-primary { @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#CAFF00] text-black px-2 py-1.5 text-[10px] font-semibold; }
+
+  /* Footer */
+  .index-footer { @apply mt-4 border-t border-[#111111] px-6 py-4 flex justify-center; }
+  .index-footer-btn-locked { @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2a2a] bg-[#050505] text-[11px] text-[#9CA3AF] cursor-not-allowed opacity-70; }

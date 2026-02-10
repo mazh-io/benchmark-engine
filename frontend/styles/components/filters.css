@@ -1,0 +1,68 @@
+/* Filters — filter bar, pills, chips, search */
+
+  .filter-shell {
+    @apply rounded-2xl border border-[#1f1f1f] bg-[#050505] px-4 py-4;
+  }
+
+  .filter-row {
+    @apply flex flex-wrap items-center gap-6;
+  }
+
+  .filter-label {
+    @apply text-[11px] uppercase tracking-wide text-[var(--acid-muted)];
+  }
+
+  .filter-pill-group {
+    @apply flex items-center gap-1 px-2 py-1 rounded-lg border border-[#262626] bg-[#050505];
+  }
+
+  .filter-pill {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition;
+  }
+
+  .filter-pill-active { @apply bg-[#CAFF00] text-black; }
+  .filter-pill-muted { @apply text-[#4B5563]; }
+  .filter-pill-muted-hover { @apply text-[#9CA3AF] hover:text-white; }
+
+  .filter-pill-badge {
+    @apply px-1 py-0.5 rounded-md text-[9px] font-semibold bg-[#111111] text-[#9CA3AF] border border-[#262626];
+  }
+
+  .filter-search-input {
+    @apply h-8 px-3 text-xs rounded-md bg-[#0b0b0b] border border-[#1f1f1f] text-white placeholder-[#6B7280] focus:outline-none w-32 sm:w-40;
+  }
+
+  .filter-chip {
+    @apply px-3 py-1 rounded-md text-xs border border-[#1f1f1f] text-[#4B5563];
+    text-transform: capitalize;
+    transition: all 0.15s ease;
+  }
+
+  .filter-chip:hover { background: rgba(255, 255, 255, 0.03); color: #9CA3AF; }
+  .filter-chip.active { border-color: var(--acid); background: rgba(202, 255, 0, 0.08); color: var(--acid); }
+  .filter-chip-google { }
+
+  .filter-chip-request {
+    @apply flex items-center gap-2 px-3 py-1.5 text-xs rounded-md border border-dashed border-[var(--acid)] text-[#9CA3AF];
+    background: transparent;
+    transition: all 0.3s ease;
+  }
+
+  .filter-chip-request:hover { background: transparent; border-color: var(--acid); }
+
+  .filter-chip-request-plus {
+    @apply flex items-center justify-center w-3 h-3 rounded-full border border-[#6B7280] text-white;
+    font-size: 9px;
+    line-height: 0;
+    padding: 0;
+    font-weight: 400;
+  }
+
+  .filter-chip-request-insight {
+    @apply flex items-center gap-2 px-3 py-1.5 text-xs rounded-md border border-dashed border-[var(--acid)];
+    background: rgba(200, 255, 0, 0.05);
+    color: var(--acid);
+    transition: all 0.3s ease;
+  }
+
+  .filter-chip-request-insight:hover { background: rgba(200, 255, 0, 0.1); border-color: var(--acid); }

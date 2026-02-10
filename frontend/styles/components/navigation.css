@@ -1,0 +1,23 @@
+/* Navigation — main tab bar */
+
+  .main-nav {
+    @apply flex gap-0 border-b;
+    border-color: var(--border-subtle);
+    padding: 0 24px;
+  }
+
+  .nav-tab {
+    padding: 8px 14px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #787878;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .nav-tab:hover { color: #b8b8b8; }
+  .nav-tab.active { color: #c8ff00; border-bottom-color: #c8ff00; }
+  .nav-tab.active:hover { color: #c8ff00; }

@@ -4,7 +4,7 @@ interface Props {
   responseExample: string;
 }
 
-export function APIResponseExample({ responseExample }: Props) {
+export function ResponseExample({ responseExample }: Props) {
   if (!responseExample) return null;
 
   return (

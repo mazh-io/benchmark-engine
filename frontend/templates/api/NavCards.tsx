@@ -12,7 +12,7 @@ const API_CARDS: APICard[] = [
   { id: 'widgets', icon: '📊', label: 'Widgets' },
 ];
 
-export function APINavigationCards({ activeSection, onSectionChange }: Props) {
+export function NavCards({ activeSection, onSectionChange }: Props) {
   return (
     <div className="api-nav-grid">
       {API_CARDS.map((card) => (

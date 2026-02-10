@@ -1,9 +1,6 @@
-import type {
-  BenchmarkResultWithRelations,
-  ProviderMetrics,
-} from '@/api/types';
+import type { BenchmarkResultWithRelations, ProviderMetrics } from '@/api/types';
 import { PROVIDER_CATEGORIES } from '@/api/types';
-import type { IndexRow } from './index.types';
+import type { RowData } from './types';
 
 /* ── shared palette ── */
 
@@ -28,11 +25,11 @@ export function buildRows(
   results: BenchmarkResultWithRelations[],
   metrics: Map<string, ProviderMetrics>,
   limit = 21,
-): IndexRow[] {
+): RowData[] {
   if (!results.length || !metrics.size) return [];
 
   const seen = new Set<string>();
-  const rows: IndexRow[] = [];
+  const rows: RowData[] = [];
 
   for (const result of results) {
     const providerKey =
@@ -47,11 +44,9 @@ export function buildRows(
     if (!metric) continue;
 
     const category = PROVIDER_CATEGORIES[providerKey] || 'direct';
-
     const ttft = result.ttft_ms ?? metric.avgTTFT ?? null;
     const tps = result.tps ?? metric.avgTPS ?? null;
 
-    // Delta vs 24h baseline for this provider (using provider averages)
     const ttftDelta24h =
       ttft != null && metric.avgTTFT
         ? ((ttft - metric.avgTTFT) / metric.avgTTFT) * 100
@@ -82,7 +77,6 @@ export function buildRows(
     if (rows.length >= limit) break;
   }
 
-  // Sort by TTFT ascending and re-number ranks
   return rows
     .sort((a, b) => (a.ttftMs ?? Infinity) - (b.ttftMs ?? Infinity))
     .map((row, i) => ({ ...row, rank: i + 1 }));

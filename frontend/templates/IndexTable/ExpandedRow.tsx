@@ -1,15 +1,13 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { IndexRow } from '../index.types';
-import { getStatusColor } from '../index.helper';
+import type { RowData } from './types';
+import { getStatusColor } from './helpers';
 
 const TIME_RANGES = ['1h', '24h', '7d', '30d', '90d'] as const;
 const PRICE_COMPARISONS = ['Fireworks', 'Together'] as const;
 
 type Accent = 'acid' | 'green' | '';
-
-/* ── helpers ── */
 
 const fmt = (v: number | null) =>
   v != null ? Math.round(v).toLocaleString() : '—';
@@ -19,7 +17,6 @@ function ComparisonValue({
 }: {
   label: string; idx: number; locked: boolean; delta: number | null;
 }): ReactElement {
-  // 24h real delta (unlocked metrics only)
   if (idx === 1 && !locked && typeof delta === 'number') {
     const up = delta <= 0;
     return (
@@ -29,15 +26,12 @@ function ComparisonValue({
     );
   }
 
-  // Locked: all ranges for locked metrics, 7d+ for TTFT/TPS
   if (locked || ((label === 'TTFT' || label === 'TPS') && idx >= 2)) {
     return <span className="index-expand-comparison-value locked">🔒</span>;
   }
 
   return <span className="opacity-40">—</span>;
 }
-
-/* ── metric card ── */
 
 interface CardProps {
   label: string;
@@ -93,9 +87,7 @@ function MetricCard({ label, value, unit, accent = '', locked = false, delta = n
   );
 }
 
-/* ── main expanded row ── */
-
-export function IndexRowExpanded({ row }: { row: IndexRow }): ReactElement {
+export function ExpandedRow({ row }: { row: RowData }): ReactElement {
   const priceAccent: Accent = row.jitterColor === 'green' ? 'green' : '';
 
   const cards: CardProps[] = [

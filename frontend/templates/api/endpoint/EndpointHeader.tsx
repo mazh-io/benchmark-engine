@@ -4,7 +4,7 @@ interface Props {
   endpoint: APIEndpoint;
 }
 
-export function APIEndpointHeader({ endpoint }: Props) {
+export function EndpointHeader({ endpoint }: Props) {
   return (
     <div>
       <h3 className="api-subsection-title">Endpoint</h3>
@@ -31,10 +31,7 @@ export function APIEndpointHeader({ endpoint }: Props) {
               <div
                 className="api-param-desc"
                 dangerouslySetInnerHTML={{
-                  __html: param.description.replace(
-                    /`([^`]+)`/g,
-                    '<code>$1</code>',
-                  ),
+                  __html: param.description.replace(/`([^`]+)`/g, '<code>$1</code>'),
                 }}
               />
             </div>

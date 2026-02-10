@@ -1,6 +1,6 @@
 import type { ProviderMetrics } from '@/api/types';
 
-export type IndexRow = {
+export type RowData = {
   rank: number;
   providerKey: string;
   providerDisplay: string;

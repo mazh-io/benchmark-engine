@@ -1,7 +1,7 @@
-import { APIEndpointDetail } from './endpoint/APIEndpointDetail';
+import { EndpointDetail } from './endpoint/EndpointDetail';
 import { LATENCY_ENDPOINT_DOC } from '@/data/apiDocumentation';
 
-export function APIRestSection() {
+export function RestSection() {
   return (
     <div className="api-section">
       <div>
@@ -30,7 +30,7 @@ export function APIRestSection() {
         <span className="api-info-highlight">Settings → API</span> after subscribing to Pro.
       </div>
 
-      <APIEndpointDetail documentation={LATENCY_ENDPOINT_DOC} />
+      <EndpointDetail documentation={LATENCY_ENDPOINT_DOC} />
     </div>
   );
 }

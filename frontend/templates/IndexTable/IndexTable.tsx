@@ -2,10 +2,10 @@
 
 import { Fragment, useState } from 'react';
 import type { BenchmarkResultWithRelations, ProviderMetrics } from '@/api/types';
-import { buildRows, INDEX_GRID_COLS } from './index.helper';
-import type { IndexRow } from './index.types';
-import { IndexRow as Row } from './row/IndexRow';
-import { IndexRowExpanded } from './row/IndexRowExpanded';
+import { buildRows, INDEX_GRID_COLS } from './helpers';
+import type { RowData } from './types';
+import { TableRow } from './TableRow';
+import { ExpandedRow } from './ExpandedRow';
 
 /* ── column definitions ── */
 
@@ -62,7 +62,7 @@ interface Props {
 
 export function IndexTable({ results, metrics }: Props) {
   const [expanded, setExpanded] = useState<number | null>(null);
-  const allRows: IndexRow[] = buildRows(results, metrics, 21);
+  const allRows: RowData[] = buildRows(results, metrics, 21);
   const primaryCount = Math.min(6, allRows.length);
   const primaryRows = allRows.slice(0, primaryCount);
   const tailRow = allRows.length > primaryCount ? allRows[allRows.length - 1] : null;
@@ -93,12 +93,12 @@ export function IndexTable({ results, metrics }: Props) {
         <div className="index-rows-container divide-y divide-[#111111]">
           {rows.map((row) => (
             <Fragment key={row.rank}>
-              <Row
+              <TableRow
                 row={row}
                 isExpanded={expanded === row.rank}
                 onToggle={() => setExpanded(expanded === row.rank ? null : row.rank)}
               />
-              {expanded === row.rank && <IndexRowExpanded row={row} />}
+              {expanded === row.rank && <ExpandedRow row={row} />}
             </Fragment>
           ))}
         </div>

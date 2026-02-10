@@ -1,15 +1,13 @@
 'use client';
 
 import { useMemo, type ReactElement } from 'react';
-import type { IndexRow as Row } from '../index.types';
-import type { JitterColor } from '../index.helper';
-import { INDEX_GRID_COLS, getStatusColor } from '../index.helper';
-import { JitterBar } from '../ui/JitterBar';
+import type { RowData } from './types';
+import type { JitterColor } from './helpers';
+import { INDEX_GRID_COLS, getStatusColor } from './helpers';
+import { JitterBar } from './JitterBar';
 
 const BAR_N = 10;
 const MAX_JITTER = 10_000;
-
-/* ── tiny helpers ── */
 
 function TrendChart({ color, value }: { color: JitterColor; value: number }) {
   const { bg } = getStatusColor(color);
@@ -42,15 +40,13 @@ function Metric({ value, unit, cls }: { value: number | null; unit?: string; cls
   );
 }
 
-/* ── main row ── */
-
 interface Props {
-  row: Row;
+  row: RowData;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
-export function IndexRow({ row, isExpanded, onToggle }: Props): ReactElement {
+export function TableRow({ row, isExpanded, onToggle }: Props): ReactElement {
   const s = getStatusColor(row.jitterColor);
 
   return (

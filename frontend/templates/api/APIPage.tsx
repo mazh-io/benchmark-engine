@@ -1,23 +1,23 @@
 'use client';
 
 import { useState, type ComponentType } from 'react';
-import { APINavigationCards } from './APINavigationCards';
-import { APIRestSection } from './APIRestSection';
-import { APIPlaygroundSection } from './APIPlaygroundSection';
-import { APIKeysSection } from './APIKeysSection';
-import { APIWidgetsSection } from './APIWidgetsSection';
+import { NavCards } from './NavCards';
+import { RestSection } from './RestSection';
+import { PlaygroundSection } from './PlaygroundSection';
+import { KeysSection } from './KeysSection';
+import { WidgetsSection } from './WidgetsSection';
 import type { APISection } from './types';
 
-const SECTION_COMPONENTS: Record<APISection, ComponentType> = {
-  docs: APIRestSection,
-  playground: APIPlaygroundSection,
-  keys: APIKeysSection,
-  widgets: APIWidgetsSection,
+const SECTIONS: Record<APISection, ComponentType> = {
+  docs: RestSection,
+  playground: PlaygroundSection,
+  keys: KeysSection,
+  widgets: WidgetsSection,
 };
 
 export function APIPage() {
-  const [activeSection, setActiveSection] = useState<APISection>('docs');
-  const ActiveContent = SECTION_COMPONENTS[activeSection];
+  const [active, setActive] = useState<APISection>('docs');
+  const Content = SECTIONS[active];
 
   return (
     <div className="api-page">
@@ -30,10 +30,10 @@ export function APIPage() {
         </p>
       </div>
 
-      <APINavigationCards activeSection={activeSection} onSectionChange={setActiveSection} />
+      <NavCards activeSection={active} onSectionChange={setActive} />
 
       <div className="api-content">
-        <ActiveContent />
+        <Content />
       </div>
     </div>
   );

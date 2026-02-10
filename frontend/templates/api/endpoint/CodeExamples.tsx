@@ -14,7 +14,7 @@ interface Props {
   codeExamples: CodeExample[];
 }
 
-export function APICodeExamples({ codeExamples }: Props) {
+export function CodeExamples({ codeExamples }: Props) {
   const [activeLanguage, setActiveLanguage] = useState<CodeExample['language']>('curl');
 
   if (!codeExamples.length) return null;

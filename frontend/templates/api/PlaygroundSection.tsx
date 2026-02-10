@@ -1,4 +1,4 @@
-export function APIPlaygroundSection() {
+export function PlaygroundSection() {
   return (
     <div className="api-section-sm">
       <div>

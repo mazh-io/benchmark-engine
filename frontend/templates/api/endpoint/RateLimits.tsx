@@ -5,7 +5,7 @@ interface Props {
   headers: APIHeader[];
 }
 
-export function APIRateLimits({ rateLimits, headers }: Props) {
+export function RateLimits({ rateLimits, headers }: Props) {
   return (
     <>
       {rateLimits.length > 0 && (

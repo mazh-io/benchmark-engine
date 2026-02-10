@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export function APIKeysSection() {
+export function KeysSection() {
   const [isProView, setIsProView] = useState(false);
 
   return (
@@ -12,7 +12,6 @@ export function APIKeysSection() {
         <p className="api-section-desc">Manage your API keys and monitor usage.</p>
       </div>
 
-      {/* Free View */}
       {!isProView && (
         <div className="api-keys-lock">
           <div className="api-keys-lock-icon">🔒</div>
@@ -34,7 +33,6 @@ export function APIKeysSection() {
         </div>
       )}
 
-      {/* Pro View */}
       {isProView && (
         <div className="api-keys-pro">
           <div className="api-keys-card">
@@ -80,7 +78,6 @@ export function APIKeysSection() {
         </div>
       )}
 
-      {/* Demo Toggle */}
       <div className="api-keys-demo">
         <button type="button" onClick={() => setIsProView((v) => !v)} className="api-keys-demo-btn">
           Toggle Free/Pro View (Demo)

@@ -7,7 +7,7 @@ import { ComparisonWidget } from './widgets/ComparisonWidget';
 import { StatusBadgeWidget } from './widgets/StatusBadgeWidget';
 import { InsightWidget } from './widgets/InsightWidget';
 
-export function APIWidgetsSection() {
+export function WidgetsSection() {
   return (
     <div className="api-section">
       <div>

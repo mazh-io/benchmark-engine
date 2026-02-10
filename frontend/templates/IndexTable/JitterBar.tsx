@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { JitterColor } from '../index.helper';
-import { getStatusColor } from '../index.helper';
+import type { JitterColor } from './helpers';
+import { getStatusColor } from './helpers';
 
 const BAR_COUNT = 10;
 

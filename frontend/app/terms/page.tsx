@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { LegalShell } from '@/templates/legal/LegalShell';
+import { LegalShell } from '../../templates/legal/LegalShell';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — MAZH',

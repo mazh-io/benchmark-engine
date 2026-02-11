@@ -1,4 +1,5 @@
 import type { ReactNode, ReactElement } from 'react';
+import Link from 'next/link';
 
 interface Props {
   icon: string;
@@ -29,7 +30,7 @@ export function DetailPanel({ icon, title, onClose, children, pro }: Props): Rea
           <div className="pro-overlay-icon">🔒</div>
           <div className="pro-overlay-title">Pro Feature</div>
           <div className="pro-overlay-text">{pro}</div>
-          <button className="pro-overlay-btn">€19/mo</button>
+          <Link href="/early-access" className="pro-overlay-btn">€19/mo</Link>
         </div>
       )}
     </div>

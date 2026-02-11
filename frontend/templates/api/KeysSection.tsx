@@ -21,7 +21,7 @@ export function KeysSection() {
             remove widget branding.
           </p>
 
-          <a href="/pricing" className="api-keys-cta">
+          <a href="/early-access" className="api-keys-cta">
             Get Early Pro Access — €19/mo
           </a>
 

@@ -15,8 +15,8 @@ export function IndexFooter() {
           <div className="ea-footer-col">
             <h4>Product</h4>
             <Link href="/">Index</Link>
-            <Link href="/">Insights</Link>
-            <Link href="/">API</Link>
+            <Link href="/?tab=insights">Insights</Link>
+            <Link href="/?tab=api">API</Link>
           </div>
           <div className="ea-footer-col">
             <h4>Company</h4>

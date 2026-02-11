@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '@/layout/Header';
 import { useBenchmarkData } from '@/hooks/useBenchmarkData';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetric';
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   >(null);
   const [activeTab, setActiveTab] = useState<Tab>('grid');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('24h');
+  const searchParams = useSearchParams();
 
   const { data, isLoading, error, refetch } = useBenchmarkData({
     timeRange: timeFilter,
@@ -29,13 +31,16 @@ export default function DashboardPage() {
 
   const dashboard = useDashboardMetrics(data);
 
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'grid' || tab === 'insights' || tab === 'api') {
+      setActiveTab(tab as Tab);
+    }
+  }, [searchParams]);
+
   const handleTimeChange = (time: TimeFilter) => {
     setTimeFilter(time);
   };
-
-  if (isLoading) {
-    return <div className="min-h-screen bg-black text-white p-10">Loading…</div>;
-  }
 
   if (error) {
     return (

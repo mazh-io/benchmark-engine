@@ -1,0 +1,365 @@
+/* ── Settings Page ──────────────────────────────── */
+
+.st-content {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+/* Page header */
+.st-page-header { margin-bottom: 32px }
+
+.st-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.st-page-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-3, #787878);
+}
+
+/* ── Tabs ───────────────────────────────────────── */
+
+.st-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border-subtle, #1a1a1a);
+}
+
+.st-tab {
+  padding: 12px 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #787878;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.st-tab:hover { color: #b8b8b8 }
+
+.st-tab.active {
+  color: #c8ff00;
+  border-bottom-color: #c8ff00;
+}
+
+.st-tab-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.st-tab-link svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Section title ──────────────────────────────── */
+
+.st-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.st-mt { margin-top: 40px }
+
+/* ── Form Elements ──────────────────────────────── */
+
+.st-form-group { margin-bottom: 24px }
+
+.st-form-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #787878;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.st-form-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-space, 'Space Grotesk', sans-serif);
+  font-size: 0.9rem;
+  color: #fff;
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.st-form-input:focus {
+  border-color: #c8ff00;
+  box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.08);
+}
+
+.st-form-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.st-form-hint {
+  font-size: 0.7rem;
+  color: #484848;
+  margin-top: 6px;
+}
+
+.st-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.st-email-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.st-email-row .st-form-input { flex: 1 }
+
+/* ── Buttons ────────────────────────────────────── */
+
+.st-btn {
+  padding: 10px 20px;
+  font-family: var(--font-space, 'Space Grotesk', sans-serif);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.st-btn-primary {
+  background: #c8ff00;
+  color: #000;
+  border: none;
+}
+
+.st-btn-primary:hover { filter: brightness(1.1) }
+
+.st-btn-secondary {
+  background: #0a0a0a;
+  color: #b8b8b8;
+  border: 1px solid #232323;
+}
+
+.st-btn-secondary:hover {
+  border-color: #787878;
+  color: #fff;
+}
+
+.st-btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.st-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Avatar Upload ──────────────────────────────── */
+
+.st-avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.st-avatar-large {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #c8ff00, #22c55e);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.st-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-avatar-hint {
+  font-size: 0.7rem;
+  color: #484848;
+}
+
+/* ── Danger Zone ────────────────────────────────── */
+
+.st-danger-zone {
+  margin-top: 48px;
+  padding: 24px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+}
+
+.st-danger-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.st-danger-desc {
+  font-size: 0.8rem;
+  color: #b8b8b8;
+  margin-bottom: 16px;
+}
+
+/* ── Billing Cards ──────────────────────────────── */
+
+.st-billing-card {
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.st-billing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.st-billing-plan-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.st-billing-badge {
+  padding: 4px 10px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.55rem;
+  font-weight: 700;
+  background: #c8ff00;
+  color: #000;
+  border-radius: 4px;
+}
+
+.st-plan-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.st-plan-detail {
+  padding: 16px;
+  background: #050505;
+  border-radius: 8px;
+}
+
+.st-plan-label {
+  font-size: 0.6rem;
+  color: #484848;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.st-plan-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.st-plan-value.acid { color: #c8ff00 }
+
+.st-billing-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.st-payment-expires {
+  font-size: 0.75rem;
+  color: #787878;
+  margin-top: 4px;
+}
+
+.st-payment-brand {
+  font-size: 0.7rem;
+  color: #787878;
+}
+
+/* ── Invoices ───────────────────────────────────── */
+
+.st-invoice-list {
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.st-invoice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.st-invoice-item:last-child { border-bottom: none }
+
+.st-invoice-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.st-invoice-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.st-invoice-amount {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+  color: #b8b8b8;
+}
+
+.st-invoice-status {
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.st-invoice-download {
+  font-size: 0.75rem;
+  color: #c8ff00;
+  text-decoration: none;
+}
+
+.st-invoice-download:hover { text-decoration: underline }
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 500px) {
+  .st-form-row { grid-template-columns: 1fr }
+  .st-plan-details { grid-template-columns: 1fr }
+}

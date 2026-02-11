@@ -1,9 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+ 
 @import './base/variables.css';
-
+ 
 @layer components {
   /* Layout */
   @import './components/header.css';
@@ -21,7 +21,16 @@
   @import './components/pro-lock.css';
   @import './components/legal.css';
   @import './components/not-found.css';
-  @import './components/early-access.css';
+
+  /* Login page */
+   @import './components/login.css';
+
+  /* Settings page */
+  @import './components/settings.css';
+
+  /* Early Access page */
+  @import './components/ea-pricing.css';
+  @import './components/ea-sections.css';
 
   /* API page */
   @import './api/api-page.css';

@@ -1,83 +1,74 @@
 /**
- * Footer
- * Index footer styles
+ * Shared Footer
+ * Used by IndexFooter and early-access page
  */
 
-/* ================= INDEX FOOTER (NEW)  ================= */
-
-.index-footer {
-  padding: 24px 24px;
+.ea-footer {
+  padding: 32px 24px;
   border-top: 1px solid var(--border-subtle);
-  margin-top: 24px;
+  margin-top: 48px;
 }
 
-.index-footer-inner {
-  max-width: 1600px;
+.ea-footer-inner {
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 60px;
+  gap: 32px;
 }
 
-/* LEFT - Brand */
-.index-footer-brand {
+.ea-footer-brand {
   max-width: 280px;
 }
 
-.index-footer-logo {
-  font-family: var(--mono);
+.ea-footer-logo {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 1.1rem;
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   letter-spacing: 0.05em;
+  color: var(--text);
 }
 
-.index-footer-tagline {
+.ea-footer-tagline {
   font-size: 0.75rem;
-  color: var(--text-2);
+  color: var(--text-3);
   line-height: 1.6;
 }
 
-/* RIGHT - Links Grid */
-.index-footer-links {
+.ea-footer-links {
   display: flex;
-  gap: 36px;
+  gap: 48px;
 }
 
-.index-footer-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.index-footer-column-title {
+.ea-footer-col h4 {
   font-size: 0.6rem;
   font-weight: 700;
-  color: var(--text-2);
+  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-.index-footer-link {
+.ea-footer-col a {
   display: block;
   font-size: 0.75rem;
-  color: var(--text);
+  color: var(--text-2);
   text-decoration: none;
-  padding: 2px 0;
+  padding: 4px 0;
   transition: color 0.1s;
 }
 
-.index-footer-link:hover {
+.ea-footer-col a:hover {
   color: var(--acid);
 }
 
-/* BOTTOM - Copyright & Social (INSIDE footer-inner, full width) */
-.index-footer-bottom {
+.ea-footer-bottom {
   width: 100%;
-  padding-top: 16px;
-  margin-top: 16px;
+  padding-top: 24px;
+  margin-top: 24px;
   border-top: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-between;
@@ -86,24 +77,17 @@
   color: var(--text-4);
 }
 
-.index-footer-copyright {
-  font-size: 0.65rem;
-  color: var(--text-3);
-}
-
-.index-footer-social-wrapper {
+.ea-footer-social {
   display: flex;
   gap: 12px;
 }
 
-.index-footer-social {
-  font-size: 0.65rem;
-  color: var(--text-2);
+.ea-footer-social a {
+  color: var(--text-3);
   text-decoration: none;
   transition: color 0.1s;
 }
 
-.index-footer-social:hover {
+.ea-footer-social a:hover {
   color: var(--acid);
 }
-

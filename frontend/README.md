@@ -51,7 +51,20 @@ frontend/
 ├── app/                        # Next.js App Router
 │   ├── layout.tsx              #   Root layout (fonts, metadata, providers)
 │   ├── page.tsx                #   Main dashboard page
-│   └── providers.tsx           #   React Query provider wrapper
+│   ├── providers.tsx           #   React Query + Auth providers wrapper
+│   ├── login/                  #   Authentication pages
+│   │   └── page.tsx           #     Login page (email/OTP flow)
+│   ├── settings/               #   User settings pages
+│   │   └── page.tsx           #     Settings page (Account/Billing tabs)
+│   ├── privacy/               #   Legal pages
+│   │   └── page.tsx           #     Privacy Policy
+│   ├── terms/                 #   Legal pages
+│   │   └── page.tsx           #     Terms of Service
+│   ├── imprint/               #   Legal pages
+│   │   └── page.tsx           #     Imprint
+│   ├── early-access/          #   Pricing page
+│   │   └── page.tsx           #     Early Access Pro pricing
+│   └── not-found.tsx          #   404 error page
 │
 ├── api/                        # Data layer
 │   ├── supabase.ts             #   Supabase client instance
@@ -64,13 +77,20 @@ frontend/
 │   ├── useBenchmarkData.ts     #   Fetches benchmark data with time range
 │   └── useDashboardMetric.ts   #   Processes dashboard-level metrics
 │
+├── contexts/                   # React Context providers
+│   └── AuthContext.tsx         #   Authentication state (login/logout/user)
+│
 ├── data/                       # Static data
-│   └── apiDocumentation.ts     #   API endpoint documentation definitions
+│   ├── apiDocumentation.ts     #   API endpoint documentation definitions
+│   └── early-access.ts         #   Early Access page content (pricing, features, FAQ)
 │
 ├── layout/                     # Layout components
-│   ├── Header.tsx              #   Top bar (logo, live badge, links)
+│   ├── Header.tsx              #   Top bar (logo, live badge, multi-tier states)
 │   ├── MainNav.tsx             #   Tab navigation (Index / Insights / API)
-│   └── IndexFooter.tsx         #   Footer with "Show all models" CTA
+│   ├── IndexFooter.tsx         #   Footer with product/legal links
+│   └── header/                 #   Header sub-components
+│       ├── LaunchpadMenu.tsx   #     Product switcher dropdown
+│       └── AvatarDropdown.tsx  #     User menu dropdown
 │
 ├── templates/                  # Page-level feature sections
 │   ├── highlights/             #   Top-of-page metric highlight cards
@@ -132,39 +152,54 @@ frontend/
 │   │   └── utils/
 │   │       └── calculations.ts #       Insight-specific math helpers
 │   │
-│   └── api/                    #   API documentation page
-│       ├── APIPage.tsx         #     Page container + tab routing
-│       ├── NavCards.tsx        #     Section navigation cards
-│       ├── RestSection.tsx     #     REST endpoints section
-│       ├── KeysSection.tsx     #     API keys management
-│       ├── PlaygroundSection.tsx#    Interactive playground
-│       ├── WidgetsSection.tsx  #     Embeddable widgets section
-│       ├── syntaxHighlighting.ts#    Code syntax highlighting util
-│       ├── types.ts            #     API page type definitions
-│       ├── endpoint/           #     Endpoint documentation components
-│       │   ├── EndpointDetail.tsx
-│       │   ├── EndpointHeader.tsx
-│       │   ├── CodeExamples.tsx
-│       │   ├── ResponseExample.tsx
-│       │   └── RateLimits.tsx
-│       └── widgets/            #     Embeddable widget components
-│           ├── WidgetChrome.tsx
-│           ├── WidgetTime.tsx
-│           ├── widgetData.ts
-│           ├── leaderboardData.ts
-│           ├── ProviderCardWidget.tsx
-│           ├── ComparisonWidget.tsx
-│           ├── StatusBadgeWidget.tsx
-│           ├── InsightWidget.tsx
-│           ├── TPSLeaderboardWidget.tsx
-│           └── TTFTLeaderboardWidget.tsx
+│   ├── api/                    #   API documentation page
+│   │   ├── APIPage.tsx         #     Page container + tab routing
+│   │   ├── NavCards.tsx        #     Section navigation cards
+│   │   ├── RestSection.tsx     #     REST endpoints section
+│   │   ├── KeysSection.tsx     #     API keys management
+│   │   ├── PlaygroundSection.tsx#    Interactive playground
+│   │   ├── WidgetsSection.tsx  #     Embeddable widgets section
+│   │   ├── syntaxHighlighting.ts#    Code syntax highlighting util
+│   │   ├── types.ts            #     API page type definitions
+│   │   ├── endpoint/           #     Endpoint documentation components
+│   │   │   ├── EndpointDetail.tsx
+│   │   │   ├── EndpointHeader.tsx
+│   │   │   ├── CodeExamples.tsx
+│   │   │   ├── ResponseExample.tsx
+│   │   │   └── RateLimits.tsx
+│   │   └── widgets/            #     Embeddable widget components
+│   │       ├── WidgetChrome.tsx
+│   │       ├── WidgetTime.tsx
+│   │       ├── widgetData.ts
+│   │       ├── leaderboardData.ts
+│   │       ├── ProviderCardWidget.tsx
+│   │       ├── ComparisonWidget.tsx
+│   │       ├── StatusBadgeWidget.tsx
+│   │       ├── InsightWidget.tsx
+│   │       ├── TPSLeaderboardWidget.tsx
+│   │       └── TTFTLeaderboardWidget.tsx
+│   │
+│   ├── settings/               #   Settings page components
+│   │   ├── AccountSection.tsx   #     Account management (profile, email)
+│   │   └── BillingSection.tsx  #     Billing (plan, payment, invoices)
+│   │
+│   ├── legal/                  #   Legal page components
+│   │   └── LegalShell.tsx      #     Shared layout for Privacy/Terms/Imprint
+│   │
+│   └── early-access/           #   Early Access pricing page components
+│       ├── PricingCard.tsx     #     Pricing card with monthly/yearly toggle
+│       ├── FeatureHighlights.tsx#    Feature highlight cards grid
+│       ├── CredibilityStats.tsx#     Dynamic stats (measurements, models, providers)
+│       ├── FeatureTable.tsx    #     Feature comparison table
+│       ├── FAQSection.tsx      #     FAQ accordion
+│       └── CTASection.tsx      #     Final call-to-action section
 │
 ├── styles/                     # CSS architecture
 │   ├── globals.css             #   Entry point — imports all stylesheets
 │   ├── base/
 │   │   └── variables.css       #   CSS custom properties (colors, fonts)
 │   ├── components/
-│   │   ├── header.css          #   Top bar, logo, live badge
+│   │   ├── header.css          #   Header (logo, badges, buttons, launchpad, avatar)
 │   │   ├── navigation.css      #   Tab bar
 │   │   ├── buttons.css         #   Buttons, utilities, recharts overrides
 │   │   ├── filters.css         #   Filter bar, pills, chips, search
@@ -174,7 +209,13 @@ frontend/
 │   │   ├── head-to-head.css    #   H2H selector, dropdown, comparison table
 │   │   ├── insights.css        #   Insights grid layout
 │   │   ├── pro-lock.css        #   Pro/locked overlays
-│   │   └── footer.css          #   Index footer
+│   │   ├── footer.css          #   Index footer
+│   │   ├── login.css           #   Login page (email form, OTP inputs, OAuth buttons)
+│   │   ├── settings.css        #   Settings page (forms, billing cards, invoices)
+│   │   ├── legal.css           #   Legal pages (Privacy, Terms, Imprint)
+│   │   ├── not-found.css       #   404 error page
+│   │   ├── ea-pricing.css      #   Early Access pricing card styles
+│   │   └── ea-sections.css     #   Early Access sections (highlights, FAQ, CTA)
 │   └── api/
 │       ├── api-page.css        #   API page layout
 │       └── widgets/            #   Widget-specific styles
@@ -236,6 +277,36 @@ No external state library. The app uses:
 - **React Query** for server state (caching, refetching, stale time)
 - **React useState** for UI state (active tab, expanded cards, filters)
 - **Props drilling** for component communication (flat hierarchy, no deep nesting)
+- **React Context** (`contexts/AuthContext.tsx`) for authentication state (ready for backend integration)
+
+## Recent Features
+
+### Authentication & User Management
+
+- **Login Flow** (`app/login/page.tsx`): Email-based authentication with OTP verification screen. Supports OAuth providers (Google, GitHub) and email/passwordless flow.
+- **Settings Page** (`app/settings/page.tsx`): User account management with two tabs:
+  - **Account**: Profile editing (avatar upload, name, email), account deletion
+  - **Billing**: Subscription management (current plan, payment method, invoice history)
+- **Auth Context** (`contexts/AuthContext.tsx`): Centralized authentication state management with localStorage persistence. Provides `login()`, `logout()`, and user state hooks.
+
+### Header & Navigation Enhancements
+
+- **Multi-tier Header** (`layout/Header.tsx`): Dynamic header with three states:
+  - **Logged-out**: Login button + "Get Pro €19" CTA
+  - **Free tier**: Upgrade button + Avatar dropdown
+  - **Pro tier**: PRO badge + Avatar dropdown
+- **Launchpad Menu** (`layout/header/LaunchpadMenu.tsx`): Product switcher dropdown showcasing skot products (mazh, imprest, calladot, goVisor, gizt) with "Soon" badges for upcoming products.
+- **Avatar Dropdown** (`layout/header/AvatarDropdown.tsx`): User menu with quick links to Settings, Billing, API, Help, and Logout.
+
+### Legal Pages
+
+- **Unified Legal Shell** (`templates/legal/LegalShell.tsx`): Shared layout component for legal pages with consistent header, navigation tabs, and footer.
+- **Legal Pages**: Privacy Policy (`app/privacy/page.tsx`), Terms of Service (`app/terms/page.tsx`), and Imprint (`app/imprint/page.tsx`) with unified styling and navigation.
+
+### Navigation Improvements
+
+- **Query String Routing**: Dashboard tabs (Index, Insights, API) support URL query parameters (`/?tab=insights`, `/?tab=api`) for deep linking and browser history.
+- **Functional Footer Links**: Footer navigation links (`layout/IndexFooter.tsx`) route to appropriate dashboard sections with query parameters.
 
 ## Deployment
 

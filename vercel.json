@@ -4,26 +4,26 @@
     "framework": "nextjs",
     "installCommand": "pip install -r backend/requirements.txt && cd frontend && npm install",
     "functions": {
-        "backend/api/index.py": {
+        "api/index.py": {
             "maxDuration": 60
         }
     },
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/backend/api/index"
+            "destination": "/api/index"
         },
         {
             "source": "/docs",
-            "destination": "/backend/api/index"
+            "destination": "/api/index"
         },
         {
             "source": "/redoc",
-            "destination": "/backend/api/index"
+            "destination": "/api/index"
         },
         {
             "source": "/openapi.json",
-            "destination": "/backend/api/index"
+            "destination": "/api/index"
         }
     ],
     "crons": [

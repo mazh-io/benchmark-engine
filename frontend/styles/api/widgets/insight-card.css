@@ -1,0 +1,239 @@
+/**
+ * Insight Card Widget
+ * Eye-catching comparison facts
+ */
+
+  /* Insight Widget */
+  .w-insight-frame {
+    background: #000000;
+  }
+
+  .w-insight-body {
+    background: #000000;
+  }
+
+  .w-insight-body.s {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .w-insight-body.m {
+    text-align: left;
+    padding: 14px 16px;
+  }
+
+  .w-insight-body.l {
+    text-align: left;
+    padding: 16px 18px;
+  }
+
+  .w-insight-label {
+    font-size: 0.6rem;
+    color: var(--acid);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .w-insight-label.s {
+    margin-bottom: 12px;
+  }
+
+  .w-insight-label.m,
+  .w-insight-label.l {
+    margin-bottom: 8px;
+  }
+
+  .w-insight-title {
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .w-insight-title.s {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+
+  .w-insight-title.m {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .w-insight-title.l {
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+  }
+
+  .w-insight-provider {
+    color: var(--acid);
+  }
+
+  .w-insight-multiplier {
+    font-family: var(--mono);
+    font-weight: 800;
+    color: var(--acid);
+  }
+
+  .w-insight-multiplier.s {
+    font-size: 1.3rem;
+  }
+
+  .w-insight-competitor {
+    color: var(--text-2);
+  }
+
+  .w-insight-metrics {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-3);
+  }
+
+  .w-insight-bars {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .w-insight-bars.m {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .w-insight-bars.l {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .w-insight-bar-row {
+    display: flex;
+    align-items: center;
+  }
+
+  .w-insight-bar-row.m {
+    gap: 12px;
+  }
+
+  .w-insight-bar-row.l {
+    gap: 12px;
+  }
+
+  .w-insight-bar-label {
+    color: var(--text-2);
+  }
+
+  .w-insight-bar-label.m {
+    font-size: 0.7rem;
+    width: 120px;
+  }
+
+  .w-insight-bar-label.l {
+    font-size: 0.75rem;
+    width: 140px;
+  }
+
+  .w-insight-bar-label-provider {
+    color: var(--acid);
+  }
+
+  .w-insight-bar-label-provider.l {
+    font-weight: 600;
+  }
+
+  .w-insight-bar-label-competitor {
+    color: var(--text-3);
+  }
+
+  .w-insight-bar-label-competitor.l {
+    font-weight: 600;
+  }
+
+  .w-insight-bar-container {
+    flex: 1;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .w-insight-bar-container.m {
+    height: 16px;
+    border-radius: 3px;
+  }
+
+  .w-insight-bar-container.l {
+    height: 18px;
+    border-radius: 4px;
+  }
+
+  .w-insight-bar-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--acid);
+  }
+
+  .w-insight-bar-fill.m {
+    border-radius: 3px;
+  }
+
+  .w-insight-bar-fill.l {
+    border-radius: 4px;
+  }
+
+  .w-insight-bar-fill.red {
+    width: 2%;
+    background: var(--red);
+  }
+
+  .w-insight-bar-value {
+    font-family: var(--mono);
+    color: var(--acid);
+    text-align: right;
+  }
+
+  .w-insight-bar-value.m {
+    font-size: 0.7rem;
+    width: 55px;
+  }
+
+  .w-insight-bar-value.l {
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: 70px;
+  }
+
+  .w-insight-bar-value.red {
+    color: var(--red);
+  }
+
+  .w-insight-bar-value.m.red {
+    color: var(--text-2);
+  }
+
+  .w-insight-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .w-insight-stat {
+    text-align: center;
+  }
+
+  .w-insight-stat-value {
+    font-family: var(--mono);
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  .w-insight-stat-value.acid {
+    color: var(--acid);
+  }
+
+  .w-insight-stat-value.white {
+    color: var(--text);
+  }
+
+  .w-insight-stat-label {
+    font-size: 0.55rem;
+    color: var(--text-4);
+    text-transform: uppercase;
+  }

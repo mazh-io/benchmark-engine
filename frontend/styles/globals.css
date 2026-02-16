@@ -1,0 +1,42 @@
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+ 
+@import './base/variables.css';
+ 
+@layer components {
+  /* Layout */
+  @import './components/header.css';
+  @import './components/navigation.css';
+  @import './components/footer.css';
+
+  /* Core components */
+  @import './components/buttons.css';
+  @import './components/filters.css';
+  @import './components/highlights.css';
+  @import './components/index-table.css';
+  @import './components/insights.css';
+  @import './components/detail-panels.css';
+  @import './components/head-to-head.css';
+  @import './components/pro-lock.css';
+  @import './components/legal.css';
+  @import './components/not-found.css';
+
+  /* Login page */
+   @import './components/login.css';
+
+  /* Settings page */
+  @import './components/settings.css';
+
+  /* Early Access page */
+  @import './components/ea-pricing.css';
+  @import './components/ea-sections.css';
+
+  /* API page */
+  @import './api/api-page.css';
+  @import './api/widgets/widget-base.css';
+  @import './api/widgets/provider-card.css';
+  @import './api/widgets/comparison.css';
+  @import './api/widgets/status-badge.css';
+  @import './api/widgets/insight-card.css';
+}

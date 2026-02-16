@@ -1,0 +1,324 @@
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+  @apply w-full border-b bg-black;
+  border-color: var(--border-subtle, #1a1a1a);
+}
+
+.header-container {
+  @apply flex items-center justify-between;
+  padding: 16px 24px;
+}
+
+.header-left {
+  @apply flex items-center;
+  gap: 16px;
+}
+
+.header-logo {
+  @apply tracking-[0.05em] text-white;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.2rem;
+  font-weight: 1000;
+  text-decoration: none;
+}
+
+.header-live-badge {
+  @apply flex items-center rounded-full border font-mono font-semibold;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  gap: 6px;
+  font-size: 0.5rem;
+  border-color: #22c55e;
+  padding: 4px 9px;
+}
+
+.header-right {
+  @apply flex items-center;
+  gap: 12px;
+}
+
+.header-divider {
+  width: 1px;
+  height: 18px;
+  background: #232323;
+}
+
+.header-link {
+  @apply flex items-center justify-center rounded-md border transition-all;
+  width: 34px;
+  height: 34px;
+  color: #787878;
+  background-color: #0a0a0a;
+  border-color: #232323;
+  text-decoration: none;
+  font-size: 0.65rem;
+}
+
+.header-link:hover {
+  color: #fff;
+  border-color: #787878;
+}
+
+.btn-login {
+  @apply rounded-md border font-bold transition-all;
+  padding: 5px 12px;
+  font-size: 0.6rem;
+  color: #a0a0a0;
+  background: transparent;
+  border-color: #232323;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-login:hover {
+  color: #fff;
+  border-color: #787878;
+}
+
+.btn-upgrade {
+  @apply rounded-md font-bold text-black transition-all;
+  padding: 5px 12px;
+  font-size: 0.6rem;
+  background-color: #c8ff00;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-upgrade:hover {
+  filter: brightness(1.1);
+}
+
+.pro-badge {
+  @apply rounded-md font-mono font-bold;
+  padding: 6px 12px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: #000000;
+  background: #c8ff00;
+  border: none;
+}
+
+/* ── Launchpad ──────────────────────────────────── */
+
+.lp-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.lp-btn:hover {
+  border-color: #232323;
+  background: #0a0a0a;
+}
+
+.lp-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.lp-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 100;
+  width: 320px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.lp-btn.open .lp-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.lp-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.lp-skot-badge {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #06b6d4;
+  letter-spacing: 0.04em;
+}
+
+.lp-menu-tagline { font-size: 0.6rem; color: #555; }
+
+.lp-menu-grid {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.lp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.lp-item:hover { background: #111; }
+
+.lp-item.active {
+  background: rgba(200, 255, 0, 0.04);
+  border: 1px solid rgba(200, 255, 0, 0.08);
+}
+
+.lp-item.more {
+  color: #333;
+  font-size: 0.6rem;
+  padding: 8px 12px;
+  cursor: default;
+}
+
+.lp-item-header { display: flex; align-items: center; gap: 8px; }
+
+.lp-item-name {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ccc;
+}
+
+.lp-item.active .lp-item-name { color: #c8ff00; }
+
+.lp-soon {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.lp-item-desc { font-size: 0.6rem; color: #555; }
+
+/* ── Avatar Dropdown ────────────────────────────── */
+
+.avatar-dropdown { position: relative; }
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c8ff00 0%, #06b6d4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #000;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+}
+
+.avatar-chevron {
+  font-size: 0.4rem;
+  color: #555;
+  transition: transform 0.15s;
+}
+
+.avatar-dropdown.open .avatar-chevron { transform: rotate(180deg); }
+
+.avatar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  width: 220px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.avatar-dropdown.open .avatar-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.avatar-menu-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.avatar-menu-name { font-size: 0.7rem; font-weight: 600; color: #fff; }
+
+.avatar-menu-email { font-size: 0.55rem; color: #555; margin-top: 2px; }
+
+.avatar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #a0a0a0;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+}
+
+.avatar-menu-item:hover {
+  background: #111;
+  color: #fff;
+}
+
+.avatar-menu-item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.avatar-menu-item.logout { color: #ef4444; }
+
+.avatar-menu-item.logout:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.avatar-menu-divider {
+  height: 1px;
+  background: #1a1a1a;
+  margin: 4px 0;
+}

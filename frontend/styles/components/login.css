@@ -1,0 +1,295 @@
+/* ── Login Page ─────────────────────────────────── */
+
+.login-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #000;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.login-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 0.85rem;
+  color: #787878;
+}
+
+/* ── OAuth Buttons ──────────────────────────────── */
+
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-family: var(--font-space, 'Space Grotesk', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.oauth-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.oauth-btn:hover {
+  background: #0f0f0f;
+  border-color: #484848;
+}
+
+/* ── Divider ────────────────────────────────────── */
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #1a1a1a;
+}
+
+.login-divider-text {
+  font-size: 0.7rem;
+  color: #484848;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Email Form ─────────────────────────────────── */
+
+.login-email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-input-group label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #787878;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.login-input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--font-space, 'Space Grotesk', sans-serif);
+  font-size: 0.9rem;
+  color: #fff;
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.login-input-group input::placeholder {
+  color: #484848;
+}
+
+.login-input-group input:focus {
+  border-color: #c8ff00;
+  box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.08);
+}
+
+.login-btn-submit {
+  padding: 14px 20px;
+  font-family: var(--font-space, 'Space Grotesk', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #000;
+  background: #c8ff00;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.login-btn-submit:hover {
+  filter: brightness(1.1);
+}
+
+.login-btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── OTP Screen ─────────────────────────────────── */
+
+.login-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 0.75rem;
+  color: #787878;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: color 0.15s;
+}
+
+.login-btn-back:hover {
+  color: #fff;
+}
+
+.login-otp-info {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-otp-info p {
+  font-size: 0.85rem;
+  color: #b8b8b8;
+  margin-bottom: 4px;
+}
+
+.login-otp-email {
+  color: #c8ff00 !important;
+  font-weight: 600;
+}
+
+.login-otp-inputs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.login-otp-input {
+  width: 48px;
+  height: 56px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.login-otp-input:focus {
+  border-color: #c8ff00;
+  box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.08);
+}
+
+.login-otp-resend {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #787878;
+  margin-top: 16px;
+}
+
+.login-otp-resend button {
+  color: #c8ff00;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.login-otp-resend button:hover {
+  text-decoration: underline;
+}
+
+/* ── Terms ──────────────────────────────────────── */
+
+.login-terms {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.7rem;
+  color: #484848;
+  line-height: 1.6;
+}
+
+.login-terms a {
+  color: #787878;
+  text-decoration: none;
+}
+
+.login-terms a:hover {
+  color: #c8ff00;
+}
+
+/* ── Footer ─────────────────────────────────────── */
+
+.login-footer {
+  padding: 24px;
+  border-top: 1px solid #1a1a1a;
+  text-align: center;
+}
+
+.login-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 0.7rem;
+}
+
+.login-footer-links a {
+  color: #484848;
+  text-decoration: none;
+}
+
+.login-footer-links a:hover {
+  color: #c8ff00;
+}

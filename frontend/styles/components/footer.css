@@ -1,0 +1,93 @@
+/**
+ * Shared Footer
+ * Used by IndexFooter and early-access page
+ */
+
+.ea-footer {
+  padding: 32px 24px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 48px;
+}
+
+.ea-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.ea-footer-brand {
+  max-width: 280px;
+}
+
+.ea-footer-logo {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.ea-footer-tagline {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  line-height: 1.6;
+}
+
+.ea-footer-links {
+  display: flex;
+  gap: 48px;
+}
+
+.ea-footer-col h4 {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.ea-footer-col a {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.1s;
+}
+
+.ea-footer-col a:hover {
+  color: var(--acid);
+}
+
+.ea-footer-bottom {
+  width: 100%;
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
+  color: var(--text-4);
+}
+
+.ea-footer-social {
+  display: flex;
+  gap: 12px;
+}
+
+.ea-footer-social a {
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.1s;
+}
+
+.ea-footer-social a:hover {
+  color: var(--acid);
+}

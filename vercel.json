@@ -1,24 +1,30 @@
 {
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/.next",
+    "framework": "nextjs",
+    "installCommand": "pip install -r backend/requirements.txt && cd frontend && npm install",
+    "functions": {
+        "backend/api/index.py": {
+            "runtime": "python3.9",
+            "maxDuration": 60
+        }
+    },
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/api/index"
-        },
-        {
-            "source": "/",
-            "destination": "/api/index"
+            "destination": "/backend/api/index"
         },
         {
             "source": "/docs",
-            "destination": "/api/index"
+            "destination": "/backend/api/index"
         },
         {
             "source": "/redoc",
-            "destination": "/api/index"
+            "destination": "/backend/api/index"
         },
         {
             "source": "/openapi.json",
-            "destination": "/api/index"
+            "destination": "/backend/api/index"
         }
     ],
     "crons": [
@@ -37,6 +43,25 @@
         {
             "path": "/api/sync/models",
             "schedule": "0 2 * * 0"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
         }
     ]
 }

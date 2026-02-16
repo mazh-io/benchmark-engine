@@ -1,0 +1,190 @@
+/**
+ * Widget Base Styles
+ * Common styles for all API widgets & embed codes
+ */
+
+  /* ========================================================================
+     API WIDGETS - TTFT Leaderboard & embed code preview
+     ======================================================================== */
+
+  .widget-type-section {
+    @apply space-y-6;
+  }
+
+  .widget-type-header {
+    @apply flex items-start justify-between gap-6;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .widget-type-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .widget-type-desc {
+    font-size: 0.75rem;
+    color: var(--text-3);
+  }
+
+  .widget-sizes {
+    display: flex;
+    gap: 8px;
+  }
+
+  .widget-size-btn {
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .widget-size-btn:hover {
+    border-color: var(--text-3);
+  }
+
+  .widget-size-btn.active {
+    color: var(--acid);
+    border-color: var(--acid);
+    background: var(--acid-dim);
+  }
+
+  .widget-preview-container {
+    @apply flex gap-6 items-start;
+  }
+
+  @media (max-width: 900px) {
+    .widget-preview-container {
+      @apply flex-col;
+    }
+  }
+
+  .widget-preview-box {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .widget-embed-box {
+    width: 320px;
+    flex-shrink: 0;
+  }
+
+  .widget-frame {
+    @apply rounded-lg border border-[var(--border)];
+    background: #000000;
+    box-shadow: none;
+  }
+
+  .widget-ttft-leaderboard-s {
+    width: 300px;
+  }
+
+  .widget-ttft-leaderboard-m {
+    width: 640px;
+  }
+
+  .widget-ttft-leaderboard-l {
+    width: 100%;
+  }
+
+  .widget-frame-header {
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-3);
+  }
+
+  .widget-frame-body {
+    padding: 12px 14px;
+    background: #000000;
+  }
+
+  .w-leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .w-leaderboard-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .w-rank {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-4);
+    width: 18px;
+  }
+
+  .w-rank.gold {
+    color: var(--acid);
+  }
+
+  .w-provider {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    width: 70px;
+  }
+
+  .w-bar-wrap {
+    flex: 1;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .w-bar {
+    height: 100%;
+    background: var(--acid);
+    border-radius: 3px;
+  }
+
+  .w-value {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-2);
+    width: 55px;
+    text-align: right;
+  }
+
+  .w-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .w-footer-time {
+    font-family: var(--mono);
+    font-size: 0.5rem;
+    color: var(--text-4);
+  }
+
+  .w-footer a {
+    font-size: 0.55rem;
+    color: var(--text-4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .w-footer a:hover {
+    color: var(--acid);
+  }
+

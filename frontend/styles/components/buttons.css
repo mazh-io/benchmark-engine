@@ -1,0 +1,24 @@
+/* Buttons & Utilities */
+
+  .btn-acid {
+    @apply inline-flex items-center justify-center gap-2
+      rounded-lg px-4 py-2 font-semibold
+      bg-[var(--acid-yellow)] text-black;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2
+      rounded-lg px-4 py-2
+      border border-[#262626]
+      bg-[#050505] text-white;
+  }
+
+  .text-acid { color: var(--acid-yellow); }
+  .text-muted { color: var(--acid-muted); }
+  .blur-locked { @apply blur-[4px] opacity-50 select-none; }
+
+/* Recharts overrides */
+
+  .recharts-cartesian-axis-tick-value { fill: #6b7280; }
+  .recharts-legend-item-text { fill: #e5e7eb !important; }
+  .recharts-tooltip-wrapper { outline: none; }

@@ -1,0 +1,130 @@
+/* ── 404 Page ─────────────────────────────────── */
+
+.error-page {
+  font-family: var(--font-space), system-ui, sans-serif;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #000;
+}
+
+/* Header */
+.error-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.error-logo {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.error-logo:hover {
+  color: var(--acid);
+}
+
+/* Content */
+.error-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.error-code {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 8rem;
+  font-weight: 800;
+  color: var(--surface-2);
+  line-height: 1;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.error-code::after {
+  content: '404';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, var(--acid) 0%, transparent 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.3;
+}
+
+.error-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.error-message {
+  font-size: 0.9rem;
+  color: var(--text-3);
+  max-width: 400px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.error-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  background: var(--acid);
+  color: #000;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.error-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Footer */
+.error-footer {
+  padding: 24px;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.error-footer-text {
+  font-size: 0.7rem;
+  color: var(--text-4);
+}
+
+.error-footer-text a {
+  color: var(--text-3);
+  text-decoration: none;
+}
+
+.error-footer-text a:hover {
+  color: var(--acid);
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+  .error-code {
+    font-size: 5rem;
+  }
+
+  .error-title {
+    font-size: 1.2rem;
+  }
+}

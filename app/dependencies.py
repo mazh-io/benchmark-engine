@@ -9,8 +9,8 @@ import sys
 import os
 from functools import lru_cache
 
-# Add src folder to path so business logic modules are importable
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+# Add backend/src to path so business logic modules are importable
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend", "src"))
 
 from database.db_connector import get_db_client
 from database.base_db_client import BaseDatabaseClient

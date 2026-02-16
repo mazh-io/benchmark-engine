@@ -4,32 +4,44 @@
     "framework": "nextjs",
     "installCommand": "pip install -r requirements.txt && cd frontend && npm install",
     "functions": {
-        "api/**/*.py": {
+        "backend/api/index.py": {
             "runtime": "python3.9",
             "maxDuration": 60
         }
     },
     "rewrites": [
         {
-            "source": "/api/:path*",
-            "destination": "/api/:path*"
+            "source": "/api/(.*)",
+            "destination": "/backend/api/index"
+        },
+        {
+            "source": "/docs",
+            "destination": "/backend/api/index"
+        },
+        {
+            "source": "/redoc",
+            "destination": "/backend/api/index"
+        },
+        {
+            "source": "/openapi.json",
+            "destination": "/backend/api/index"
         }
     ],
     "crons": [
         {
-            "path": "/api/benchmark?action=init",
+            "path": "/api/benchmark/init",
             "schedule": "0,15,30,45 * * * *"
         },
         {
-            "path": "/api/benchmark?action=process",
+            "path": "/api/benchmark/process",
             "schedule": "* * * * *"
         },
         {
-            "path": "/api/pricing_scraper",
+            "path": "/api/pricing/scrape",
             "schedule": "0 0 * * *"
         },
         {
-            "path": "/api/sync_models",
+            "path": "/api/sync/models",
             "schedule": "0 2 * * 0"
         }
     ],

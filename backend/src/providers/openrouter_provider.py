@@ -1,7 +1,9 @@
 import time
 import requests
 import uuid
+import json
 from utils.env_helper import get_env
+from utils.provider_service import is_reasoning_model, get_timeout_for_model
 
 # OpenRouter pricing varies by model, using approximate values
 # Check https://openrouter.ai/models for exact pricing
@@ -29,6 +31,12 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
             "error_message": "OPENROUTER_API_KEY not found in environment",
             "response_text": None
         }
+    
+    # Get timeout based on model type (centralized logic)
+    timeout_seconds = get_timeout_for_model(model)
+    
+    if is_reasoning_model(model):
+        print(f"⏱️  Using extended {timeout_seconds:.0f}s timeout for reasoning model: {model}")
     
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
@@ -58,7 +66,7 @@ def call_openrouter(prompt: str, model: str = "openai/gpt-4o-mini"):
     
     try:
         # Send streaming request to OpenRouter API
-        response = requests.post(url, json=payload, headers=headers, timeout=60, stream=True)
+        response = requests.post(url, json=payload, headers=headers, timeout=timeout_seconds, stream=True)
         status_code = response.status_code
         
         if response.status_code != 200:

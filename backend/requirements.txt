@@ -2,6 +2,14 @@
 python-dotenv
 supabase
 
+# FastAPI & server
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+
+# Scheduler (replaces Vercel cron)
+apscheduler>=3.10
+
 # OpenAI-compatible providers (Phase 0 & Phase 2)
 openai
 groq
@@ -16,6 +24,7 @@ google-genai
 httpx
 requests
 beautifulsoup4
+tiktoken  # Token count estimation and validation
 
 # Local database (PostgreSQL)
 psycopg2-binary

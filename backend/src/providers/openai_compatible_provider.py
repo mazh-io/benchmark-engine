@@ -18,13 +18,15 @@ Supported Providers:
 import uuid
 from typing import Dict, Any, Optional
 import logging
+import httpx
 
-from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError
+from openai import OpenAI, RateLimitError, APIError, APIConnectionError, APITimeoutError, AuthenticationError
 
 from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
 from database.db_connector import get_db_client
 from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
+from utils.provider_service import is_reasoning_model, get_timeout_for_model
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +61,8 @@ class OpenAICompatibleProvider(BaseProvider):
         api_key: str,
         base_url: str,
         pricing_table: Optional[Dict[str, Dict[str, float]]] = None,
-        default_pricing: Optional[Dict[str, float]] = None
+        default_pricing: Optional[Dict[str, float]] = None,
+        env_key_name: Optional[str] = None
     ) -> None:
         """
         Initialize generic OpenAI-compatible provider.
@@ -84,10 +87,18 @@ class OpenAICompatibleProvider(BaseProvider):
         self.base_url = base_url
         self.pricing_table = pricing_table or {}  # Keep for backward compatibility
         self.default_pricing = default_pricing or {"input": 1.0, "output": 1.0}
+        self.env_key_name = env_key_name
+        
+        # Configure HTTP client with reasonable timeout (can be overridden per-request)
+        # Default: 60s for regular models, 120s for reasoning models
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(60.0, connect=10.0)  # 60s request, 10s connect
+        )
         
         self.client = OpenAI(
             api_key=api_key,
             base_url=base_url,
+            http_client=http_client,
         )
         
         logger.info(
@@ -153,6 +164,15 @@ class OpenAICompatibleProvider(BaseProvider):
         metrics = StreamingMetrics()
         metrics.start()
         
+        # Get timeout based on model type (centralized logic)
+        timeout_seconds = get_timeout_for_model(model)
+        
+        if is_reasoning_model(model):
+            logger.info(
+                f"Using extended timeout for reasoning model",
+                extra={"model": model, "timeout_seconds": timeout_seconds}
+            )
+        
         try:
             stream = self.client.chat.completions.create(
                 model=model,
@@ -163,6 +183,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 temperature=0.7,
                 stream=True,
                 stream_options={"include_usage": True},
+                timeout=timeout_seconds,
             )
             
             response_chunks = []
@@ -179,15 +200,22 @@ class OpenAICompatibleProvider(BaseProvider):
                         "prompt_tokens": chunk.usage.prompt_tokens,
                         "completion_tokens": chunk.usage.completion_tokens,
                     }
+                    # Capture reasoning tokens if available (for reasoning models)
+                    if hasattr(chunk.usage, 'completion_tokens_details'):
+                        details = chunk.usage.completion_tokens_details
+                        if hasattr(details, 'reasoning_tokens'):
+                            usage_data["reasoning_tokens"] = details.reasoning_tokens
             
             metrics.end()
             
             response_text = "".join(response_chunks)
             
             # Token counting
+            reasoning_tokens = None
             if usage_data:
                 input_tokens = usage_data["prompt_tokens"]
                 output_tokens = usage_data["completion_tokens"]
+                reasoning_tokens = usage_data.get("reasoning_tokens")  # Available for reasoning models
             else:
                 logger.warning(
                     f"Usage data not provided by {self.provider_name}",
@@ -203,6 +231,7 @@ class OpenAICompatibleProvider(BaseProvider):
                 extra={
                     "request_id": request_id,
                     "model": model,
+                    "reasoning_tokens": reasoning_tokens,
                     "total_latency_ms": metrics.get_total_latency_ms(),
                     "ttft_ms": metrics.get_ttft_ms(),
                 }
@@ -211,6 +240,7 @@ class OpenAICompatibleProvider(BaseProvider):
             return {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "reasoning_tokens": reasoning_tokens,  # Thinking tokens for reasoning models
                 "total_latency_ms": metrics.get_total_latency_ms(),
                 "ttft_ms": metrics.get_ttft_ms(),
                 "tps": metrics.get_tps(output_tokens),
@@ -221,6 +251,27 @@ class OpenAICompatibleProvider(BaseProvider):
                 "response_text": response_text,
             }
             
+        except AuthenticationError as e:
+            metrics.end()
+            logger.warning(
+                f"{self.provider_name.title()} authentication failed",
+                extra={
+                    "request_id": request_id,
+                    "model": model,
+                    "error": str(e),
+                }
+            )
+            error_result = self.handle_error(e, model)
+            env_hint = f" Check {self.env_key_name}." if self.env_key_name else ""
+            error_result.update(
+                {
+                    "status_code": 401,
+                    "error_type": "AUTH_ERROR",
+                    "error_message": f"[AUTH_ERROR] {self.provider_name} unauthorized.{env_hint}",
+                }
+            )
+            return error_result
+
         except RateLimitError as e:
             metrics.end()
             logger.warning(
@@ -325,7 +376,8 @@ def create_openai_compatible_caller(
                 api_key=api_key,
                 base_url=base_url,
                 pricing_table=pricing_table,
-                default_pricing=default_pricing
+                default_pricing=default_pricing,
+                env_key_name=env_key_name
             )
             return provider.call_with_retry(prompt, model)
         except Exception as e:

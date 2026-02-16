@@ -12,6 +12,7 @@ It enforces a consistent interface and provides common functionality for:
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 import time
+from src.utils.retry_logic import RetryConfig, retry_with_backoff
 
 
 class BaseProvider(ABC):
@@ -34,6 +35,16 @@ class BaseProvider(ABC):
         self.api_key = api_key
         self.max_retries = 3
         self.base_backoff = 2  # seconds
+        
+        # Configure smart retry logic for 5xx errors only
+        # Rate limits (429) should NOT be retried here - they're handled by 
+        # the benchmark runner's retry queue (60s delay + retry all at once)
+        self.retry_config = RetryConfig(
+            max_retries=3,
+            initial_delay=1.0,  # 1s → 2s → 4s for 5xx errors
+            exponential_base=2.0,
+            retry_on_status_codes=list(range(500, 600))  # Only 5xx errors
+        )
     
     @abstractmethod
     def call(self, prompt: str, model: str) -> Dict[str, Any]:
@@ -204,10 +215,15 @@ class BaseProvider(ABC):
     
     def call_with_retry(self, prompt: str, model: str) -> Dict[str, Any]:
         """
-        Call the provider with automatic retry logic for rate limits.
+        Call the provider with automatic retry logic for transient failures.
         
-        This wrapper method handles rate limiting (429 errors) automatically
-        with exponential backoff. Other errors are returned immediately.
+        This wrapper method handles:
+        - Rate limiting (429) with exponential backoff
+        - 5xx errors (500-599) with exponential backoff (1s -> 2s -> 4s)
+        - Other errors are returned immediately
+        
+        The retry logic helps smooth out temporary API hiccups so they don't
+        appear as permanent outages in benchmarks.
         
         Args:
             prompt: The input prompt
@@ -216,52 +232,13 @@ class BaseProvider(ABC):
         Returns:
             Standardized response dict
         """
-        last_error = None
-        
-        for attempt in range(self.max_retries + 1):
-            try:
-                result = self.call(prompt, model)
-                
-                # If we got a rate limit error, retry
-                if not result["success"] and result.get("status_code") == 429:
-                    if self.handle_rate_limit(attempt):
-                        continue  # Retry
-                    else:
-                        return result  # Max retries reached
-                
-                # Success or non-rate-limit error
-                return result
-                
-            except Exception as e:
-                last_error = e
-                error_result = self.handle_error(e, model)
-                
-                # If it's a rate limit error, retry
-                if error_result.get("status_code") == 429:
-                    if self.handle_rate_limit(attempt):
-                        continue  # Retry
-                    else:
-                        return error_result  # Max retries reached
-                
-                # Non-rate-limit error, return immediately
-                return error_result
-        
-        # Should never reach here, but just in case
-        if last_error:
-            return self.handle_error(last_error, model)
-        
-        return {
-            "input_tokens": 0,
-            "output_tokens": 0,
-            "total_latency_ms": 0,
-            "ttft_ms": None,
-            "tps": None,
-            "status_code": 500,
-            "cost_usd": 0,
-            "success": False,
-            "error_message": "Unknown error occurred",
-            "response_text": None
-        }
+        # Use smart retry logic for 5xx errors
+        return retry_with_backoff(
+            self.call,
+            self.retry_config,
+            prompt,
+            model
+        )
 
 
 class StreamingMetrics:

@@ -8,6 +8,7 @@ Each invocation processes a batch of items from the queue.
 from database.db_connector import get_db_client
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
 from utils.provider_service import get_providers
+from utils.budget_breaker import BudgetCircuitBreaker, BudgetExceededException
 from typing import Optional
 
 def run_benchmark_batch(batch_size: int = 5) -> dict:
@@ -21,6 +22,31 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
         Dictionary with processing statistics
     """
     db = get_db_client()
+    
+    # 🚨 BUDGET CHECK: Prevent runaway costs
+    try:
+        breaker = BudgetCircuitBreaker()
+        budget_status = breaker.check_budget(db, hours=24)
+        
+        if budget_status["should_abort"]:
+            print("\n" + "="*60)
+            print("🚨 BUDGET EXCEEDED - ABORTING BATCH")
+            print("="*60)
+            print(breaker.get_status_message(db, hours=24))
+            print("\nTo increase budget, set BENCHMARK_BUDGET_CAP environment variable.")
+            return {
+                "status": "aborted",
+                "reason": "budget_exceeded",
+                "processed": 0,
+                "successful": 0,
+                "failed": 0,
+                "budget_status": budget_status
+            }
+        else:
+            print(f"💰 Budget OK: ${budget_status['current_spend']:.2f} / ${budget_status['budget_cap']:.2f} ({budget_status['percent_used']}%)")
+    except Exception as e:
+        print(f"⚠️  Budget check failed: {e}")
+        print("Continuing with batch (fail-open safety)...")
     
     # Get pending queue items
     queue_items = db.get_pending_queue_items(limit=batch_size)
@@ -45,12 +71,23 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
         run_id = str(item['run_id'])
         provider_key = item['provider_key']
         model_name = item['model_name']
+        attempts = item.get('attempts', 0)
+        max_attempts = item.get('max_attempts', 3)
         
         print(f"\n{'='*60}")
         print(f"Queue Item {queue_id[:8]}... → {provider_key} / {model_name}")
+        print(f"Attempt {attempts + 1}/{max_attempts}")
         print(f"{'='*60}")
         
-        # Mark as processing
+        # Check if max attempts reached
+        if attempts >= max_attempts:
+            print(f"⚠️  Max attempts ({max_attempts}) reached - marking as failed")
+            db.mark_queue_item_failed(queue_id, f"Max retry attempts ({max_attempts}) exceeded")
+            failed += 1
+            processed += 1
+            continue
+        
+        # Mark as processing (increments attempts counter)
         db.mark_queue_item_processing(queue_id)
         
         # Initialize variables for exception handler

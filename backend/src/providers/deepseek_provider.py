@@ -13,6 +13,7 @@ Pricing: Fetched dynamically from database (updated via pricing scraper)
 import uuid
 from typing import Dict, Any, Optional
 import logging
+import httpx
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -21,6 +22,7 @@ from providers.base_provider import BaseProvider, StreamingMetrics
 from utils.env_helper import get_env
 from database.db_connector import get_db_client
 from utils.constants import PROVIDER_CONFIG, SYSTEM_PROMPT
+from utils.provider_service import get_timeout_for_model, is_reasoning_model
 
 # Configure module logger
 logger = logging.getLogger(__name__)
@@ -82,10 +84,17 @@ class DeepSeekProvider(BaseProvider):
             
         super().__init__(provider_name="deepseek", api_key=api_key)
         
+        # Configure HTTP client with extended timeout for reasoning models
+        # DeepSeek R1 can take 10-20s to think before first token
+        http_client = httpx.Client(
+            timeout=httpx.Timeout(120.0, connect=10.0)  # 120s request, 10s connect
+        )
+        
         # Initialize OpenAI client with DeepSeek base URL
         self.client = OpenAI(
             api_key=api_key,
             base_url=PROVIDER_CONFIG["deepseek"]["base_url"],
+            http_client=http_client,
         )
         
         logger.info("DeepSeek provider initialized")
@@ -171,6 +180,15 @@ class DeepSeekProvider(BaseProvider):
         metrics = StreamingMetrics()
         metrics.start()
         
+        # Get timeout based on model type (centralized logic)
+        timeout_seconds = get_timeout_for_model(model)
+        
+        if is_reasoning_model(model):
+            logger.info(
+                "Using extended timeout for DeepSeek reasoning model (R1)",
+                extra={"model": model, "timeout_seconds": timeout_seconds}
+            )
+        
         try:
             # Create streaming chat completion
             stream = self.client.chat.completions.create(
@@ -182,6 +200,7 @@ class DeepSeekProvider(BaseProvider):
                 temperature=0.7,
                 stream=True,
                 stream_options={"include_usage": True},  # Request token usage in stream
+                timeout=timeout_seconds,
             )
             
             # Collect streaming response
@@ -202,6 +221,15 @@ class DeepSeekProvider(BaseProvider):
                         "completion_tokens": chunk.usage.completion_tokens,
                         "total_tokens": chunk.usage.total_tokens,
                     }
+                    # Capture reasoning tokens if available (DeepSeek R1 provides this)
+                    if hasattr(chunk.usage, 'prompt_tokens_details'):
+                        details = chunk.usage.prompt_tokens_details
+                        if hasattr(details, 'cached_tokens'):
+                            usage_data["cached_tokens"] = details.cached_tokens
+                    if hasattr(chunk.usage, 'completion_tokens_details'):
+                        details = chunk.usage.completion_tokens_details
+                        if hasattr(details, 'reasoning_tokens'):
+                            usage_data["reasoning_tokens"] = details.reasoning_tokens
             
             metrics.end()
             
@@ -209,9 +237,11 @@ class DeepSeekProvider(BaseProvider):
             response_text = "".join(response_chunks)
             
             # Extract token counts
+            reasoning_tokens = None
             if usage_data:
                 input_tokens = usage_data["prompt_tokens"]
                 output_tokens = usage_data["completion_tokens"]
+                reasoning_tokens = usage_data.get("reasoning_tokens")  # DeepSeek R1 provides this
             else:
                 # Fallback: estimate token counts
                 logger.warning(
@@ -236,6 +266,7 @@ class DeepSeekProvider(BaseProvider):
                     "model": model,
                     "input_tokens": input_tokens,
                     "output_tokens": output_tokens,
+                    "reasoning_tokens": reasoning_tokens,
                     "total_latency_ms": total_latency_ms,
                     "ttft_ms": ttft_ms,
                     "tps": tps,
@@ -246,6 +277,7 @@ class DeepSeekProvider(BaseProvider):
             return {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
+                "reasoning_tokens": reasoning_tokens,  # Separate thinking tokens for R1
                 "total_latency_ms": total_latency_ms,
                 "ttft_ms": ttft_ms,
                 "tps": tps,

@@ -215,6 +215,53 @@ def get_provider_service() -> ProviderService:
 
 
 # ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def is_reasoning_model(model: str) -> bool:
+    """
+    Detect if a model is a reasoning model that needs extended timeout.
+    
+    Reasoning models (DeepSeek R1, OpenAI o3/o4-mini) take 10-20s to "think"
+    before sending the first token, requiring longer timeouts (120s vs 60s).
+    
+    This is the centralized source of truth for reasoning model detection,
+    used by all providers to determine timeout configuration.
+    
+    Args:
+        model: Model identifier (e.g., "deepseek-reasoner", "o3", "gpt-4o")
+        
+    Returns:
+        True if reasoning model, False otherwise
+        
+    Example:
+        >>> is_reasoning_model("deepseek-reasoner")
+        True
+        >>> is_reasoning_model("gpt-4o")
+        False
+    """
+    # ACTIVE_MODELS is the single source of truth for model categorization
+    for provider, model_id, category, notes in ACTIVE_MODELS:
+        if model_id == model and category == "reasoning":
+            return True
+    
+    return False
+
+
+def get_timeout_for_model(model: str) -> float:
+    """
+    Get the appropriate HTTP timeout for a model.
+    
+    Args:
+        model: Model identifier
+        
+    Returns:
+        Timeout in seconds (120.0 for reasoning models, 60.0 for regular)
+    """
+    return 120.0 if is_reasoning_model(model) else 60.0
+
+
+# ============================================================================
 # ACTIVE MODELS - Currently Used for Benchmarking
 # ============================================================================
 # These models are actively benchmarked in each run.
@@ -250,7 +297,7 @@ ACTIVE_MODELS = [
     # Together AI - GPU Cloud
     ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", "Mixtral MoE"),
     ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", "Llama 3.3"),
-    ("together", "Qwen/Qwen2.5-72B-Instruct-Turbo", "flagship", "Chinese model"),
+    ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", "Chinese model"),
     ("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "heavyweight", "405B giant"),
     
     # Infrastructure Providers

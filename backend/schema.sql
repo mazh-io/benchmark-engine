@@ -61,6 +61,7 @@ create table if not exists public.benchmark_results (
     -- Performance metrics
     input_tokens integer not null,
     output_tokens integer not null,
+    reasoning_tokens integer,  -- Reasoning/thinking tokens (for models like DeepSeek R1, OpenAI o-series)
     total_latency_ms double precision not null,
     ttft_ms double precision,  -- Time to First Token (measured via streaming)
     tps double precision,     -- Tokens Per Second: (Total Tokens - 1) / (Time End - Time First Token)

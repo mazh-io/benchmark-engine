@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/layout/Header';
 import { useBenchmarkData } from '@/hooks/useBenchmarkData';
@@ -17,6 +17,14 @@ import { APIPage } from '@/templates/api/APIPage';
 import type { TimeFilter } from '@/api/types';
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const [expandedCard, setExpandedCard] = useState<
     'fastest' | 'slowest' | 'bestvalue' | 'moststable' | 'insight' | null
   >(null);
@@ -96,9 +104,9 @@ export default function DashboardPage() {
 
         {activeTab === 'insights' && (
           <>
-            <InsightsToolbar 
+            <InsightsToolbar
               selectedTime={timeFilter}
-              onTimeChange={handleTimeChange} 
+              onTimeChange={handleTimeChange}
             />
             <InsightsGrid
               results={data?.results}

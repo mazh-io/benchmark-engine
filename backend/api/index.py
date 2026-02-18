@@ -20,7 +20,11 @@ import os
 # Disable the in-process scheduler — Vercel Cron handles scheduling
 os.environ["DISABLE_SCHEDULER"] = "1"
 
-# Add src folder to path so business logic modules are importable
+# Add project root to path so the `app` package is importable
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
+sys.path.insert(0, PROJECT_ROOT)
+
+# Add backend/src to path so business logic modules (database, providers, etc.) are importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Import the FastAPI app (Vercel detects the `app` variable automatically)

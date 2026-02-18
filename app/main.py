@@ -9,8 +9,8 @@ import sys
 import os
 from contextlib import asynccontextmanager
 
-# Add src folder to path BEFORE any other imports that depend on it
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+# Add backend/src to path BEFORE any other imports that depend on it
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend", "src"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

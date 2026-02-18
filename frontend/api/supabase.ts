@@ -3,6 +3,7 @@
  *
  * Singleton pattern with type safety, error handling, and perf monitoring.
  */
+/// <reference types="node" />
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';

@@ -4,32 +4,39 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/layout/Header';
+import { useAuth } from '@/contexts/AuthContext';
 import { MainNav, type Tab } from '@/layout/MainNav';
 import { AccountSection } from '@/templates/settings/AccountSection';
 import { BillingSection } from '@/templates/settings/BillingSection';
 
 type SettingsTab = 'account' | 'billing';
 
-const MOCK_USER = {
-  initials: 'SV',
-  firstName: 'Sven',
-  lastName: 'Mazh',
-  email: 'sven@example.com',
-};
-
 export default function SettingsPage() {
-  const [tab, setTab] = useState<SettingsTab>('account');
   const router = useRouter();
+  const { isLoggedIn, isReady, user } = useAuth();
+  const [tab, setTab] = useState<SettingsTab>('account');
 
   useEffect(() => {
-    if (window.location.hash === '#billing') setTab('billing');
+    if (!isReady) return;
+    if (!isLoggedIn) {
+      router.replace('/login');
+      return;
+    }
+  }, [isReady, isLoggedIn, router]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#billing') setTab('billing');
   }, []);
+
+  if (!isReady || !isLoggedIn) {
+    return <div className="min-h-screen bg-black" />;
+  }
 
   return (
     <div className="min-h-screen bg-black">
       <Header
         tier="pro"
-        user={{ initials: 'SV', name: 'Sven Mazh', email: 'sven@example.com' }}
+        user={user ? { initials: user.initials, name: user.name, email: user.email } : undefined}
         showSocial={false}
       />
       <div className="h-px bg-[#0f0f0f]" />
@@ -73,7 +80,16 @@ export default function SettingsPage() {
         </div>
 
         {/* Sections */}
-        {tab === 'account' && <AccountSection user={MOCK_USER} />}
+        {tab === 'account' && user && (
+          <AccountSection
+            user={{
+              initials: user.initials,
+              firstName: user.name.split(' ')[0] ?? user.name,
+              lastName: user.name.split(' ').slice(1).join(' ') ?? '',
+              email: user.email,
+            }}
+          />
+        )}
         {tab === 'billing' && <BillingSection />}
       </div>
     </div>

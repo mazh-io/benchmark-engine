@@ -1,71 +1,84 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-
-const STORAGE_KEY = 'mazh_auth';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '@/api/supabase';
 
 type User = { initials: string; name: string; email: string };
 
-interface AuthState {
-  isLoggedIn: boolean;
-  user: User | null;
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 }
 
-function getStored(): AuthState {
-  if (typeof window === 'undefined') return { isLoggedIn: false, user: null };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { isLoggedIn: false, user: null };
-    const parsed = JSON.parse(raw);
-    return { isLoggedIn: !!parsed.user, user: parsed.user || null };
-  } catch {
-    return { isLoggedIn: false, user: null };
-  }
+function nameFromMetadata(meta: Record<string, unknown> | undefined): { first: string; last: string } | null {
+  const first = typeof meta?.first_name === 'string' ? meta.first_name.trim() : '';
+  const last = typeof meta?.last_name === 'string' ? meta.last_name.trim() : '';
+  if (first || last) return { first: first || 'User', last };
+  return null;
 }
 
-function toInitials(email: string): string {
-  const part = email.split('@')[0];
-  if (!part) return '?';
-  if (part.length >= 2) return part.slice(0, 2).toUpperCase();
-  return part[0].toUpperCase();
+function nameFromEmail(email: string): { first: string; last: string } {
+  const local = email.split('@')[0] || 'user';
+  const parts = local.split(/[._-]+/).filter(Boolean);
+  const first = capitalize(parts[0] || 'User');
+  const last = parts.slice(1).map(capitalize).join(' ') || '';
+  return { first, last };
+}
+
+function sessionToUser(session: Session | null): User | null {
+  if (!session?.user?.email) return null;
+  const email = session.user.email;
+  const meta = session.user.user_metadata as Record<string, unknown> | undefined;
+  const { first, last } = nameFromMetadata(meta) ?? nameFromEmail(email);
+  const name = [first, last].filter(Boolean).join(' ');
+  const initials = last
+    ? (first.slice(0, 1) + last.slice(0, 1)).toUpperCase()
+    : first.slice(0, 2).toUpperCase() || 'U';
+  return { initials, name, email };
 }
 
 const AuthContext = createContext<{
   isLoggedIn: boolean;
+  isReady: boolean;
   user: User | null;
-  login: (email: string) => void;
+  loginFromSession: (session: Session) => void;
   logout: () => void;
 } | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AuthState>({ isLoggedIn: false, user: null });
+  const [user, setUser] = useState<User | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  const setFromSession = useCallback((session: Session | null) => {
+    setUser(sessionToUser(session));
+  }, []);
 
   useEffect(() => {
-    setState(getStored());
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setFromSession(session);
+      setIsReady(true);
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setFromSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, [setFromSession]);
+
+  const loginFromSession = useCallback((session: Session) => {
+    setUser(sessionToUser(session));
   }, []);
 
-  const login = useCallback((email: string) => {
-    const name = email.split('@')[0] || 'User';
-    const user: User = {
-      initials: toInitials(email),
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      email,
-    };
-    setState({ isLoggedIn: true, user });
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user }));
-    } catch {}
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   }, []);
 
-  const logout = useCallback(() => {
-    setState({ isLoggedIn: false, user: null });
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
-  }, []);
+  const isLoggedIn = !!user;
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isReady, user, loginFromSession, logout }}>
       {children}
     </AuthContext.Provider>
   );

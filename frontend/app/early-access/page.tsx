@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/layout/Header';
+import { useAuth } from '@/contexts/AuthContext';
 import { MainNav } from '@/layout/MainNav';
 import { IndexFooter } from '@/layout/IndexFooter';
 import { useBenchmarkData } from '@/hooks/useBenchmarkData';
@@ -15,6 +16,7 @@ import { FAQSection } from '@/templates/early-access/FAQSection';
 import { CTASection } from '@/templates/early-access/CTASection';
 
 export default function EarlyAccessPage() {
+  const { isLoggedIn, user } = useAuth();
   const [expandedCard, setExpandedCard] = useState<
     'fastest' | 'slowest' | 'bestvalue' | 'moststable' | 'insight' | null
   >(null);
@@ -25,7 +27,7 @@ export default function EarlyAccessPage() {
   return (
     <div className="min-h-screen bg-black" style={{ fontFamily: 'var(--font-space), system-ui, sans-serif' }}>
       {/* Dashboard chrome */}
-      <Header />
+      <Header tier={isLoggedIn ? 'free' : 'logged-out'} user={user ?? undefined} />
       <div className="h-px bg-[#0f0f0f]" />
 
       <div className="px-4 pt-6 pb-4">

@@ -11,14 +11,18 @@ import type { Database } from './database.types';
 // CONFIGURATION
 // ============================================================================
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-if (!SUPABASE_URL && typeof window !== 'undefined') {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
+if (!SUPABASE_URL) {
+  throw new Error(
+    'Missing NEXT_PUBLIC_SUPABASE_URL. Add it to frontend/.env.local (NEXT_PUBLIC_SUPABASE_URL=...)',
+  );
 }
-if (!SUPABASE_ANON_KEY && typeof window !== 'undefined') {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
+if (!SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Add it to frontend/.env.local (NEXT_PUBLIC_SUPABASE_ANON_KEY=...)',
+  );
 }
 
 // ============================================================================
@@ -30,7 +34,7 @@ let instance: SupabaseClient<Database> | null = null;
 function getClient(): SupabaseClient<Database> {
   if (!instance) {
     instance = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
+      auth: { persistSession: true },
       global: {
         headers: { 'x-client-info': 'benchmark-dashboard@1.0.0' },
       },

@@ -89,6 +89,15 @@ export function useLoginForm(): UseLoginFormReturn {
     setResendAvailableAt(Date.now() + RESEND_COOLDOWN_MS);
   }, [email]);
 
+  const clearOtpInputs = useCallback(() => {
+    otpRefs.current.forEach((el) => {
+      if (el) {
+        el.value = '';
+      }
+    });
+    otpRefs.current[0]?.focus();
+  }, []);
+
   const runOtpVerify = useCallback(async () => {
     const code = otpRefs.current.map((r) => r?.value || '').join('');
     if (code.length !== 6 || loading) return;
@@ -102,13 +111,14 @@ export function useLoginForm(): UseLoginFormReturn {
     setLoading(false);
     if (err) {
       setError(err.message || 'Invalid or expired code');
+      clearOtpInputs();
       return;
     }
     if (data?.session) {
       loginFromSession(data.session);
       router.push('/');
     }
-  }, [email, loading, loginFromSession, router]);
+  }, [email, loading, loginFromSession, router, clearOtpInputs]);
 
   const handleOtpInput = useCallback(
     (index: number, value: string) => {

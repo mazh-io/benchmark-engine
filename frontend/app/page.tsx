@@ -17,9 +17,17 @@ import { IndexFooter } from '@/layout/IndexFooter';
 import { APIPage } from '@/templates/api/APIPage';
 import type { TimeFilter } from '@/api/types';
 
+function RedirectToLogin() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/login');
+  }, [router]);
+  return null;
+}
+
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><span className="text-white/60 text-sm">Loading...</span></div>}>
       <DashboardContent />
     </Suspense>
   );
@@ -43,7 +51,10 @@ function DashboardContent() {
   const dashboard = useDashboardMetrics(data);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady) {
+      router.replace('/login');
+      return;
+    }
     if (!isLoggedIn) {
       router.replace('/login');
       return;
@@ -61,10 +72,7 @@ function DashboardContent() {
     setTimeFilter(time);
   };
 
-  if (!isReady) {
-    return <div className="min-h-screen bg-black" />;
-  }
-  if (!isLoggedIn) {
+  if (!isReady || !isLoggedIn) {
     return null;
   }
   if (error) {

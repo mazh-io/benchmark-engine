@@ -1,22 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/api/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
+const AUTH_WAIT_MS = 8000;
+
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { loginFromSession } = useAuth();
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const doneRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const next = searchParams.get('next');
+    const redirectPath = next && next.startsWith('/') ? next : '/';
 
-    async function finish() {
-      for (let i = 0; i < 3; i++) {
+    function finish(session: import('@supabase/supabase-js').Session) {
+      if (doneRef.current || cancelled) return;
+      doneRef.current = true;
+      loginFromSession(session);
+      setStatus('ok');
+      router.replace(redirectPath);
+    }
+
+    const authSub = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+        finish(session);
+      }
+    });
+
+    const timeoutId = window.setTimeout(async () => {
+      if (doneRef.current || cancelled) return;
+      for (let i = 0; i < 20; i++) {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (cancelled) return;
         if (error) {
@@ -25,23 +47,31 @@ export default function AuthPage() {
           return;
         }
         if (session) {
-          loginFromSession(session);
-          setStatus('ok');
-          router.replace('/');
+          finish(session);
           return;
         }
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, 250));
       }
-      if (cancelled) return;
-      setStatus('error');
-      setMessage('No session returned. Try signing in again.');
-    }
+      if (!doneRef.current && !cancelled) {
+        setStatus('error');
+        setMessage('No session returned. Try signing in again.');
+      }
+    }, 100);
 
-    finish();
+    const maxWait = window.setTimeout(() => {
+      if (!doneRef.current && !cancelled && status === 'loading') {
+        setStatus('error');
+        setMessage('No session returned. Try signing in again.');
+      }
+    }, AUTH_WAIT_MS);
+
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
+      clearTimeout(maxWait);
+      authSub?.data?.subscription?.unsubscribe?.();
     };
-  }, [loginFromSession, router]);
+  }, [loginFromSession, router, searchParams]);
 
   if (status === 'error') {
     return (

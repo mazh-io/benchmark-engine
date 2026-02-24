@@ -1,3 +1,197 @@
+-- USERS (Supabase Auth mirror + app profile)
+-- Synced from auth.users via triggers. is_active = false means "delete account"
+-- (soft delete): app should treat as deactivated and e.g. sign out / block access.
+-- No INSERT policy: rows created only by handle_new_user() (security definer).
+
+create table if not exists public.users (
+    id uuid primary key references auth.users(id) on delete cascade,
+    email text not null,
+    full_name text,
+    first_name text,
+    last_name text,
+    avatar_url text,
+    is_active boolean not null default true,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint users_email_not_empty check (length(trim(email)) > 0)
+);
+
+alter table public.users enable row level security;
+
+create policy "users_select_own"
+    on public.users for select
+    using (auth.uid() = id);
+
+create policy "users_update_own"
+    on public.users for update
+    using (auth.uid() = id);
+
+-- Build display name: metadata full_name > (first_name + last_name), store null if empty
+create or replace function public.users_full_name(meta jsonb)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+    select nullif(trim(
+        coalesce(
+            nullif(trim(meta->>'full_name'), ''),
+            trim(coalesce(meta->>'first_name', '') || ' ' || coalesce(meta->>'last_name', ''))
+        )
+    ), '');
+$$;
+
+-- Derive first_name, last_name from email when metadata is empty.
+-- If local part has . _ - use first and last segment (helidona.shabani -> Helidona, Shabani).
+create or replace function public.email_to_first_last(em text)
+returns table(first_name text, last_name text)
+language sql
+immutable
+set search_path = ''
+as $$
+    with
+    local as (select lower(split_part(nullif(trim(coalesce(em, '')), ''), '@', 1)) as s),
+    clean as (select regexp_replace(coalesce(s, 'user'), '[0-9]+$', '') as s from local),
+    segs as (
+        select s, array_remove(regexp_split_to_array(s, '[._-]+'), '') as a
+        from clean
+    )
+    select
+        case
+            when coalesce(array_length(a, 1), 0) >= 2 then initcap(a[1])
+            when length(s) <= 2 then initcap(s)
+            else initcap(left(s, length(s) / 2))
+        end,
+        case
+            when coalesce(array_length(a, 1), 0) >= 2 then initcap(a[array_length(a, 1)])
+            when length(s) <= 2 then ''::text
+            else initcap(right(s, length(s) - length(s) / 2))
+        end
+    from segs;
+$$;
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+    fn text;
+    ln text;
+    display_name text;
+begin
+    fn := nullif(trim(new.raw_user_meta_data->>'first_name'), '');
+    ln := nullif(trim(new.raw_user_meta_data->>'last_name'), '');
+    display_name := public.users_full_name(new.raw_user_meta_data);
+
+    if fn is null and ln is null then
+        select e.first_name, e.last_name into fn, ln
+        from public.email_to_first_last(coalesce(new.email, '')) e;
+        display_name := nullif(trim(fn || ' ' || ln), '');
+    end if;
+
+    insert into public.users (id, email, full_name, first_name, last_name, avatar_url, is_active)
+    values (
+        new.id,
+        trim(coalesce(new.email, '')),
+        display_name,
+        fn,
+        ln,
+        new.raw_user_meta_data->>'avatar_url',
+        true
+    )
+    on conflict (id) do update set
+        email = trim(coalesce(excluded.email, public.users.email)),
+        full_name = coalesce(excluded.full_name, public.users.full_name),
+        first_name = coalesce(excluded.first_name, public.users.first_name),
+        last_name = coalesce(excluded.last_name, public.users.last_name),
+        avatar_url = coalesce(excluded.avatar_url, public.users.avatar_url),
+        updated_at = now();
+    return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute procedure public.handle_new_user();
+
+create or replace function public.handle_user_updated()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+    fn text;
+    ln text;
+    display_name text;
+begin
+    fn := nullif(trim(new.raw_user_meta_data->>'first_name'), '');
+    ln := nullif(trim(new.raw_user_meta_data->>'last_name'), '');
+    display_name := public.users_full_name(new.raw_user_meta_data);
+
+    if fn is null and ln is null then
+        select e.first_name, e.last_name into fn, ln
+        from public.email_to_first_last(coalesce(new.email, '')) e;
+        display_name := nullif(trim(fn || ' ' || ln), '');
+    end if;
+
+    update public.users
+    set
+        email = trim(coalesce(new.email, email)),
+        full_name = coalesce(display_name, full_name),
+        first_name = coalesce(fn, first_name),
+        last_name = coalesce(ln, last_name),
+        avatar_url = coalesce(new.raw_user_meta_data->>'avatar_url', avatar_url),
+        updated_at = now()
+    where id = new.id;
+    return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_updated on auth.users;
+create trigger on_auth_user_updated
+    after update on auth.users
+    for each row execute procedure public.handle_user_updated();
+
+-- =============================================================================
+-- STORAGE (avatars bucket RLS)
+-- =============================================================================
+-- Requires bucket "avatars" (public) in Dashboard → Storage. Path: {auth.uid()}/avatar.*
+-- Users can only insert/update under their own folder; public read for avatar URLs.
+-- =============================================================================
+
+drop policy if exists "Users can upload own avatar" on storage.objects;
+create policy "Users can upload own avatar"
+    on storage.objects for insert
+    to authenticated
+    with check (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    );
+
+drop policy if exists "Users can update own avatar" on storage.objects;
+create policy "Users can update own avatar"
+    on storage.objects for update
+    to authenticated
+    using (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    )
+    with check (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    );
+
+drop policy if exists "Avatar files are publicly readable" on storage.objects;
+create policy "Avatar files are publicly readable"
+    on storage.objects for select
+    to public
+    using (bucket_id = 'avatars');
+
+-- =============================================================================
 -- PROVIDERS TABLE
 -- Stores static information about AI providers (OpenAI, Groq, Together AI, etc.)
 create table if not exists public.providers (
@@ -139,15 +333,27 @@ create table if not exists public.benchmark_queue (
     unique(run_id, provider_key, model_name)
 );
 
--- Indexes for query performance
+-- INDEXES (all in one place for consistency and easier maintenance)
+-- users
+create index if not exists idx_users_is_active on public.users(is_active);
+create index if not exists idx_users_email on public.users(email);
+create index if not exists idx_users_updated_at on public.users(updated_at);
+
+-- providers
 create index if not exists idx_providers_name on public.providers(name);
+
+-- models
 create index if not exists idx_models_provider_id on public.models(provider_id);
 create index if not exists idx_models_name on public.models(name);
 create index if not exists idx_models_active on public.models(active);
 create index if not exists idx_models_last_seen on public.models(last_seen_at);
+
+-- prices
 create index if not exists idx_prices_provider_id on public.prices(provider_id);
 create index if not exists idx_prices_model_id on public.prices(model_id);
 create index if not exists idx_prices_timestamp on public.prices(timestamp);
+
+-- benchmark_results
 create index if not exists idx_benchmark_results_run_id on public.benchmark_results(run_id);
 create index if not exists idx_benchmark_results_provider_id on public.benchmark_results(provider_id);
 create index if not exists idx_benchmark_results_model_id on public.benchmark_results(model_id);
@@ -155,10 +361,14 @@ create index if not exists idx_benchmark_results_provider on public.benchmark_re
 create index if not exists idx_benchmark_results_model on public.benchmark_results(model);
 create index if not exists idx_benchmark_results_created_at on public.benchmark_results(created_at);
 create index if not exists idx_benchmark_results_tokens_per_dollar on public.benchmark_results(tokens_per_dollar);
+
+-- run_errors
 create index if not exists idx_run_errors_run_id on public.run_errors(run_id);
 create index if not exists idx_run_errors_provider_id on public.run_errors(provider_id);
 create index if not exists idx_run_errors_error_type on public.run_errors(error_type);
 create index if not exists idx_run_errors_timestamp on public.run_errors(timestamp);
+
+-- benchmark_queue
 create index if not exists idx_benchmark_queue_run_id on public.benchmark_queue(run_id);
 create index if not exists idx_benchmark_queue_status on public.benchmark_queue(status);
 create index if not exists idx_benchmark_queue_created_at on public.benchmark_queue(created_at);

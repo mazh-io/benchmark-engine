@@ -3,26 +3,15 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/api/supabase';
+import { nameFromEmail } from '@/api/nameFromEmail';
 
-type User = { initials: string; name: string; email: string };
-
-function capitalize(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
-}
+type User = { id: string; initials: string; name: string; email: string; avatarUrl: string | null };
 
 function nameFromMetadata(meta: Record<string, unknown> | undefined): { first: string; last: string } | null {
   const first = typeof meta?.first_name === 'string' ? meta.first_name.trim() : '';
   const last = typeof meta?.last_name === 'string' ? meta.last_name.trim() : '';
   if (first || last) return { first: first || 'User', last };
   return null;
-}
-
-function nameFromEmail(email: string): { first: string; last: string } {
-  const local = email.split('@')[0] || 'user';
-  const parts = local.split(/[._-]+/).filter(Boolean);
-  const first = capitalize(parts[0] || 'User');
-  const last = parts.slice(1).map(capitalize).join(' ') || '';
-  return { first, last };
 }
 
 function sessionToUser(session: Session | null): User | null {
@@ -34,7 +23,8 @@ function sessionToUser(session: Session | null): User | null {
   const initials = last
     ? (first.slice(0, 1) + last.slice(0, 1)).toUpperCase()
     : first.slice(0, 2).toUpperCase() || 'U';
-  return { initials, name, email };
+  const avatarUrl = typeof meta?.avatar_url === 'string' ? meta.avatar_url : null;
+  return { id: session.user.id, initials, name, email, avatarUrl };
 }
 
 const AuthContext = createContext<{

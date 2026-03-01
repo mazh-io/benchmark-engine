@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend", "src
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import benchmark, pricing, sync
+from app.routers import auth, benchmark, pricing, sync
 from app.scheduler import start_scheduler, shutdown_scheduler, get_scheduler_status
 
 
@@ -63,6 +63,7 @@ def create_app() -> FastAPI:
     )
 
     # ----- Routers -----
+    app.include_router(auth.router)
     app.include_router(benchmark.router)
     app.include_router(pricing.router)
     app.include_router(sync.router)

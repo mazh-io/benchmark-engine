@@ -115,6 +115,12 @@
   margin-top: 6px;
 }
 
+.st-form-success {
+  font-size: 0.7rem;
+  color: var(--st-success, #22c55e);
+  margin-top: 6px;
+}
+
 .st-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -128,6 +134,10 @@
 }
 
 .st-email-row .st-form-input { flex: 1 }
+
+.st-email-row-clickable {
+  cursor: pointer;
+}
 
 /* ── Buttons ────────────────────────────────────── */
 
@@ -191,6 +201,7 @@
   font-weight: 700;
   color: #000;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .st-avatar-actions {
@@ -356,6 +367,45 @@
 }
 
 .st-invoice-download:hover { text-decoration: underline }
+
+/* ── Unsaved changes modal ───────────────────────── */
+
+.st-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.st-modal {
+  background: #111;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: calc(100% - 32px);
+}
+
+.st-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.st-modal-text {
+  font-size: 0.85rem;
+  color: #787878;
+  margin-bottom: 20px;
+}
+
+.st-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
 /* ── Responsive ─────────────────────────────────── */
 

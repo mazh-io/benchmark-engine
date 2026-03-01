@@ -25,6 +25,7 @@ httpx
 requests
 beautifulsoup4
 tiktoken  # Token count estimation and validation
+PyJWT>=2.0  # Supabase JWT verification
 
 # Local database (PostgreSQL)
 psycopg2-binary

@@ -11,12 +11,6 @@ const nextConfig = {
     domains: [], // Add domains if fetching images from external sources
   },
 
-  // Environment variables - remap from backend env vars if NEXT_PUBLIC_ versions aren't set
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
-  },
-
   // Headers for security
   async headers() {
     return [

@@ -1,8 +1,9 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/layout/Header';
+import { useAuth } from '@/contexts/AuthContext';
 import { useBenchmarkData } from '@/hooks/useBenchmarkData';
 import { useDashboardMetrics } from '@/hooks/useDashboardMetric';
 import { HighlightsGrid } from '@/templates/highlights/HighlightsGrid';
@@ -16,15 +17,25 @@ import { IndexFooter } from '@/layout/IndexFooter';
 import { APIPage } from '@/templates/api/APIPage';
 import type { TimeFilter } from '@/api/types';
 
+function RedirectToLogin() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/login');
+  }, [router]);
+  return null;
+}
+
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><span className="text-white/60 text-sm">Loading...</span></div>}>
       <DashboardContent />
     </Suspense>
   );
 }
 
 function DashboardContent() {
+  const router = useRouter();
+  const { isLoggedIn, isReady, user } = useAuth();
   const [expandedCard, setExpandedCard] = useState<
     'fastest' | 'slowest' | 'bestvalue' | 'moststable' | 'insight' | null
   >(null);
@@ -40,6 +51,17 @@ function DashboardContent() {
   const dashboard = useDashboardMetrics(data);
 
   useEffect(() => {
+    if (!isReady) {
+      router.replace('/login');
+      return;
+    }
+    if (!isLoggedIn) {
+      router.replace('/login');
+      return;
+    }
+  }, [isReady, isLoggedIn, router]);
+
+  useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'grid' || tab === 'insights' || tab === 'api') {
       setActiveTab(tab as Tab);
@@ -50,6 +72,9 @@ function DashboardContent() {
     setTimeFilter(time);
   };
 
+  if (!isReady || !isLoggedIn) {
+    return null;
+  }
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -62,7 +87,7 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Header />
+      <Header tier={isLoggedIn ? 'free' : 'logged-out'} user={user ?? undefined} />
 
       {/* Divider */}
       <div className="h-px bg-[#0f0f0f]" />

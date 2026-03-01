@@ -1,106 +1,95 @@
 'use client';
 
-type AccountUser = {
-  initials: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-};
+import { forwardRef, useImperativeHandle, useRef } from 'react';
+import type { AccountUser } from './accountTypes';
+import { useAccountSection } from './useAccountSection';
+import { AccountAvatar } from './AccountAvatar';
+import { ProfileForm } from './ProfileForm';
+import { EmailField } from './EmailField';
+import { DangerZone } from './DangerZone';
 
-interface AccountSectionProps {
+export type { AccountUser };
+
+export interface AccountSectionProps {
   user: AccountUser;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function AccountSection({ user }: AccountSectionProps) {
+export interface AccountSectionRef {
+  save: () => Promise<void>;
+  discard: () => void;
+}
+
+export const AccountSection = forwardRef<AccountSectionRef, AccountSectionProps>(function AccountSection(
+  { user, onDirtyChange },
+  ref,
+) {
+  const { profile, email, dangerZone, avatar } = useAccountSection(user, { onDirtyChange });
+  const saveRef = useRef(profile.handleSaveProfile);
+  saveRef.current = profile.handleSaveProfile;
+
+  useImperativeHandle(ref, () => ({
+    save: () => saveRef.current?.(),
+    discard: profile.handleDiscard,
+  }), [profile.handleDiscard]);
+
   return (
     <section>
       <h2 className="st-section-title">Account</h2>
 
-      {/* Avatar upload */}
-      <div className="st-avatar-upload">
-        <div className="st-avatar-large">{user.initials}</div>
-        <div className="st-avatar-actions">
-          <button type="button" className="st-btn st-btn-secondary">
-            Upload Photo
-          </button>
-          <p className="st-avatar-hint">PNG or JPG, at least 240x240px.</p>
-        </div>
-      </div>
+      <AccountAvatar
+        initials={user.initials}
+        avatarUrl={avatar.avatarPreviewUrl}
+        onUpload={avatar.handleAvatarUpload}
+        uploading={profile.saving}
+        error={avatar.avatarError}
+      />
 
-      {/* Profile form */}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-        }}
-      >
-        <div className="st-form-row">
-          <div className="st-form-group">
-            <label className="st-form-label" htmlFor="first-name">
-              First name
-            </label>
-            <input
-              id="first-name"
-              className="st-form-input"
-              defaultValue={user.firstName}
-              placeholder="First name"
-            />
-          </div>
-          <div className="st-form-group">
-            <label className="st-form-label" htmlFor="last-name">
-              Last name
-            </label>
-            <input
-              id="last-name"
-              className="st-form-input"
-              defaultValue={user.lastName}
-              placeholder="Last name"
-            />
-          </div>
-        </div>
+      <ProfileForm
+        firstName={profile.firstName}
+        lastName={profile.lastName}
+        onFirstNameChange={profile.setFirstName}
+        onLastNameChange={profile.setLastName}
+        onSubmit={(e) => profile.handleSaveProfile(e)}
+        onDiscard={profile.isDirty ? profile.handleDiscard : undefined}
+        saving={profile.saving}
+      />
 
-        <div className="st-form-group">
-          <label className="st-form-label" htmlFor="email">
-            Email
-          </label>
-          <div className="st-email-row">
-            <input
-              id="email"
-              type="email"
-              className="st-form-input"
-              defaultValue={user.email}
-              placeholder="you@example.com"
-            />
-            <button type="button" className="st-btn st-btn-secondary">
-              Change email
-            </button>
-          </div>
-          <p className="st-form-hint">
-            We&apos;ll use this address for account notifications and receipts.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-          <button type="submit" className="st-btn st-btn-primary">
-            Save changes
-          </button>
-          <button type="button" className="st-btn st-btn-secondary">
-            Cancel
-          </button>
-        </div>
-      </form>
-
-      {/* Danger zone */}
-      <div className="st-danger-zone">
-        <h3 className="st-danger-title">Danger zone</h3>
-        <p className="st-danger-desc">
-          Deleting your account will permanently remove your workspace, API keys, and all
-          benchmark data. This action cannot be undone.
+      {profile.saveSuccess && (
+        <p className="st-form-hint st-form-success">
+          {profile.saveSuccess}
         </p>
-        <button type="button" className="st-btn st-btn-danger">
-          Delete account
-        </button>
+      )}
+      {profile.saveError && (
+        <p className="st-form-hint" style={{ color: 'var(--st-danger, #ef4444)' }}>
+          {profile.saveError}
+        </p>
+      )}
+
+      <div className="st-mt">
+        <EmailField
+        email={user.email}
+        isEditing={email.changeEmailMode}
+        onStartEdit={() => email.setChangeEmailMode(true)}
+        newEmail={email.newEmail}
+        onNewEmailChange={email.setNewEmail}
+        onSubmit={email.handleChangeEmail}
+        onCancel={email.cancelEmailEdit}
+        changing={email.changingEmail}
+        message={email.emailMessage}
+        error={email.emailError}
+        successNewEmail={email.emailSuccessNewEmail}
+      />
       </div>
+
+      <DangerZone
+        showConfirm={dangerZone.showDeleteConfirm}
+        onStartDelete={() => dangerZone.setShowDeleteConfirm(true)}
+        onConfirmDelete={dangerZone.handleDeleteAccount}
+        onCancel={dangerZone.cancelDelete}
+        deleting={dangerZone.deleting}
+        error={dangerZone.deleteError}
+      />
     </section>
   );
-}
-
+});

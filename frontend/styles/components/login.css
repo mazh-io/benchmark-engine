@@ -47,6 +47,12 @@
   color: #787878;
 }
 
+.login-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
 /* ── OAuth Buttons ──────────────────────────────── */
 
 .oauth-buttons {
@@ -135,6 +141,16 @@
   border-radius: 8px;
   outline: none;
   transition: all 0.15s;
+}
+
+/* Fix browser autofill (keeps dark background) */
+.login-input-group input:-webkit-autofill,
+.login-input-group input:-webkit-autofill:hover,
+.login-input-group input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0a inset;
+  box-shadow: 0 0 0 1000px #0a0a0a inset;
+  caret-color: #fff;
 }
 
 .login-input-group input::placeholder {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/api/supabase';
@@ -9,6 +9,20 @@ import { useAuth } from '@/contexts/AuthContext';
 const AUTH_WAIT_MS = 8000;
 
 export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <p className="text-white/70">Signing you in…</p>
+        </div>
+      }
+    >
+      <AuthInner />
+    </Suspense>
+  );
+}
+
+function AuthInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginFromSession } = useAuth();

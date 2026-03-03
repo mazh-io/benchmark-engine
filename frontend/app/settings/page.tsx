@@ -9,7 +9,7 @@ import { MainNav, type Tab } from '@/layout/MainNav';
 import { AccountSection, type AccountSectionRef } from '@/templates/settings/AccountSection';
 import { BillingSection } from '@/templates/settings/BillingSection';
 
-type SettingsTab = 'account' | 'billing';
+type SettingsTab = 'account' | 'billing' | 'api';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -29,7 +29,10 @@ export default function SettingsPage() {
   }, [isReady, isLoggedIn, router]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#billing') setTab('billing');
+    if (typeof window !== 'undefined') {
+      if (window.location.hash === '#billing') setTab('billing');
+      if (window.location.hash === '#api') setTab('api');
+    }
   }, []);
 
   if (!isReady || !isLoggedIn) {
@@ -40,7 +43,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black">
       <Header
         tier="pro"
-        user={user ? { initials: user.initials, name: user.name, email: user.email } : undefined}
+        user={user ? { initials: user.initials, name: user.name, email: user.email, avatarUrl: user.avatarUrl } : undefined}
         showSocial={false}
       />
       <div className="h-px bg-[#0f0f0f]" />
@@ -79,14 +82,18 @@ export default function SettingsPage() {
           >
             Billing
           </button>
-          <Link href="/" className="st-tab st-tab-link">
+          <button
+            className={`st-tab ${tab === 'api' ? 'active' : ''}`}
+            onClick={() => {
+              if (accountDirty) {
+                setPendingTab('api');
+              } else {
+                setTab('api');
+              }
+            }}
+          >
             API Keys
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width={12} height={12}>
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          </Link>
+          </button>
         </div>
 
         {/* Sections */}
@@ -105,6 +112,14 @@ export default function SettingsPage() {
           />
         )}
         {tab === 'billing' && <BillingSection />}
+        {tab === 'api' && (
+          <div className="st-section">
+            <h2 className="st-section-title">API Keys</h2>
+            <p className="text-[#666] text-sm">
+              API access is coming soon. You&apos;ll be able to generate and manage your API keys here.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Unsaved changes modal */}

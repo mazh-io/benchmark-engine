@@ -7,9 +7,10 @@ interface Props {
   initials: string;
   name: string;
   email: string;
+  avatarUrl?: string | null;
 }
 
-export function AvatarDropdown({ initials, name, email }: Props) {
+export function AvatarDropdown({ initials, name, email, avatarUrl }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -24,7 +25,11 @@ export function AvatarDropdown({ initials, name, email }: Props) {
   return (
     <div ref={ref} className={`avatar-dropdown ${open ? 'open' : ''}`}>
       <button className="avatar-btn" onClick={() => setOpen(!open)}>
-        <div className="avatar">{initials}</div>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={name} className="avatar avatar-img" />
+        ) : (
+          <div className="avatar">{initials}</div>
+        )}
         <span className="avatar-chevron">▼</span>
       </button>
 
@@ -50,7 +55,7 @@ export function AvatarDropdown({ initials, name, email }: Props) {
           Billing
         </Link>
 
-        <Link href="/" className="avatar-menu-item">
+        <Link href="/settings#api" className="avatar-menu-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M4 17l6-6-6-6" />
             <line x1="12" y1="19" x2="20" y2="19" />

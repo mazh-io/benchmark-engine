@@ -85,7 +85,7 @@ export function EmailField({
           )}
           {message === 'success' && (
             <p className="st-form-hint st-form-success">
-              We&apos;ve sent a confirmation link to {successNewEmail || 'your new email'}. Click the link in that inbox to confirm the change.
+              We&apos;ve sent a confirmation link to {successNewEmail || 'your new email'}. Check that inbox and click the link to confirm the change.
             </p>
           )}
         </form>
@@ -97,7 +97,7 @@ export function EmailField({
           </p>
           {message === 'success' && successNewEmail && (
             <p className="st-form-hint st-form-success">
-              We&apos;ve sent a confirmation link to {successNewEmail}. Click the link in that inbox to confirm the change.
+              We&apos;ve sent a confirmation link to {successNewEmail}. Check that inbox and click the link to confirm the change.
             </p>
           )}
         </>

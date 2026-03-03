@@ -8,11 +8,11 @@ type Tier = 'logged-out' | 'free' | 'pro';
 
 interface Props {
   tier?: Tier;
-  user?: { initials: string; name: string; email: string };
+  user?: { initials: string; name: string; email: string; avatarUrl?: string | null };
   showSocial?: boolean;
 }
 
-const MOCK_USER = { initials: 'SV', name: 'Sven', email: 'sven@example.com' };
+const MOCK_USER = { initials: 'SV', name: 'Sven', email: 'sven@example.com', avatarUrl: null };
 
 export function Header({ tier = 'free', user = MOCK_USER, showSocial = true }: Props) {
   return (
@@ -65,6 +65,7 @@ export function Header({ tier = 'free', user = MOCK_USER, showSocial = true }: P
                   initials={user.initials}
                   name={user.name}
                   email={user.email}
+                  avatarUrl={user.avatarUrl}
                 />
               )}
             </>
@@ -76,8 +77,9 @@ export function Header({ tier = 'free', user = MOCK_USER, showSocial = true }: P
                 initials={user.initials}
                 name={user.name}
                 email={user.email}
+                avatarUrl={user.avatarUrl}
               />
-              <span className="pro-badge">PRO</span>
+              <Link href="/early-access" className="pro-badge">PRO</Link>
             </>
           )}
         </div>

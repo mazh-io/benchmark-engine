@@ -1,0 +1,93 @@
+/* ── Settings – Billing Tab ────────────────────── */
+
+.st-billing-card {
+  background: #0a0a0a;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.st-billing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.st-billing-plan-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Status badges */
+
+.st-billing-badge {
+  padding: 4px 10px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.55rem;
+  font-weight: 700;
+  background: #c8ff00;
+  color: #000;
+  border-radius: 4px;
+}
+
+.st-billing-badge.st-badge-warn {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.st-billing-badge.st-badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Plan detail grid */
+
+.st-plan-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.st-plan-detail {
+  padding: 16px;
+  background: #050505;
+  border-radius: 8px;
+}
+
+.st-plan-label {
+  font-size: 0.6rem;
+  color: #484848;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.st-plan-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.st-plan-value.acid { color: #c8ff00 }
+
+.st-billing-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Misc */
+
+.st-billing-hint {
+  font-size: 0.8rem;
+  color: #787878;
+  margin: 8px 0 20px;
+}
+
+.st-billing-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-top: 8px;
+}

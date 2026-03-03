@@ -1,0 +1,38 @@
+/* ── Settings – Unsaved Changes Modal ─────────── */
+
+.st-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.st-modal {
+  background: #111;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: calc(100% - 32px);
+}
+
+.st-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.st-modal-text {
+  font-size: 0.85rem;
+  color: #787878;
+  margin-bottom: 20px;
+}
+
+.st-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

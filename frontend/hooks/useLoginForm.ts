@@ -83,7 +83,7 @@ export function useLoginForm(): UseLoginFormReturn {
     });
     setLoading(false);
     if (err) {
-q      const isRateLimit = /security purposes|rate limit|too many/i.test(err.message ?? '');
+      const isRateLimit = /security purposes|rate limit|too many/i.test(err.message ?? '');
       if (isRateLimit) {
         const secsMatch = err.message?.match(/(\d+)\s*seconds?/i);
         const waitMs = secsMatch ? parseInt(secsMatch[1], 10) * 1000 : RESEND_COOLDOWN_MS;

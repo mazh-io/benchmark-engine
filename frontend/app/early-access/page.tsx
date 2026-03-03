@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainNav } from '@/layout/MainNav';
@@ -16,7 +17,13 @@ import { FAQSection } from '@/templates/early-access/FAQSection';
 import { CTASection } from '@/templates/early-access/CTASection';
 
 export default function EarlyAccessPage() {
+  const router = useRouter();
   const { isLoggedIn, user } = useAuth();
+  const handleTabChange = useCallback((tab: 'grid' | 'insights' | 'api') => {
+    if (tab === 'grid') router.push('/');
+    if (tab === 'insights') router.push('/?tab=insights');
+    if (tab === 'api') router.push('/?tab=api');
+  }, [router]);
   const [expandedCard, setExpandedCard] = useState<
     'fastest' | 'slowest' | 'bestvalue' | 'moststable' | 'insight' | null
   >(null);
@@ -44,7 +51,7 @@ export default function EarlyAccessPage() {
         />
       </div>
 
-      <MainNav activeTab={null} onTabChange={() => {}} />
+      <MainNav activeTab={null} onTabChange={handleTabChange} />
 
       {/* Page content */}
       <div className="ea-content">

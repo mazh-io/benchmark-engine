@@ -76,13 +76,22 @@ export function useLoginForm(): UseLoginFormReturn {
     setError(null);
     if (!email.trim()) return;
     setLoading(true);
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth` : '';
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
     });
     setLoading(false);
     if (err) {
-      setError(err.message || 'Failed to send code');
+      const isRateLimit = /security purposes|rate limit|too many/i.test(err.message ?? '');
+      if (isRateLimit) {
+        const secsMatch = err.message?.match(/(\d+)\s*seconds?/i);
+        const waitMs = secsMatch ? parseInt(secsMatch[1], 10) * 1000 : RESEND_COOLDOWN_MS;
+        setResendAvailableAt(Date.now() + waitMs);
+        setScreen('otp');
+        return;
+      }
+      setError(err.message || 'Failed to send code. Please try again.');
       return;
     }
     setScreen('otp');
@@ -103,21 +112,53 @@ export function useLoginForm(): UseLoginFormReturn {
     if (code.length !== 6 || loading) return;
     setError(null);
     setLoading(true);
-    const { data, error: err } = await supabase.auth.verifyOtp({
+
+    const { data, error: verifyErr } = await supabase.auth.verifyOtp({
       email: email.trim(),
       token: code,
       type: 'email',
     });
-    setLoading(false);
-    if (err) {
-      setError(err.message || 'Invalid or expired code');
-      clearOtpInputs();
-      return;
-    }
-    if (data?.session) {
+
+    if (!verifyErr && data.session) {
+      setLoading(false);
       loginFromSession(data.session);
       router.push('/');
+      return;
     }
+
+    // SDK returned error — try raw verify with magiclink type as fallback
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    try {
+      const res = await fetch(`${supabaseUrl}/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ email: email.trim(), token: code, type: 'magiclink' }),
+      });
+      const body = await res.json();
+      if (res.ok && body.access_token) {
+        const { data: sessionData } = await supabase.auth.setSession({
+          access_token: body.access_token,
+          refresh_token: body.refresh_token,
+        });
+        setLoading(false);
+        if (sessionData.session) {
+          loginFromSession(sessionData.session);
+          router.push('/');
+        }
+        return;
+      }
+    } catch (_) {
+      // fallback failed
+    }
+
+    setLoading(false);
+    clearOtpInputs();
+    setError(verifyErr?.message || 'Invalid or expired code. Click "Resend code" to get a new one.');
   }, [email, loading, loginFromSession, router, clearOtpInputs]);
 
   const handleOtpInput = useCallback(
@@ -165,13 +206,21 @@ export function useLoginForm(): UseLoginFormReturn {
     if (!canResend) return;
     setError(null);
     setLoading(true);
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth` : '';
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
     });
     setLoading(false);
     if (err) {
-      setError(err.message || 'Failed to resend');
+      const isRateLimit = /security purposes|rate limit|too many/i.test(err.message ?? '');
+      if (isRateLimit) {
+        const secsMatch = err.message?.match(/(\d+)\s*seconds?/i);
+        const waitMs = secsMatch ? parseInt(secsMatch[1], 10) * 1000 : RESEND_COOLDOWN_MS;
+        setResendAvailableAt(Date.now() + waitMs);
+        return;
+      }
+      setError(err.message || 'Failed to resend code. Please try again.');
       return;
     }
     setResendAvailableAt(Date.now() + RESEND_COOLDOWN_MS);

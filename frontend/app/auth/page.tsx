@@ -22,6 +22,19 @@ export default function AuthPage() {
   );
 }
 
+function parseHash(): { error?: string; message?: string } {
+  if (typeof window === 'undefined') return {};
+  const hash = window.location.hash;
+  if (!hash) return {};
+  const params = new URLSearchParams(hash.replace('#', ''));
+  const error = params.get('error_description') || params.get('error');
+  const message = params.get('message');
+  return {
+    error: error ? error.replace(/\+/g, ' ') : undefined,
+    message: message ? message.replace(/\+/g, ' ') : undefined,
+  };
+}
+
 function AuthInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,18 +47,48 @@ function AuthInner() {
     let cancelled = false;
     const next = searchParams.get('next');
     const redirectPath = next && next.startsWith('/') ? next : '/';
+    const hashInfo = parseHash();
+
+    // If the hash contains an actual error (expired, denied), show immediately
+    if (hashInfo.error) {
+      const friendly = /expired/i.test(hashInfo.error)
+        ? 'This link has expired. Please request a new one.'
+        : hashInfo.error;
+      setStatus('error');
+      setMessage(friendly);
+      return;
+    }
+
+    // Detect email change double-confirmation message from hash.
+    // We do NOT return early here — let Supabase SDK process the tokens first.
+    const isEmailChangeMessage =
+      !!hashInfo.message && /confirmation|sent.*other.*email/i.test(hashInfo.message);
 
     function finish(session: import('@supabase/supabase-js').Session) {
       if (doneRef.current || cancelled) return;
       doneRef.current = true;
       loginFromSession(session);
-      setStatus('ok');
-      router.replace(redirectPath);
+
+      if (isEmailChangeMessage) {
+        setStatus('error');
+        setMessage(
+          'Almost done! We\'ve sent a confirmation link to your new email address. Please check your inbox and click the link to complete the change.',
+        );
+      } else {
+        setStatus('ok');
+        router.replace(redirectPath);
+      }
     }
 
     const authSub = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
-      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+      if (
+        session &&
+        (event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED' ||
+          event === 'INITIAL_SESSION' ||
+          event === 'USER_UPDATED')
+      ) {
         finish(session);
       }
     });
@@ -67,15 +110,29 @@ function AuthInner() {
         await new Promise((r) => setTimeout(r, 250));
       }
       if (!doneRef.current && !cancelled) {
-        setStatus('error');
-        setMessage('No session returned. Try signing in again.');
+        if (isEmailChangeMessage) {
+          setStatus('error');
+          setMessage(
+            'Almost done! We\'ve sent a confirmation link to your new email address. Please check your inbox and click the link to complete the change.',
+          );
+        } else {
+          setStatus('error');
+          setMessage('No session returned. Try signing in again.');
+        }
       }
     }, 100);
 
     const maxWait = window.setTimeout(() => {
       if (!doneRef.current && !cancelled && status === 'loading') {
-        setStatus('error');
-        setMessage('No session returned. Try signing in again.');
+        if (isEmailChangeMessage) {
+          setStatus('error');
+          setMessage(
+            'Almost done! We\'ve sent a confirmation link to your new email address. Please check your inbox and click the link to complete the change.',
+          );
+        } else {
+          setStatus('error');
+          setMessage('No session returned. Try signing in again.');
+        }
       }
     }, AUTH_WAIT_MS);
 
@@ -88,11 +145,13 @@ function AuthInner() {
   }, [loginFromSession, router, searchParams]);
 
   if (status === 'error') {
+    const backPath = searchParams.get('next') || '/login';
+    const backLabel = backPath === '/login' ? 'Back to login' : 'Back to settings';
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-white/80 text-center">{message}</p>
-        <Link href="/login" className="text-white underline hover:no-underline">
-          Back to login
+        <Link href={backPath} className="text-white underline hover:no-underline">
+          {backLabel}
         </Link>
       </div>
     );

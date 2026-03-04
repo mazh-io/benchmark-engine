@@ -1,5 +1,10 @@
 /* ── Early Access – Static Data ────────────────── */
 
+/**
+ * Direct Lemon Squeezy checkout links for the public early-access
+ * landing page. Logged-in users in Settings use the API-based
+ * checkout flow (POST /api/billing/checkout) instead.
+ */
 export const CHECKOUT = {
   monthly: 'https://mazh.lemonsqueezy.com/checkout/buy/early-monthly',
   yearly: 'https://mazh.lemonsqueezy.com/checkout/buy/early-yearly',

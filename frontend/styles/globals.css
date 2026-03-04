@@ -27,6 +27,9 @@
 
   /* Settings page */
   @import './components/settings.css';
+  @import './components/settings-account.css';
+  @import './components/settings-billing.css';
+  @import './components/settings-modal.css';
 
   /* Early Access page */
   @import './components/ea-pricing.css';

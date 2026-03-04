@@ -1,100 +1,63 @@
 'use client';
 
-const PLAN = {
-  name: 'Early Access Pro',
-  price: '€19/mo',
-  nextBilling: 'Feb 15, 2025',
-  type: 'Early Access',
-  priceLocked: 'Forever ✓',
-} as const;
+import { useBilling } from './useBilling';
 
-const PAYMENT = {
-  last4: '4242',
-  expires: '12/26',
-  brand: 'Visa',
-} as const;
-
-const INVOICES = [
-  { date: 'Jan 15, 2025', amount: '€19.00' },
-  { date: 'Dec 15, 2024', amount: '€19.00' },
-  { date: 'Nov 15, 2024', amount: '€19.00' },
-] as const;
+const PRO_LABEL = process.env.NEXT_PUBLIC_PRO_LABEL ?? 'Pro';
 
 export function BillingSection() {
+  const { view, planName, badge, periodEnd, busy, error, checkout, portal } = useBilling();
+
+  if (view === 'loading') {
+    return <p className="st-plan-value" style={{ padding: '2rem 0' }}>Loading billing…</p>;
+  }
+
   return (
     <>
-      {/* Current Plan */}
       <h2 className="st-section-title">Current Plan</h2>
 
       <div className="st-billing-card">
         <div className="st-billing-header">
-          <div className="st-billing-plan-name">{PLAN.name}</div>
-          <span className="st-billing-badge">ACTIVE</span>
+          <div className="st-billing-plan-name">{view === 'free' ? 'Free' : planName}</div>
+          {badge && view !== 'free' && (
+            <span className={badge.cls}>{badge.text}</span>
+          )}
         </div>
 
-        <div className="st-plan-details">
-          <div className="st-plan-detail">
-            <div className="st-plan-label">Price</div>
-            <div className="st-plan-value acid">{PLAN.price}</div>
-          </div>
-          <div className="st-plan-detail">
-            <div className="st-plan-label">Next billing</div>
-            <div className="st-plan-value">{PLAN.nextBilling}</div>
-          </div>
-          <div className="st-plan-detail">
-            <div className="st-plan-label">Plan type</div>
-            <div className="st-plan-value">{PLAN.type}</div>
-          </div>
-          <div className="st-plan-detail">
-            <div className="st-plan-label">Price locked</div>
-            <div className="st-plan-value acid">{PLAN.priceLocked}</div>
-          </div>
-        </div>
+        {(view === 'free' || view === 'expired') && (
+          <>
+            <p className="st-billing-hint">
+              {view === 'free'
+                ? 'Upgrade to Pro for cost analysis, efficiency scores, extended data history, API access, and more.'
+                : 'Your subscription has expired. Re-subscribe to regain Pro access.'}
+            </p>
+            <button type="button" className="st-btn st-btn-primary" disabled={busy} onClick={checkout}>
+              {busy ? 'Redirecting…' : view === 'free' ? `Get ${PRO_LABEL}` : `Re-subscribe — ${PRO_LABEL}`}
+            </button>
+          </>
+        )}
 
-        <div className="st-billing-actions">
-          <button type="button" className="st-btn st-btn-secondary">
-            Manage Subscription
-          </button>
-          <button type="button" className="st-btn st-btn-danger">
-            Cancel Plan
-          </button>
-        </div>
-      </div>
-
-      {/* Payment Method */}
-      <h2 className="st-section-title st-mt">Payment Method</h2>
-
-      <div className="st-billing-card">
-        <div className="st-billing-header">
-          <div>
-            <div className="st-billing-plan-name">•••• •••• •••• {PAYMENT.last4}</div>
-            <p className="st-payment-expires">Expires {PAYMENT.expires}</p>
-          </div>
-          <span className="st-payment-brand">{PAYMENT.brand}</span>
-        </div>
-        <button type="button" className="st-btn st-btn-secondary">
-          Update Payment Method
-        </button>
-      </div>
-
-      {/* Invoices */}
-      <h2 className="st-section-title st-mt">Invoices</h2>
-
-      <div className="st-invoice-list">
-        {INVOICES.map((invoice) => (
-          <div key={invoice.date} className="st-invoice-item">
-            <div className="st-invoice-info">
-              <span className="st-invoice-date">{invoice.date}</span>
-              <span className="st-invoice-amount">{invoice.amount}</span>
-              <span className="st-invoice-status">Paid</span>
+        {view !== 'free' && view !== 'expired' && (
+          <>
+            {periodEnd && (
+              <div className="st-plan-details">
+                <div className="st-plan-detail">
+                  <div className="st-plan-label">
+                    {view === 'cancelled' ? 'Access until' : 'Next billing'}
+                  </div>
+                  <div className="st-plan-value">{periodEnd}</div>
+                </div>
+              </div>
+            )}
+            <div className="st-billing-actions">
+              <button type="button" className="st-btn st-btn-secondary" disabled={busy} onClick={portal}>
+                {busy ? 'Loading…' : 'Manage Subscription'}
+              </button>
             </div>
-            <a href="#" className="st-invoice-download">
-              Download
-            </a>
-          </div>
-        ))}
+          </>
+        )}
       </div>
+
+      {error && <p className="st-billing-error">{error}</p>}
     </>
   );
 }
-

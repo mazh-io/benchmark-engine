@@ -333,6 +333,32 @@ create table if not exists public.benchmark_queue (
     unique(run_id, provider_key, model_name)
 );
 
+-- =============================================================================
+-- SUBSCRIPTIONS (Lemon Squeezy billing state)
+-- One active subscription per user. Writes happen server-side via webhook;
+-- RLS allows users to read their own row only.
+-- =============================================================================
+
+create table if not exists public.subscriptions (
+    id                    uuid primary key default gen_random_uuid(),
+    user_id               uuid not null references public.users(id) on delete cascade,
+    ls_subscription_id    text not null unique,
+    ls_customer_id        text not null,
+    variant_id            text not null,
+    product_name          text,
+    status                text not null default 'active',
+    current_period_end    timestamptz,
+    cancel_at_period_end  boolean not null default false,
+    created_at            timestamptz not null default now(),
+    updated_at            timestamptz not null default now()
+);
+
+alter table public.subscriptions enable row level security;
+
+create policy "Users read own subscription"
+    on public.subscriptions for select
+    using (auth.uid() = user_id);
+
 -- INDEXES (all in one place for consistency and easier maintenance)
 -- users
 create index if not exists idx_users_is_active on public.users(is_active);
@@ -372,3 +398,8 @@ create index if not exists idx_run_errors_timestamp on public.run_errors(timesta
 create index if not exists idx_benchmark_queue_run_id on public.benchmark_queue(run_id);
 create index if not exists idx_benchmark_queue_status on public.benchmark_queue(status);
 create index if not exists idx_benchmark_queue_created_at on public.benchmark_queue(created_at);
+
+-- subscriptions
+create unique index if not exists idx_subscriptions_user on public.subscriptions(user_id);
+create index if not exists idx_subscriptions_status on public.subscriptions(status);
+create index if not exists idx_subscriptions_ls_sub_id on public.subscriptions(ls_subscription_id);

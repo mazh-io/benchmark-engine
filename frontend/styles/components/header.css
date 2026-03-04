@@ -98,6 +98,13 @@
   color: #000000;
   background: #c8ff00;
   border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.pro-badge:hover {
+  filter: brightness(1.1);
 }
 
 /* ── Launchpad ──────────────────────────────────── */
@@ -244,6 +251,12 @@
   font-weight: 800;
   color: #000;
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
+}
+
+.avatar-img {
+  object-fit: cover;
+  border: 1.5px solid #232323;
+  background: #0a0a0a;
 }
 
 .avatar-chevron {

@@ -154,33 +154,25 @@ export function useAccountSection(user: AccountUser, options: UseAccountSectionO
     setDeleting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
+      if (!session?.access_token) {
         setDeleteError('Not logged in');
         setDeleting(false);
         return;
       }
-      const authUser = session.user;
-      // 1) Soft-delete in public.users
-      const { error: updateError } = await (
-        supabase as import('@supabase/supabase-js').SupabaseClient
-      ).from('users').update({ is_active: false }).eq('id', authUser.id);
-      if (updateError) {
-        setDeleteError(updateError.message || 'Failed to deactivate account');
-        setDeleting(false);
-        return;
-      }
-      // 2) Permanently delete from auth.users (backend admin API)
-      const apiBase = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : '';
-      const res = await fetch(`${apiBase}/api/auth/delete-me`, {
+      const res = await fetch('/api/account', {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session!.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!res.ok) {
-        const detail = res.status === 503
-          ? 'Account deletion is not configured on the server. Your account was deactivated; contact support to remove it from auth.'
-          : (await res.text()) || `Failed to delete auth account (${res.status})`;
+        let detail: string;
+        if (res.status === 503) {
+          detail =
+            'Account deletion is not configured on the server. Contact support to remove your account.';
+        } else {
+          const body = await res.json().catch(() => null);
+          detail =
+            body?.error || `Failed to delete account (${res.status})`;
+        }
         setDeleteError(detail);
         setDeleting(false);
         return;

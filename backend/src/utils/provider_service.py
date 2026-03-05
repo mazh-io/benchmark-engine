@@ -316,6 +316,10 @@ ACTIVE_MODELS = [
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", "Low latency"),
     ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", "RDU chip"),
     
+    # xAI - Direct Grok Access (vs OpenRouter comparison)
+    ("xai", "grok-3", "flagship", "Direct vs OpenRouter comparison"),
+    ("xai", "grok-3-mini", "reasoning", "Budget reasoning from xAI"),
+    
     # OpenRouter - Aggregator (Router Tax Analysis)
     ("openrouter", "openai/gpt-4o-mini", "budget", "Compare vs direct"),
     ("openrouter", "openai/gpt-4o", "flagship", "Compare vs direct"),

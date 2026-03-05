@@ -97,4 +97,10 @@ PROVIDER_CONFIG = {
         "pricing_url": "https://docs.x.ai/",
         "default_pricing": {"input": 3.00, "output": 15.00},
     },
+    "perplexity": {
+        "display_name": "Perplexity",
+        "base_url": "https://api.perplexity.ai",
+        "pricing_url": "https://docs.perplexity.ai/",
+        "default_pricing": {"input": 3.00, "output": 15.00},
+    },
 }

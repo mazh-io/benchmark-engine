@@ -320,6 +320,10 @@ ACTIVE_MODELS = [
     ("xai", "grok-3", "flagship", "Direct vs OpenRouter comparison"),
     ("xai", "grok-3-mini", "reasoning", "Budget reasoning from xAI"),
     
+    # Perplexity - Search-Augmented Generation
+    ("perplexity", "sonar-pro", "flagship", "Search-augmented flagship"),
+    ("perplexity", "sonar", "budget", "Budget search model"),
+    
     # OpenRouter - Aggregator (Router Tax Analysis)
     ("openrouter", "openai/gpt-4o-mini", "budget", "Compare vs direct"),
     ("openrouter", "openai/gpt-4o", "flagship", "Compare vs direct"),

@@ -310,7 +310,8 @@ ACTIVE_MODELS = [
     ("together", "meta-llama/Llama-4-Scout-17B-16E-Instruct", "budget", ""),
     
     # Infrastructure Providers
-    ("cerebras", "llama-3.3-70b", "speed", "Wafer-scale engine"),
+    ("cerebras", "llama3.1-8b", "speed", "Wafer-scale engine"),
+    ("cerebras", "gpt-oss-120b", "flagship", "Wafer-scale engine"),
     ("mistral", "mistral-large-latest", "flagship", "European flagship"),
     ("mistral", "codestral-latest", "specialist", "Code specialist"),
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", "Low latency"),
@@ -323,6 +324,10 @@ ACTIVE_MODELS = [
     # Perplexity - Search-Augmented Generation
     ("perplexity", "sonar-pro", "flagship", "Search-augmented flagship"),
     ("perplexity", "sonar", "budget", "Budget search model"),
+    
+    # Cohere - Enterprise RAG (Custom SDK)
+    ("cohere", "command-a-03-2025", "flagship", "Enterprise RAG leader"),
+    ("cohere", "command-r7b-12-2024", "budget", "Budget RAG model"),
     
     # OpenRouter - Aggregator (Router Tax Analysis)
     ("openrouter", "openai/gpt-4o-mini", "budget", "Compare vs direct"),

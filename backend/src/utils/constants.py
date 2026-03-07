@@ -103,4 +103,10 @@ PROVIDER_CONFIG = {
         "pricing_url": "https://docs.perplexity.ai/",
         "default_pricing": {"input": 3.00, "output": 15.00},
     },
+    "cohere": {
+        "display_name": "Cohere",
+        "base_url": "https://api.cohere.com",
+        "pricing_url": "https://cohere.com/pricing",
+        "default_pricing": {"input": 2.50, "output": 10.00},
+    },
 }

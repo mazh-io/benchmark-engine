@@ -38,9 +38,8 @@ def fetch_models_cerebras():
         Dictionary with success, models, and note
     """
     models = [
-        "llama-3.3-70b",
-        "llama-3.1-70b",
-        "llama-3.1-8b",
+        "llama3.1-8b",
+        "gpt-oss-120b",
     ]
     return {
         "success": True,
@@ -69,7 +68,7 @@ class CerebrasProvider(BaseProvider):
         >>> provider = CerebrasProvider(api_key="csk-...")
         >>> result = provider.call_with_retry(
         ...     prompt="Explain neural networks",
-        ...     model="llama-3.3-70b"
+        ...     model="llama3.1-8b"
         ... )
         >>> print(f"Latency: {result['total_latency_ms']:.2f}ms")
     """
@@ -108,7 +107,7 @@ class CerebrasProvider(BaseProvider):
         Tries database first, then falls back to default.
         
         Args:
-            model: Model identifier (e.g., "llama-3.3-70b")
+            model: Model identifier (e.g., "llama3.1-8b")
             
         Returns:
             Dictionary with 'input' and 'output' prices per 1M tokens
@@ -254,7 +253,7 @@ def call_cerebras(prompt: str, model: str) -> Dict[str, Any]:
     
     Args:
         prompt: Input text
-        model: Model identifier (e.g., "llama-3.3-70b")
+        model: Model identifier (e.g., "llama3.1-8b")
         
     Returns:
         Dictionary with benchmark results

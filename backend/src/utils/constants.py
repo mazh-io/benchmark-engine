@@ -90,4 +90,23 @@ PROVIDER_CONFIG = {
         "pricing_url": "https://ai.google.dev/pricing",
         "default_pricing": {"input": 1.25, "output": 5.00},
     },
+    # Phase 4 - Direct API Providers
+    "xai": {
+        "display_name": "xAI",
+        "base_url": "https://api.x.ai/v1",
+        "pricing_url": "https://docs.x.ai/",
+        "default_pricing": {"input": 3.00, "output": 15.00},
+    },
+    "perplexity": {
+        "display_name": "Perplexity",
+        "base_url": "https://api.perplexity.ai",
+        "pricing_url": "https://docs.perplexity.ai/",
+        "default_pricing": {"input": 3.00, "output": 15.00},
+    },
+    "cohere": {
+        "display_name": "Cohere",
+        "base_url": "https://api.cohere.com",
+        "pricing_url": "https://cohere.com/pricing",
+        "default_pricing": {"input": 2.50, "output": 10.00},
+    },
 }

@@ -15,6 +15,9 @@ from .scrapers.deepseek_scraper import DeepSeekScraper
 from .scrapers.cerebras_scraper import CerebrasScraper
 from .scrapers.fireworks_scraper import FireworksScraper
 from .scrapers.sambanova_scraper import SambaNovaScraper
+from .scrapers.cohere_scraper import CohereScraper
+from .scrapers.perplexity_scraper import PerplexityScraper
+from .scrapers.xai_scraper import XAIScraper
 from utils.constants import PROVIDER_CONFIG
 
 
@@ -37,6 +40,9 @@ class ScraperFactory:
         "cerebras": CerebrasScraper,
         "fireworks": FireworksScraper,
         "sambanova": SambaNovaScraper,
+        "cohere": CohereScraper,
+        "perplexity": PerplexityScraper,
+        "xai": XAIScraper,
     }
     
     @staticmethod

@@ -15,6 +15,9 @@ from pricing_scraper.scrapers.deepseek_scraper import DeepSeekScraper
 from pricing_scraper.scrapers.cerebras_scraper import CerebrasScraper
 from pricing_scraper.scrapers.fireworks_scraper import FireworksScraper
 from pricing_scraper.scrapers.sambanova_scraper import SambaNovaScraper
+from pricing_scraper.scrapers.cohere_scraper import CohereScraper
+from pricing_scraper.scrapers.perplexity_scraper import PerplexityScraper
+from pricing_scraper.scrapers.xai_scraper import XAIScraper
 
 __all__ = [
     "OpenAIScraper",
@@ -28,4 +31,7 @@ __all__ = [
     "CerebrasScraper",
     "FireworksScraper",
     "SambaNovaScraper",
+    "CohereScraper",
+    "PerplexityScraper",
+    "XAIScraper",
 ]

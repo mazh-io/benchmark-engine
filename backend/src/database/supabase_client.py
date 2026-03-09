@@ -99,8 +99,10 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
             )
             
             # Update token counts with validated/estimated values
-            data["input_tokens"] = validation["input_tokens"]
-            data["output_tokens"] = validation["output_tokens"]
+            # Cast to int: some providers (e.g. Cohere) return float token counts
+            # which PostgreSQL rejects for integer columns ("invalid input syntax")
+            data["input_tokens"] = int(validation["input_tokens"]) if validation["input_tokens"] is not None else 0
+            data["output_tokens"] = int(validation["output_tokens"]) if validation["output_tokens"] is not None else 0
             
             # Mark benchmark as failed if token counts are suspicious
             if should_fail_benchmark(validation):

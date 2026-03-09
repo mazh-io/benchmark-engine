@@ -271,70 +271,124 @@ def get_timeout_for_model(model: str) -> float:
 # ============================================================================
 
 ACTIVE_MODELS = [
-    # OpenAI - Industry Standard
-    ("openai", "gpt-4o-mini", "budget", "Baseline budget model"),
-    ("openai", "gpt-4o", "flagship", "GPT-4 Optimized flagship"),
-    ("openai", "o3", "reasoning", "Latest reasoning model"),
-    ("openai", "o4-mini", "reasoning", "Budget reasoning model"),
-    ("openai", "gpt-4.1", "flagship", "better coding"),
-    ("openai", "gpt-4.1-mini", "budget", "Better coding budget"),
-    ("openai", "gpt-4.1-nano", "budget", "Legacy budget model"),
-    
-    # Anthropic - Developer Favorite
-    ("anthropic", "claude-sonnet-4-5-20250929", "flagship", "Sonnet 4.5 flagship"),
-    ("anthropic", "claude-haiku-4-5-20251001", "budget", "Haiku 4.5 fast & cheap"),
-    ("anthropic", "claude-sonnet-4-20250514", "flagship", "Celebrity benchmark"),
+    # ===== OpenAI (12) =====
+    ("openai", "gpt-4o-mini", "budget", ""),
+    ("openai", "gpt-4o", "flagship", ""),
+    ("openai", "gpt-4.1", "flagship", ""),
+    ("openai", "gpt-4.1-mini", "budget", ""),
+    ("openai", "gpt-4.1-nano", "budget", ""),
+    ("openai", "gpt-5-mini", "budget", ""),
+    ("openai", "gpt-5.1", "flagship", ""),
+    ("openai", "gpt-5.2", "flagship", ""),
+    ("openai", "gpt-5.4", "flagship", "Latest GPT"),
+    ("openai", "o3", "reasoning", ""),
+    ("openai", "o3-mini", "reasoning", "Budget reasoning"),
+    ("openai", "o4-mini", "reasoning", ""),
+
+    # ===== Anthropic (8) =====
+    ("anthropic", "claude-haiku-4-5-20251001", "budget", ""),
+    ("anthropic", "claude-sonnet-4-5-20250929", "flagship", ""),
+    ("anthropic", "claude-sonnet-4-20250514", "flagship", ""),
+    ("anthropic", "claude-sonnet-4-6", "flagship", "Latest Sonnet"),
     ("anthropic", "claude-opus-4-20250514", "heavyweight", ""),
-    ("anthropic", "claude-opus-4-6", "flagship", ""),
-    
-    # Google - Gemini Latest
-    ("google", "models/gemini-2.5-pro", "flagship", "Best quality"),
-    ("google", "models/gemini-2.5-flash", "speed", "Fast & cheap"),
-    
-    # DeepSeek - Disruptive Pricing
-    ("deepseek", "deepseek-chat", "budget", "V3 - Ultra budget"),
-    ("deepseek", "deepseek-reasoner", "reasoning", "R1 - Reasoning"),
-    
-    # Groq - LPU Speed Champion
-    ("groq", "llama-3.3-70b-versatile", "speed", "Latest Llama 3.3 on LPU"),
-    ("groq", "llama-3.1-8b-instant", "speed", "Ultra-fast 8B"),
+    ("anthropic", "claude-opus-4-1-20250805", "flagship", ""),
+    ("anthropic", "claude-opus-4-5-20251101", "heavyweight", ""),
+    ("anthropic", "claude-opus-4-6", "flagship", "Latest Opus"),
+
+    # ===== Google (7) =====
+    ("google", "models/gemini-2.0-flash", "speed", ""),
+    ("google", "models/gemini-2.5-flash", "speed", ""),
+    ("google", "models/gemini-2.5-flash-lite", "budget", ""),
+    ("google", "models/gemini-2.5-pro", "flagship", ""),
+    ("google", "models/gemini-3-flash-preview", "speed", ""),
+    ("google", "models/gemini-3-pro-preview", "flagship", ""),
+    ("google", "models/gemini-3.1-pro-preview", "flagship", "Latest Gemini"),
+
+    # ===== DeepSeek (2) =====
+    ("deepseek", "deepseek-chat", "budget", "V3.2"),
+    ("deepseek", "deepseek-reasoner", "reasoning", "R1"),
+
+    # ===== xAI (4) =====
+    ("xai", "grok-3", "flagship", ""),
+    ("xai", "grok-3-mini", "reasoning", ""),
+    ("xai", "grok-4-0709", "flagship", "Grok 4"),
+    ("xai", "grok-4-1-fast-non-reasoning", "speed", "Grok 4.1"),
+
+    # ===== Mistral (6) =====
+    ("mistral", "mistral-small-latest", "budget", ""),
+    ("mistral", "mistral-medium-latest", "flagship", ""),
+    ("mistral", "mistral-large-latest", "flagship", ""),
+    ("mistral", "codestral-latest", "specialist", "Code"),
+    ("mistral", "magistral-medium-latest", "reasoning", ""),
+    ("mistral", "magistral-small-latest", "reasoning", "Budget"),
+
+    # ===== Groq (7) =====
+    ("groq", "llama-3.1-8b-instant", "speed", ""),
+    ("groq", "llama-3.3-70b-versatile", "speed", ""),
     ("groq", "meta-llama/llama-4-scout-17b-16e-instruct", "flagship", ""),
-    
-    # Together AI - GPU Cloud
-    ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", "Mixtral MoE"),
-    ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", "Llama 3.3"),
-    ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", "Chinese model"),
-    ("together", "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "flagship", "Llama 4 Maverick MoE"),
-    
-    # Infrastructure Providers
-    ("cerebras", "llama3.1-8b", "speed", "Wafer-scale engine"),
-    ("cerebras", "gpt-oss-120b", "flagship", "Wafer-scale engine"),
-    ("mistral", "mistral-large-latest", "flagship", "European flagship"),
-    ("mistral", "codestral-latest", "specialist", "Code specialist"),
-    ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", "Low latency"),
-    ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", "RDU chip"),
-    
-    # xAI - Direct Grok Access (vs OpenRouter comparison)
-    ("xai", "grok-3", "flagship", "Direct vs OpenRouter comparison"),
-    ("xai", "grok-3-mini", "reasoning", "Budget reasoning from xAI"),
-    
-    # Perplexity - Search-Augmented Generation
-    ("perplexity", "sonar-pro", "flagship", "Search-augmented flagship"),
-    ("perplexity", "sonar", "budget", "Budget search model"),
-    
-    # Cohere - Enterprise RAG (Custom SDK)
-    ("cohere", "command-a-03-2025", "flagship", "Enterprise RAG leader"),
-    ("cohere", "command-r7b-12-2024", "budget", "Budget RAG model"),
-    
-    # OpenRouter - Aggregator (Router Tax Analysis)
-    ("openrouter", "openai/gpt-4o-mini", "budget", "Compare vs direct"),
-    ("openrouter", "openai/gpt-4o", "flagship", "Compare vs direct"),
-    ("openrouter", "meta-llama/llama-3.3-70b-instruct", "flagship", "Llama via router"),
-    ("openrouter", "minimax/minimax-01", "flagship", "Chinese Claude challenger"),
-    ("openrouter", "x-ai/grok-3", "flagship", "xAI Grok 3"),
-    ("openrouter", "deepseek/deepseek-chat", "budget", "Compare vs direct"),
-    ("openrouter", "openai/gpt-4.1", "flagship", ""),
+    ("groq", "meta-llama/llama-4-maverick-17b-128e-instruct", "flagship", ""),
+    ("groq", "moonshotai/kimi-k2-instruct", "flagship", "Kimi on LPU"),
+    ("groq", "openai/gpt-oss-20b", "budget", ""),
+    ("groq", "qwen/qwen3-32b", "flagship", "Qwen3 on LPU"),
+
+    # ===== Together AI (14) =====
+    ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", ""),
+    ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", ""),
+    ("together", "meta-llama/Llama-3.1-405B-Instruct", "heavyweight", "Largest open-source"),
+    ("together", "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "flagship", ""),
+    ("together", "meta-llama/Llama-4-Scout-17B-16E-Instruct", "flagship", ""),
+    ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", ""),
+    ("together", "Qwen/Qwen3.5-397B-A17B", "flagship", "Latest Qwen"),
+    ("together", "deepseek-ai/DeepSeek-V3.1", "flagship", ""),
+    ("together", "deepseek-ai/DeepSeek-R1", "reasoning", ""),
+    ("together", "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", "reasoning", "Distill"),
+    ("together", "MiniMaxAI/MiniMax-M2.5", "flagship", ""),
+    ("together", "zai-org/GLM-5", "flagship", "Top open-source"),
+    ("together", "zai-org/GLM-4.7", "flagship", ""),
+    ("together", "openai/gpt-oss-20b", "budget", ""),
+
+    # ===== Cerebras (4) =====
+    ("cerebras", "llama3.1-8b", "speed", ""),
+    ("cerebras", "gpt-oss-120b", "flagship", ""),
+    ("cerebras", "qwen-3-235b-a22b-instruct-2507", "flagship", "Qwen3 at Cerebras speed"),
+    ("cerebras", "zai-glm-4.7", "flagship", "GLM at Cerebras speed"),
+
+    # ===== Fireworks (2) =====
+    ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", ""),
+    ("fireworks", "accounts/fireworks/models/deepseek-v3p2", "flagship", "DeepSeek V3.2"),
+
+    # ===== SambaNova (6) =====
+    ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", ""),
+    ("sambanova", "Llama-4-Maverick-17B-128E-Instruct", "flagship", ""),
+    ("sambanova", "DeepSeek-V3.2", "flagship", ""),
+    ("sambanova", "MiniMax-M2.5", "flagship", ""),
+    ("sambanova", "Qwen3-235B", "flagship", ""),
+    ("sambanova", "Qwen3-32B", "flagship", ""),
+
+    # ===== Perplexity (2) =====
+    ("perplexity", "sonar-pro", "flagship", "Search-augmented"),
+    ("perplexity", "sonar", "budget", ""),
+
+    # ===== Cohere (2) =====
+    ("cohere", "command-a-03-2025", "flagship", "Enterprise RAG"),
+    ("cohere", "command-r7b-12-2024", "budget", ""),
+
+    # ===== OpenRouter (15) — Router tax + exclusive models =====
+    ("openrouter", "openai/gpt-4o-mini", "budget", "vs direct"),
+    ("openrouter", "openai/gpt-4o", "flagship", "vs direct"),
+    ("openrouter", "openai/gpt-4.1", "flagship", "vs direct"),
+    ("openrouter", "deepseek/deepseek-chat", "budget", "vs direct"),
+    ("openrouter", "meta-llama/llama-3.3-70b-instruct", "flagship", "vs direct"),
     ("openrouter", "meta-llama/llama-4-maverick", "flagship", ""),
+    ("openrouter", "x-ai/grok-3", "flagship", "vs direct"),
+    ("openrouter", "x-ai/grok-4", "flagship", "vs direct"),
+    ("openrouter", "minimax/minimax-01", "flagship", ""),
+    ("openrouter", "minimax/minimax-m2.5", "flagship", ""),
+    ("openrouter", "z-ai/glm-5", "flagship", "Top open-source"),
+    ("openrouter", "moonshotai/kimi-k2.5", "flagship", ""),
+    ("openrouter", "xiaomi/mimo-v2-flash", "speed", ""),
+    ("openrouter", "qwen/qwen3-max", "flagship", "Alibaba commercial"),
+    ("openrouter", "deepseek/deepseek-v3.2", "flagship", "vs SambaNova"),
 ]
 
 def _initialize_default_models():

@@ -31,6 +31,9 @@
   @import './components/settings-billing.css';
   @import './components/settings-modal.css';
 
+  /* Monitoring page */
+  @import './components/monitoring.css';
+
   /* Early Access page */
   @import './components/ea-pricing.css';
   @import './components/ea-sections.css';

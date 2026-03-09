@@ -104,6 +104,35 @@ export interface Database {
           timestamp: string;
         };
       };
+      run_errors: {
+        Row: {
+          id: string;
+          run_id: string;
+          provider_id: string | null;
+          model_id: string | null;
+          provider: string | null;
+          model: string | null;
+          error_type: string;
+          error_message: string;
+          status_code: number | null;
+          timestamp: string;
+        };
+      };
+      benchmark_queue: {
+        Row: {
+          id: string;
+          run_id: string;
+          provider_key: string;
+          model_name: string;
+          status: string;
+          attempts: number;
+          max_attempts: number;
+          error_message: string | null;
+          created_at: string;
+          started_at: string | null;
+          completed_at: string | null;
+        };
+      };
       subscriptions: {
         Row: {
           id: string;

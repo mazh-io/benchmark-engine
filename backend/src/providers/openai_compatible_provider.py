@@ -174,17 +174,21 @@ class OpenAICompatibleProvider(BaseProvider):
             )
         
         try:
-            stream = self.client.chat.completions.create(
-                model=model,
-                messages=[
+            # Reasoning models require temperature=1 (or omit it)
+            call_kwargs: Dict[str, Any] = {
+                "model": model,
+                "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f"REQUEST ID: {request_id}\n\n{prompt}"}
                 ],
-                temperature=0.7,
-                stream=True,
-                stream_options={"include_usage": True},
-                timeout=timeout_seconds,
-            )
+                "stream": True,
+                "stream_options": {"include_usage": True},
+                "timeout": timeout_seconds,
+            }
+            if not is_reasoning_model(model):
+                call_kwargs["temperature"] = 0.7
+
+            stream = self.client.chat.completions.create(**call_kwargs)
             
             response_chunks = []
             usage_data: Optional[Dict[str, int]] = None
@@ -193,7 +197,14 @@ class OpenAICompatibleProvider(BaseProvider):
                 if chunk.choices and chunk.choices[0].delta.content:
                     if not metrics.first_token_time:
                         metrics.mark_first_token()
-                    response_chunks.append(chunk.choices[0].delta.content)
+                    content = chunk.choices[0].delta.content
+                    # Magistral/reasoning models may return content as a list
+                    if isinstance(content, list):
+                        content = "".join(
+                            c.get("text", str(c)) if isinstance(c, dict) else str(c)
+                            for c in content
+                        )
+                    response_chunks.append(content)
                 
                 if hasattr(chunk, 'usage') and chunk.usage:
                     usage_data = {

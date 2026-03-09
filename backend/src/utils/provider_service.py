@@ -277,7 +277,7 @@ ACTIVE_MODELS = [
     ("openai", "gpt-4.1", "flagship", ""),
     ("openai", "gpt-4.1-mini", "budget", ""),
     ("openai", "gpt-4.1-nano", "budget", ""),
-    ("openai", "gpt-5-mini", "budget", ""),
+    ("openai", "gpt-5-mini", "reasoning", ""),
     ("openai", "gpt-5.1", "flagship", ""),
     ("openai", "gpt-5.2", "flagship", ""),
     ("openai", "gpt-5.4", "flagship", "Latest GPT"),
@@ -295,8 +295,7 @@ ACTIVE_MODELS = [
     ("anthropic", "claude-opus-4-5-20251101", "heavyweight", ""),
     ("anthropic", "claude-opus-4-6", "flagship", "Latest Opus"),
 
-    # ===== Google (7) =====
-    ("google", "models/gemini-2.0-flash", "speed", ""),
+    # ===== Google (6) =====
     ("google", "models/gemini-2.5-flash", "speed", ""),
     ("google", "models/gemini-2.5-flash-lite", "budget", ""),
     ("google", "models/gemini-2.5-pro", "flagship", ""),
@@ -331,17 +330,14 @@ ACTIVE_MODELS = [
     ("groq", "openai/gpt-oss-20b", "budget", ""),
     ("groq", "qwen/qwen3-32b", "flagship", "Qwen3 on LPU"),
 
-    # ===== Together AI (14) =====
+    # ===== Together AI (11) =====
     ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", ""),
     ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", ""),
-    ("together", "meta-llama/Llama-3.1-405B-Instruct", "heavyweight", "Largest open-source"),
     ("together", "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "flagship", ""),
-    ("together", "meta-llama/Llama-4-Scout-17B-16E-Instruct", "flagship", ""),
     ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", ""),
     ("together", "Qwen/Qwen3.5-397B-A17B", "flagship", "Latest Qwen"),
     ("together", "deepseek-ai/DeepSeek-V3.1", "flagship", ""),
     ("together", "deepseek-ai/DeepSeek-R1", "reasoning", ""),
-    ("together", "deepseek-ai/DeepSeek-R1-Distill-Llama-70B", "reasoning", "Distill"),
     ("together", "MiniMaxAI/MiniMax-M2.5", "flagship", ""),
     ("together", "zai-org/GLM-5", "flagship", "Top open-source"),
     ("together", "zai-org/GLM-4.7", "flagship", ""),
@@ -357,11 +353,10 @@ ACTIVE_MODELS = [
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", ""),
     ("fireworks", "accounts/fireworks/models/deepseek-v3p2", "flagship", "DeepSeek V3.2"),
 
-    # ===== SambaNova (6) =====
+    # ===== SambaNova (5) =====
     ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", ""),
     ("sambanova", "Llama-4-Maverick-17B-128E-Instruct", "flagship", ""),
     ("sambanova", "DeepSeek-V3.2", "flagship", ""),
-    ("sambanova", "MiniMax-M2.5", "flagship", ""),
     ("sambanova", "Qwen3-235B", "flagship", ""),
     ("sambanova", "Qwen3-32B", "flagship", ""),
 

@@ -12,7 +12,7 @@ It enforces a consistent interface and provides common functionality for:
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 import time
-from src.utils.retry_logic import RetryConfig, retry_with_backoff
+from utils.retry_logic import RetryConfig, retry_with_backoff
 
 
 class BaseProvider(ABC):

@@ -299,15 +299,12 @@ ACTIVE_MODELS = [
     ("groq", "llama-3.3-70b-versatile", "speed", "Latest Llama 3.3 on LPU"),
     ("groq", "llama-3.1-8b-instant", "speed", "Ultra-fast 8B"),
     ("groq", "meta-llama/llama-4-scout-17b-16e-instruct", "flagship", ""),
-    ("groq", "deepseek-r1-distill-llama-70b", "reasoning", ""),
     
     # Together AI - GPU Cloud
     ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", "Mixtral MoE"),
     ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", "Llama 3.3"),
     ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", "Chinese model"),
-    ("together", "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "heavyweight", "405B giant"),
-    ("together", "Maverick-17B-128E-Instruct-Turbo", "flagship", ""),
-    ("together", "meta-llama/Llama-4-Scout-17B-16E-Instruct", "budget", ""),
+    ("together", "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "flagship", "Llama 4 Maverick MoE"),
     
     # Infrastructure Providers
     ("cerebras", "llama3.1-8b", "speed", "Wafer-scale engine"),

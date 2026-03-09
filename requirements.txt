@@ -19,6 +19,7 @@ openrouter
 # Custom SDK providers (Phase 3)
 anthropic
 google-genai
+cohere
 
 # Utilities
 httpx

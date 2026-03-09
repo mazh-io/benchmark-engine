@@ -25,7 +25,6 @@ from app.schemas import (
 from benchmarking.queue_benchmark_runner import run_benchmark_batch, init_benchmark_queue
 from benchmarking.benchmark_runner import run_benchmark
 from database.base_db_client import BaseDatabaseClient
-from utils.budget_breaker import BudgetCircuitBreaker
 
 router = APIRouter(
     prefix="/api/benchmark",
@@ -234,3 +233,109 @@ def benchmark_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# DIAGNOSTIC ENDPOINT — Direct provider test (bypasses queue & budget)
+# ============================================================================
+
+@router.get(
+    "/debug/{provider_key}",
+    summary="Debug: call a single provider directly",
+    description=(
+        "Bypasses the queue, budget check, and cron system entirely. "
+        "Calls the provider function directly and returns the raw result. "
+        "Use this to verify API keys, SDK availability, and model validity in Vercel."
+    ),
+)
+def benchmark_debug_provider(
+    provider_key: str,
+    model: Optional[str] = Query(default=None, description="Model to test. If omitted, uses first active model for provider."),
+):
+    """Direct provider call for debugging — no queue, no budget, no DB save."""
+    import os
+    from utils.provider_service import get_provider_service, ACTIVE_MODELS
+    from utils.constants import PROVIDER_CONFIG
+
+    diagnostics = {
+        "provider_key": provider_key,
+        "model_requested": model,
+        "env_checks": {},
+        "provider_loaded": False,
+        "call_result": None,
+        "error": None,
+    }
+
+    # 1. Check if provider exists in PROVIDER_CONFIG
+    if provider_key not in PROVIDER_CONFIG:
+        diagnostics["error"] = f"Unknown provider: {provider_key}"
+        return diagnostics
+
+    # 2. Check relevant env vars
+    env_key_map = {
+        "anthropic": "ANTHROPIC_API_KEY",
+        "google": "GOOGLE_API_KEY",
+        "deepseek": "DEEPSEEK_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "groq": "GROQ_API_KEY",
+        "together": "TOGETHER_API_KEY",
+        "cerebras": "CEREBRAS_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+        "fireworks": "FIREWORKS_API_KEY",
+        "sambanova": "SAMBANOVA_API_KEY",
+        "xai": "XAI_API_KEY",
+        "perplexity": "PERPLEXITY_API_KEY",
+        "cohere": "CO_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+    }
+    expected_key = env_key_map.get(provider_key, f"{provider_key.upper()}_API_KEY")
+    key_value = os.getenv(expected_key)
+    diagnostics["env_checks"][expected_key] = (
+        f"SET ({len(key_value)} chars)" if key_value else "MISSING"
+    )
+
+    if not key_value:
+        diagnostics["error"] = f"{expected_key} is not set in Vercel environment"
+        return diagnostics
+
+    # 3. Resolve model
+    if not model:
+        for prov, model_id, cat, notes in ACTIVE_MODELS:
+            if prov == provider_key:
+                model = model_id
+                break
+    if not model:
+        diagnostics["error"] = f"No model specified and none found in ACTIVE_MODELS for {provider_key}"
+        return diagnostics
+    diagnostics["model_used"] = model
+
+    # 4. Load provider function
+    try:
+        service = get_provider_service()
+        call_fn = service.get_provider_function(provider_key)
+        diagnostics["provider_loaded"] = True
+    except Exception as e:
+        diagnostics["error"] = f"Failed to load provider function: {e}"
+        return diagnostics
+
+    # 5. Call the provider directly with a short test prompt
+    test_prompt = "Explain what an API is in two sentences."
+    try:
+        result = call_fn(test_prompt, model)
+        diagnostics["call_result"] = {
+            "success": result.get("success"),
+            "status_code": result.get("status_code"),
+            "error_message": result.get("error_message"),
+            "error_type": result.get("error_type"),
+            "input_tokens": result.get("input_tokens"),
+            "output_tokens": result.get("output_tokens"),
+            "total_latency_ms": result.get("total_latency_ms"),
+            "ttft_ms": result.get("ttft_ms"),
+            "cost_usd": result.get("cost_usd"),
+            "response_preview": (result.get("response_text") or "")[:200],
+        }
+    except Exception as e:
+        diagnostics["error"] = f"Provider call raised exception: {type(e).__name__}: {e}"
+        diagnostics["traceback"] = traceback.format_exc()
+
+    return diagnostics

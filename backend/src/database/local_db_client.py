@@ -792,6 +792,35 @@ class LocalDatabaseClient(BaseDatabaseClient):
             print(f"DB Error (mark_queue_item_failed): {e}")
             return False
     
+    def get_last_provider_call_time(self, provider_key: str):
+        """Get the last time a provider was called."""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT created_at FROM benchmark_results WHERE provider = ? ORDER BY created_at DESC LIMIT 1",
+                (provider_key,)
+            )
+            row = cursor.fetchone()
+            if row and row[0]:
+                from datetime import datetime
+                return datetime.fromisoformat(row[0])
+            return None
+        except Exception as e:
+            print(f"DB Error (get_last_provider_call_time): {e}")
+            return None
+    
+    def requeue_item(self, queue_id: str) -> bool:
+        """Put a queue item back to pending."""
+        try:
+            conn = self._get_connection()
+            conn.execute("UPDATE benchmark_queue SET status = 'pending' WHERE id = ?", (queue_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"DB Error (requeue_item): {e}")
+            return False
+    
     def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
         """Get statistics for a run's queue."""
         try:

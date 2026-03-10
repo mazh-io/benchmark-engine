@@ -465,6 +465,33 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
             print(f"DB Error (mark_queue_item_failed): {e}")
             return False
     
+    def get_last_provider_call_time(self, provider_key: str) -> Optional[datetime]:
+        """Get the last time a provider was called (from benchmark_results)."""
+        try:
+            response = self.supabase.table("benchmark_results").select(
+                "created_at"
+            ).eq("provider", provider_key).order(
+                "created_at", desc=True
+            ).limit(1).execute()
+            
+            if response.data and response.data[0].get("created_at"):
+                return datetime.fromisoformat(response.data[0]["created_at"].replace("Z", "+00:00")).replace(tzinfo=None)
+            return None
+        except Exception as e:
+            print(f"DB Error (get_last_provider_call_time): {e}")
+            return None
+    
+    def requeue_item(self, queue_id: str) -> bool:
+        """Put a queue item back to pending (for rate limit skip)."""
+        try:
+            self.supabase.table("benchmark_queue").update({
+                "status": "pending",
+            }).eq("id", queue_id).execute()
+            return True
+        except Exception as e:
+            print(f"DB Error (requeue_item): {e}")
+            return False
+    
     def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
         """Get statistics for a run's queue."""
         try:

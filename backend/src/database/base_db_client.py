@@ -321,6 +321,16 @@ class BaseDatabaseClient(ABC):
         pass
     
     @abstractmethod
+    def get_last_provider_call_time(self, provider_key: str) -> Optional[Any]:
+        """Get the last time a provider was called."""
+        pass
+    
+    @abstractmethod
+    def requeue_item(self, queue_id: str) -> bool:
+        """Put a queue item back to pending."""
+        pass
+    
+    @abstractmethod
     def get_queue_stats(self, run_id: str) -> Optional[Dict[str, int]]:
         """
         Get statistics for a run's queue.

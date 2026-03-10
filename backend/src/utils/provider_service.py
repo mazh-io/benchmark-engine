@@ -352,7 +352,7 @@ ACTIVE_MODELS = [
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", ""),
     ("fireworks", "accounts/fireworks/models/deepseek-v3p2", "flagship", "DeepSeek V3.2"),
 
-    # ===== SambaNova (5) =====
+    # ===== SambaNova (5) — free-tier rate limit, uses inter_call_delay_s throttling =====
     ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", ""),
     ("sambanova", "Llama-4-Maverick-17B-128E-Instruct", "flagship", ""),
     ("sambanova", "DeepSeek-V3.2", "flagship", ""),

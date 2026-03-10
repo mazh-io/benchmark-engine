@@ -36,14 +36,14 @@ class BaseProvider(ABC):
         self.max_retries = 3
         self.base_backoff = 2  # seconds
         
-        # Configure smart retry logic for 5xx errors only
-        # Rate limits (429) should NOT be retried here - they're handled by 
-        # the benchmark runner's retry queue (60s delay + retry all at once)
+        # Retry logic for 5xx errors only.
+        # Rate limits (429) are handled by the benchmark runner's retry queue.
         self.retry_config = RetryConfig(
-            max_retries=3,
-            initial_delay=1.0,  # 1s → 2s → 4s for 5xx errors
+            max_retries=4,
+            initial_delay=2.0,  # 2s → 4s → 8s → 16s for 5xx errors
             exponential_base=2.0,
-            retry_on_status_codes=list(range(500, 600))  # Only 5xx errors
+            max_delay=20.0,
+            retry_on_status_codes=list(range(500, 600))
         )
     
     @abstractmethod
@@ -155,26 +155,35 @@ class BaseProvider(ABC):
         if 'RateLimitError' in error_type_name:
             status_code = 429
         
-        # Check for specific error types
         error_message = str(error)
+        error_lower = error_message.lower()
+        
         if "429" in error_message or status_code == 429:
             error_type = "RATE_LIMIT"
             status_code = 429
         elif "401" in error_message or status_code == 401:
             error_type = "AUTH_ERROR"
             status_code = 401
-        elif "400" in error_message or status_code == 400:
-            error_type = "BAD_REQUEST"
+        elif status_code == 400 or "400" in error_message:
+            # Distinguish parameter errors from generic bad requests
+            param_keywords = ["temperature", "top_p", "max_tokens", "unsupported value",
+                              "not supported", "invalid value", "service tier"]
+            if any(kw in error_lower for kw in param_keywords):
+                error_type = "BAD_PARAM"
+            else:
+                error_type = "BAD_REQUEST"
             status_code = 400
         elif "404" in error_message or status_code == 404:
             error_type = "NOT_FOUND"
             status_code = 404
-        elif "timeout" in error_message.lower():
+        elif "timeout" in error_lower:
             error_type = "TIMEOUT"
             status_code = 504
-        elif "credit balance" in error_message.lower():
+        elif "credit balance" in error_lower:
             error_type = "INSUFFICIENT_CREDITS"
             status_code = 402
+        elif status_code and 500 <= status_code < 600:
+            error_type = "SERVER_ERROR"
         else:
             error_type = "UNKNOWN_ERROR"
         

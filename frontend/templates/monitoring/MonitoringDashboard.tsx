@@ -194,7 +194,7 @@ function ErrorLog({ errors }: { errors: RunError[] }) {
     <div className="monitoring-errors">
       <div className="monitoring-errors-toggle" onClick={() => setOpen(!open)}>
         <span className="monitoring-errors-title">
-          Error Log <span className="monitoring-errors-count">{errors.length}</span>
+          Errors (1h) <span className="monitoring-errors-count">{errors.length}</span>
         </span>
         <ChevronDown
           size={14}

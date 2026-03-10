@@ -321,11 +321,10 @@ ACTIVE_MODELS = [
     ("mistral", "magistral-medium-latest", "reasoning", ""),
     ("mistral", "magistral-small-latest", "reasoning", "Budget"),
 
-    # ===== Groq (7) =====
+    # ===== Groq (6) =====
     ("groq", "llama-3.1-8b-instant", "speed", ""),
     ("groq", "llama-3.3-70b-versatile", "speed", ""),
     ("groq", "meta-llama/llama-4-scout-17b-16e-instruct", "flagship", ""),
-    ("groq", "meta-llama/llama-4-maverick-17b-128e-instruct", "flagship", ""),
     ("groq", "moonshotai/kimi-k2-instruct", "flagship", "Kimi on LPU"),
     ("groq", "openai/gpt-oss-20b", "budget", ""),
     ("groq", "qwen/qwen3-32b", "flagship", "Qwen3 on LPU"),

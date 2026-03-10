@@ -163,7 +163,7 @@ async function fetchDatapointCounts(): Promise<Map<string, number>> {
 }
 
 async function fetchRecentErrors(): Promise<RunError[]> {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // last 1h
 
   const { data, error } = await supabase
     .from('run_errors')

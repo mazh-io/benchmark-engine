@@ -6,6 +6,7 @@ Each invocation processes a batch of items from the queue.
 """
 
 import time
+from datetime import datetime
 
 from database.db_connector import get_db_client
 from utils.constants import BENCHMARK_PROMPT, PROVIDER_CONFIG
@@ -67,7 +68,6 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
     processed = 0
     successful = 0
     failed = 0
-    last_provider_call: Dict[str, float] = {}
     
     for item in queue_items:
         queue_id = str(item['id'])
@@ -124,17 +124,18 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
             provider_service = get_provider_service()
             provider_function = provider_service.get_provider_function(provider_key)
             
-            # Per-provider rate limit delay (respects inter_call_delay_s from config)
+            # Per-provider rate limit: check last call time from DB
+            # Serverless functions are stateless, so we check benchmark_results
             delay_s = PROVIDER_CONFIG.get(provider_key, {}).get("inter_call_delay_s", 0)
-            if delay_s > 0 and provider_key in last_provider_call:
-                elapsed = time.time() - last_provider_call[provider_key]
-                remaining = delay_s - elapsed
-                if remaining > 0:
-                    print(f"⏳ {provider_key}: waiting {remaining:.1f}s (rate limit throttle)")
-                    time.sleep(remaining)
+            if delay_s > 0:
+                last_call = db.get_last_provider_call_time(provider_key)
+                if last_call:
+                    elapsed = (datetime.utcnow() - last_call).total_seconds()
+                    if elapsed < delay_s:
+                        print(f"⏳ {provider_key}: skipping, last call {elapsed:.0f}s ago (need {delay_s}s)")
+                        db.requeue_item(queue_id)
+                        continue
             
-            # Call the provider
-            last_provider_call[provider_key] = time.time()
             result = provider_function(BENCHMARK_PROMPT, model_name)
             
             # Check if successful

@@ -1,13 +1,13 @@
 """
-Smart Retry Logic with Exponential Backoff
+Smart Retry Logic with Exponential Backoff + Jitter
 
 Handles transient API failures (5xx errors) with intelligent retry logic.
-Uses exponential backoff: 1s -> 2s -> 4s to smooth out temporary provider issues.
-
-This prevents temporary API hiccups from appearing as permanent outages in benchmarks.
+Uses exponential backoff with jitter to smooth out temporary provider issues
+and prevent thundering-herd retries from hitting the API simultaneously.
 """
 
 import time
+import random
 import logging
 from typing import Callable, Any, List, Optional
 from functools import wraps
@@ -86,26 +86,23 @@ def should_retry(result: dict, config: RetryConfig) -> bool:
 
 def calculate_backoff_delay(attempt: int, config: RetryConfig) -> float:
     """
-    Calculate exponential backoff delay for retry attempt.
+    Calculate exponential backoff delay with jitter for retry attempt.
+    
+    Uses "full jitter" strategy (AWS best practice): uniform random between
+    0 and the exponential cap. This decorrelates concurrent retries so they
+    don't all hit the API at the same instant.
     
     Args:
         attempt: Current retry attempt number (0-indexed)
         config: Retry configuration
         
     Returns:
-        Delay in seconds
-        
-    Examples:
-        >>> config = RetryConfig(initial_delay=1.0, exponential_base=2.0)
-        >>> calculate_backoff_delay(0, config)
-        1.0
-        >>> calculate_backoff_delay(1, config)
-        2.0
-        >>> calculate_backoff_delay(2, config)
-        4.0
+        Delay in seconds (randomised between 50%-100% of the exponential value)
     """
-    delay = config.initial_delay * (config.exponential_base ** attempt)
-    return min(delay, config.max_delay)
+    base_delay = config.initial_delay * (config.exponential_base ** attempt)
+    capped = min(base_delay, config.max_delay)
+    # Jitter: random value between 50% and 100% of the capped delay
+    return capped * (0.5 + random.random() * 0.5)
 
 
 def retry_with_backoff(

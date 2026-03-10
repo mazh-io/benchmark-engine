@@ -63,98 +63,82 @@ def call_openai(prompt: str, model: str = "gpt-4o-mini"):
     status_code = 200
     
     try:
-        # O-series models (reasoning models) only support temperature=1 and no top_p
-        # Check if this is an O-series model (o1, o3, o4-mini, etc.)
-        is_reasoning_model = model.startswith('o') and any(c.isdigit() for c in model)
+        reasoning = is_reasoning_model(model)
+        timeout_seconds = get_timeout_for_model(model)
         
-        # Build request parameters based on model type
         request_params = {
             "model": model,
             "messages": [
-                # System prompt: instruct the AI to summarize the provided text into exactly three concise bullet points
                 {"role": "system", "content": "You are a helpful assistant. Your task is to summarize the provided text into exactly three concise bullet points."},
-                # User prompt: add UUID for tracking + actual prompt
                 {"role": "user", "content": f"REQUEST ID: {request_id}\n\n{prompt}"}
             ],
             "user": request_id,
-            "stream": True
+            "stream": True,
+            "stream_options": {"include_usage": True},
+            "timeout": timeout_seconds,
         }
         
-        # O-series models: only temperature=1, no top_p
-        # Regular models: temperature=0.8, top_p=0.9
-        # Get timeout from centralized function
-        timeout_seconds = get_timeout_for_model(model)
-        
-        if is_reasoning_model:
+        if reasoning:
             request_params["temperature"] = 1.0
-            request_params["timeout"] = timeout_seconds
             print(f"⏱️  Using extended {timeout_seconds:.0f}s timeout for reasoning model: {model}")
         else:
             request_params["temperature"] = 0.8
             request_params["top_p"] = 0.9
-            request_params["timeout"] = timeout_seconds
         
-        # Send streaming request to OpenAI API for TTFT measurement
         stream = client.chat.completions.create(**request_params)
         
-        # Collect streaming response
         response_text_parts = []
         first_chunk_received = False
-        total_output_tokens = 0
+        estimated_output_tokens = 0
+        usage_data = None
         
         for chunk in stream:
-            # Measure Time to First Token (TTFT)
             if not first_chunk_received and chunk.choices and chunk.choices[0].delta.content:
                 first_token_time = time.time()
                 first_chunk_received = True
             
-            # Collect content
             if chunk.choices and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
                 response_text_parts.append(content)
-                # Approximate token count (rough estimate: 1 token ≈ 4 characters)
-                total_output_tokens += len(content) // 4
+                estimated_output_tokens += max(1, len(content) // 4)
+            
+            if hasattr(chunk, 'usage') and chunk.usage:
+                usage_data = {
+                    "prompt_tokens": chunk.usage.prompt_tokens,
+                    "completion_tokens": chunk.usage.completion_tokens,
+                }
         
-        # End time for total latency
         end_time = time.time()
         total_latency_ms = (end_time - start_time) * 1000
         
-        # Calculate TTFT (Time to First Token)
         ttft_ms = None
         if first_token_time:
             ttft_ms = (first_token_time - start_time) * 1000
         
-        # Calculate TPS (Tokens Per Second)
-        # Formula: (Total Tokens - 1) / (Time End - Time First Token)
-        tps = None
-        if first_token_time and total_output_tokens > 1:
-            time_for_tokens = end_time - first_token_time
-            if time_for_tokens > 0:
-                tps = (total_output_tokens - 1) / time_for_tokens
-        
-        # Combine response text
         response_text = "".join(response_text_parts)
         
-        # Get actual token counts from final chunk (if available) or use estimates
-        # Note: OpenAI streaming doesn't provide usage in chunks, so we estimate
-        # For accurate counts, we'd need to make a separate non-streaming call or use the final chunk
-        # For now, we'll use the estimated output tokens and estimate input tokens
-        input_tokens = len(prompt.split()) // 0.75  # Rough estimate: 1 token ≈ 0.75 words
-        output_tokens = total_output_tokens
+        # Use real usage data from API when available, fall back to estimates
+        if usage_data:
+            input_tokens = usage_data["prompt_tokens"]
+            output_tokens = usage_data["completion_tokens"]
+        else:
+            input_tokens = max(1, len(prompt) // 4)
+            output_tokens = estimated_output_tokens
         
-        # Make a non-streaming call to get accurate token counts (optional, adds latency)
-        # For MVP, we'll use estimates above
+        tps = None
+        if first_token_time and output_tokens > 1:
+            time_for_tokens = end_time - first_token_time
+            if time_for_tokens > 0:
+                tps = (output_tokens - 1) / time_for_tokens
         
-        # Calculate cost based on the model's pricing
         pricing = PRICING.get(model, PRICING["gpt-4o-mini"])
         cost_usd = (input_tokens / 1_000_000 * pricing["input"]) + (output_tokens / 1_000_000 * pricing["output"])
         
-        # Return the result with all the request data
         return {
             "input_tokens": int(input_tokens),
             "output_tokens": int(output_tokens),
             "total_latency_ms": total_latency_ms,
-            "latency_ms": total_latency_ms,  # Backward compatibility
+            "latency_ms": total_latency_ms,
             "ttft_ms": ttft_ms,
             "tps": tps,
             "status_code": status_code,

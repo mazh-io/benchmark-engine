@@ -16,10 +16,10 @@ import {
 function timeAgo(iso: string | null): string {
   if (!iso) return '—';
   const diff = Date.now() - new Date(iso).getTime();
-  if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`;
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-  return `${Math.floor(diff / 86_400_000)}d ago`;
+  if (diff < 60_000) return `${Math.floor(diff / 1000)}s`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`;
+  return `${Math.floor(diff / 86_400_000)}d`;
 }
 
 function formatTime(iso: string): string {
@@ -37,8 +37,13 @@ function formatMetric(val: number | null, suffix: string): string {
   return `${Math.round(val)} ${suffix}`;
 }
 
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
 function shortModelName(name: string): string {
-  // Strip common prefixes for display
   return name
     .replace(/^accounts\/fireworks\/models\//, '')
     .replace(/^models\//, '')
@@ -57,49 +62,44 @@ function shortModelName(name: string): string {
     .replace(/^qwen\//, '');
 }
 
-// ============================================================================
-// STAT CARD
-// ============================================================================
-
-function StatCard({
-  value,
-  label,
-  color,
-}: {
-  value: number | string;
-  label: string;
-  color: string;
-}) {
-  return (
-    <div className="monitoring-stat-card">
-      <div className="monitoring-stat-value" style={{ color }}>
-        {value}
-      </div>
-      <div className="monitoring-stat-label">{label}</div>
-    </div>
-  );
+function summarizeError(msg: string): string {
+  if (msg.includes('Rate limit')) return 'Rate limit';
+  if (msg.includes('non-serverless')) return 'Model retired';
+  if (msg.includes('no longer available')) return 'Deprecated';
+  if (msg.includes('temperature')) return 'Bad param';
+  if (msg.includes('service tier')) return 'No tier';
+  if (msg.includes('sequence item')) return 'Format bug';
+  if (msg.includes('401')) return 'Auth error';
+  if (msg.includes('timeout') || msg.includes('Timeout')) return 'Timeout';
+  const clean = msg.replace(/^\[.*?\]\s*/, '').slice(0, 40);
+  return clean || 'Unknown';
 }
 
 // ============================================================================
-// PROVIDER CARD
+// PROVIDER CARD (compact)
 // ============================================================================
 
 function ProviderCard({
   provider,
-  expanded,
+  active,
   onToggle,
 }: {
   provider: ProviderStatus;
-  expanded: boolean;
+  active: boolean;
   onToggle: () => void;
 }) {
+  const pct = provider.totalModels > 0
+    ? Math.round((provider.liveModels / provider.totalModels) * 100)
+    : 0;
+
   return (
     <div
-      className={`monitoring-card monitoring-card--${provider.status} ${expanded ? 'monitoring-card--expanded' : ''}`}
+      className={`monitoring-card monitoring-card--${provider.status} ${active ? 'monitoring-card--active' : ''}`}
       onClick={onToggle}
     >
-      <div className="monitoring-card-header">
-        <div className="flex items-center gap-2">
+      {/* Row 1: name + ratio */}
+      <div className="monitoring-card-top">
+        <div className="monitoring-card-left">
           <span className={`monitoring-dot monitoring-dot--${provider.status}`} />
           <span className="monitoring-card-name">{provider.displayName}</span>
         </div>
@@ -107,30 +107,39 @@ function ProviderCard({
           {provider.liveModels}/{provider.totalModels}
         </span>
       </div>
-      <div className="monitoring-card-meta">
-        {provider.errorModels > 0 && (
-          <span style={{ color: '#ef4444' }}>
-            {provider.errorModels} error{provider.errorModels > 1 ? 's' : ''}
-            {' · '}
-          </span>
-        )}
-        {timeAgo(provider.lastBenchmark)}
+
+      {/* Progress bar */}
+      <div className="monitoring-bar">
+        <div
+          className="monitoring-bar-fill"
+          style={{ width: `${pct}%` }}
+        />
       </div>
 
-      {expanded && (
-        <div className="monitoring-model-table">
-          <div
-            className="monitoring-model-row"
-            style={{ color: 'var(--text-4)', fontWeight: 600, fontSize: '10px', borderBottom: '1px solid var(--border)' }}
-          >
+      {/* Row 2: meta */}
+      <div className="monitoring-card-meta">
+        <span>{timeAgo(provider.lastBenchmark)}</span>
+        {provider.errorModels > 0 && (
+          <span className="monitoring-card-err">
+            {provider.errorModels} err
+          </span>
+        )}
+        <span className="monitoring-card-dp">{formatCount(provider.datapoints)} dp</span>
+      </div>
+
+      {/* Expanded model table */}
+      {active && (
+        <div className="monitoring-detail" onClick={(e) => e.stopPropagation()}>
+          <div className="monitoring-detail-head">
             <span />
             <span>Model</span>
-            <span style={{ textAlign: 'right' }}>TTFT</span>
-            <span style={{ textAlign: 'right' }}>TPS</span>
-            <span style={{ textAlign: 'right' }}>Age</span>
+            <span>TTFT</span>
+            <span>TPS</span>
+            <span>Age</span>
+            <span>DP</span>
           </div>
-          {provider.models.map((model) => (
-            <ModelRow key={model.name} model={model} />
+          {provider.models.map((m) => (
+            <ModelRow key={m.name} model={m} />
           ))}
         </div>
       )}
@@ -142,20 +151,6 @@ function ProviderCard({
 // MODEL ROW
 // ============================================================================
 
-function summarizeError(msg: string): string {
-  if (msg.includes('Rate limit')) return 'Rate limit';
-  if (msg.includes('non-serverless')) return 'Model retired (needs dedicated)';
-  if (msg.includes('no longer available')) return 'Model deprecated';
-  if (msg.includes('temperature')) return 'Bad param (temperature)';
-  if (msg.includes('service tier')) return 'No service tier';
-  if (msg.includes('sequence item')) return 'Response format bug';
-  if (msg.includes('401')) return 'Auth error';
-  if (msg.includes('timeout') || msg.includes('Timeout')) return 'Timeout';
-  // Truncate to first meaningful part
-  const clean = msg.replace(/^\[.*?\]\s*/, '').slice(0, 60);
-  return clean || 'Unknown';
-}
-
 function ModelRow({ model }: { model: ModelStatus }) {
   const dotClass =
     model.status === 'live'
@@ -166,19 +161,20 @@ function ModelRow({ model }: { model: ModelStatus }) {
 
   return (
     <>
-      <div className="monitoring-model-row" title={model.errorMessage ?? undefined}>
+      <div className="monitoring-detail-row" title={model.errorMessage ?? undefined}>
         <span className={`monitoring-dot ${dotClass}`} />
-        <span className="monitoring-model-name">{shortModelName(model.name)}</span>
-        <span className="monitoring-model-metric">
+        <span className="monitoring-detail-name">{shortModelName(model.name)}</span>
+        <span className="monitoring-detail-val">
           {formatMetric(model.ttft_ms, 'ms')}
         </span>
-        <span className="monitoring-model-metric">
+        <span className="monitoring-detail-val">
           {model.tps !== null ? Math.round(model.tps) : '—'}
         </span>
-        <span className="monitoring-model-age">{timeAgo(model.lastBenchmark)}</span>
+        <span className="monitoring-detail-dim">{timeAgo(model.lastBenchmark)}</span>
+        <span className="monitoring-detail-dim">{model.datapoints}</span>
       </div>
       {model.status === 'error' && model.errorMessage && (
-        <div className="monitoring-model-error">
+        <div className="monitoring-detail-err">
           {summarizeError(model.errorMessage)}
         </div>
       )}
@@ -192,52 +188,38 @@ function ModelRow({ model }: { model: ModelStatus }) {
 
 function ErrorLog({ errors }: { errors: RunError[] }) {
   const [open, setOpen] = useState(false);
-
   if (errors.length === 0) return null;
 
   return (
     <div className="monitoring-errors">
-      <div className="monitoring-errors-header" onClick={() => setOpen(!open)}>
-        <span className="monitoring-errors-title">Error Log (24h)</span>
-        <div className="flex items-center gap-3">
-          <span className="monitoring-errors-badge">{errors.length}</span>
-          <ChevronDown
-            size={14}
-            className={`monitoring-chevron ${open ? 'monitoring-chevron--open' : ''}`}
-          />
-        </div>
+      <div className="monitoring-errors-toggle" onClick={() => setOpen(!open)}>
+        <span className="monitoring-errors-title">
+          Error Log <span className="monitoring-errors-count">{errors.length}</span>
+        </span>
+        <ChevronDown
+          size={14}
+          className={`monitoring-chevron ${open ? 'monitoring-chevron--open' : ''}`}
+        />
       </div>
       {open && (
-        <div className="monitoring-error-list">
+        <div className="monitoring-errors-list">
           {errors.slice(0, 50).map((err) => (
-            <ErrorRow key={err.id} error={err} />
+            <div key={err.id} className="monitoring-errors-row">
+              <span className="monitoring-errors-time">{formatTime(err.timestamp)}</span>
+              <span className="monitoring-errors-src">
+                {err.provider}/{shortModelName(err.model ?? '')}
+              </span>
+              <span className="monitoring-errors-msg" title={err.error_message}>
+                {err.error_message}
+              </span>
+              <span className={`monitoring-errors-type monitoring-errors-type--${err.error_type}`}>
+                {err.error_type}
+                {err.status_code ? ` ${err.status_code}` : ''}
+              </span>
+            </div>
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function ErrorRow({ error }: { error: RunError }) {
-  const typeClass = ['RATE_LIMIT', 'AUTH_ERROR', 'TIMEOUT', 'UNKNOWN_ERROR'].includes(
-    error.error_type,
-  )
-    ? `monitoring-error-type--${error.error_type}`
-    : 'monitoring-error-type--default';
-
-  return (
-    <div className="monitoring-error-row">
-      <span className="monitoring-error-time">{formatTime(error.timestamp)}</span>
-      <span className="monitoring-error-source">
-        {error.provider}/{shortModelName(error.model ?? '')}
-      </span>
-      <span className="monitoring-error-message" title={error.error_message}>
-        {error.error_message}
-      </span>
-      <span className={`monitoring-error-type ${typeClass}`}>
-        {error.error_type}
-        {error.status_code ? ` ${error.status_code}` : ''}
-      </span>
     </div>
   );
 }
@@ -283,48 +265,37 @@ export function MonitoringDashboard() {
 
   return (
     <div>
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="monitoring-header">
-        <div className="monitoring-header-left">
-          <h1 className="monitoring-header-title">System Status</h1>
-          <span className="monitoring-auto-badge">AUTO 30s</span>
+        <div>
+          <div className="monitoring-header-top">
+            <h1 className="monitoring-title">System Status</h1>
+            <span className="monitoring-badge monitoring-badge--green">AUTO 30s</span>
+          </div>
+          <div className="monitoring-kpis">
+            <span className="monitoring-kpi">{data.totalModels} models</span>
+            <span className="monitoring-kpi monitoring-kpi--green">{data.liveModels} live</span>
+            {data.errorModels > 0 && (
+              <span className="monitoring-kpi monitoring-kpi--red">{data.errorModels} errors</span>
+            )}
+            {queueTotal > 0 && (
+              <span className="monitoring-kpi monitoring-kpi--amber">{queueTotal} queued</span>
+            )}
+            <span className="monitoring-kpi monitoring-kpi--acid">
+              {data.totalDatapoints.toLocaleString('en-US')} datapoints
+            </span>
+          </div>
         </div>
-        <span className="monitoring-header-refresh">
-          Last refresh: {lastRefresh}
-        </span>
+        <span className="monitoring-refresh">{lastRefresh}</span>
       </div>
 
-      {/* Summary bar */}
-      <div className="monitoring-summary">
-        <StatCard
-          value={data.totalModels}
-          label="Total Models"
-          color="var(--text)"
-        />
-        <StatCard
-          value={data.liveModels}
-          label="Live"
-          color="#22c55e"
-        />
-        <StatCard
-          value={data.errorModels}
-          label="Errors"
-          color={data.errorModels > 0 ? '#ef4444' : 'var(--text-3)'}
-        />
-        <StatCard
-          value={queueTotal > 0 ? queueTotal : '—'}
-          label="Queue"
-          color={queueTotal > 0 ? '#f59e0b' : 'var(--text-3)'}
-        />
-      </div>
-
-      {/* Provider grid */}
+      {/* ── Provider grid ── */}
       <div className="monitoring-grid">
         {data.providers.map((p) => (
           <ProviderCard
             key={p.key}
             provider={p}
-            expanded={expandedProvider === p.key}
+            active={expandedProvider === p.key}
             onToggle={() =>
               setExpandedProvider(expandedProvider === p.key ? null : p.key)
             }
@@ -332,7 +303,7 @@ export function MonitoringDashboard() {
         ))}
       </div>
 
-      {/* Error log */}
+      {/* ── Error log ── */}
       <ErrorLog errors={data.errors} />
     </div>
   );

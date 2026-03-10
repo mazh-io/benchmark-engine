@@ -1,3 +1,5 @@
+import time
+
 from benchmarking.run_manager import RunManager
 from database.db_connector import get_db_client
 
@@ -80,7 +82,16 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
     failed_providers = 0
     rate_limited_count = 0
     
+    last_provider = None
     for provider_name, func, model in all_providers:
+        # Per-provider delay: throttle calls to rate-limited providers
+        if provider_name == last_provider:
+            delay_s = PROVIDER_CONFIG.get(provider_name, {}).get("inter_call_delay_s", 0)
+            if delay_s > 0:
+                print(f"⏳ {provider_name}: waiting {delay_s}s (rate limit throttle)")
+                time.sleep(delay_s)
+        last_provider = provider_name
+
         print("\n" + "=" * 60)
         print(f"Testing → {provider_name} / {model}")
         print("=" * 60)

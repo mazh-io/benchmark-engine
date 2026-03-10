@@ -45,6 +45,7 @@ export interface ProviderStatus {
   errorModels: number;
   lastBenchmark: string | null;
   status: 'green' | 'yellow' | 'red';
+  datapoints: number;
 }
 
 export interface ModelStatus {
@@ -54,6 +55,7 @@ export interface ModelStatus {
   tps: number | null;
   lastBenchmark: string | null;
   errorMessage: string | null;
+  datapoints: number;
 }
 
 export interface MonitoringData {
@@ -63,6 +65,7 @@ export interface MonitoringData {
   totalModels: number;
   liveModels: number;
   errorModels: number;
+  totalDatapoints: number;
 }
 
 // ============================================================================
@@ -128,6 +131,37 @@ async function fetchQueueStats(): Promise<QueueStats> {
   return stats;
 }
 
+async function fetchDatapointCounts(): Promise<Map<string, number>> {
+  // Use RPC or paginated fetch to get ALL successful results counted per provider::model
+  // Supabase default limit is 1000, so we paginate
+  const PAGE = 5000;
+  let offset = 0;
+  const counts = new Map<string, number>();
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data, error } = await supabase
+      .from('benchmark_results')
+      .select('provider, model')
+      .eq('success', true)
+      .range(offset, offset + PAGE - 1);
+
+    if (error) throw new Error(`Failed to fetch counts: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    for (const row of data as { provider: string | null; model: string | null }[]) {
+      if (!row.provider || !row.model) continue;
+      const key = `${row.provider}::${row.model}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    if (data.length < PAGE) break;
+    offset += PAGE;
+  }
+
+  return counts;
+}
+
 async function fetchRecentErrors(): Promise<RunError[]> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -150,6 +184,7 @@ function aggregateMonitoringData(
   results: MonitoringResult[],
   queue: QueueStats,
   errors: RunError[],
+  dpCounts: Map<string, number>,
 ): MonitoringData {
   const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
 
@@ -222,6 +257,8 @@ function aggregateMonitoringData(
         providerLastBenchmark = latest.created_at;
       }
 
+      const modelDp = dpCounts.get(`${providerKey}::${modelName}`) ?? 0;
+
       models.push({
         name: modelName,
         status,
@@ -229,6 +266,7 @@ function aggregateMonitoringData(
         tps: latest.tps ?? null,
         lastBenchmark: latest.created_at,
         errorMessage: latest.error_message ?? null,
+        datapoints: modelDp,
       });
     }
 
@@ -246,6 +284,8 @@ function aggregateMonitoringData(
     if (errorCount === models.length) provStatus = 'red';
     else if (errorCount > 0 || liveCount < models.length) provStatus = 'yellow';
 
+    const providerDp = models.reduce((sum, m) => sum + m.datapoints, 0);
+
     providers.push({
       key: providerKey,
       displayName: PROVIDER_DISPLAY[providerKey] ?? providerKey,
@@ -255,6 +295,7 @@ function aggregateMonitoringData(
       errorModels: errorCount,
       lastBenchmark: providerLastBenchmark,
       status: provStatus,
+      datapoints: providerDp,
     });
   }
 
@@ -268,6 +309,9 @@ function aggregateMonitoringData(
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
+  let totalDatapoints = 0;
+  for (const v of dpCounts.values()) totalDatapoints += v;
+
   return {
     providers,
     queue,
@@ -275,6 +319,7 @@ function aggregateMonitoringData(
     totalModels,
     liveModels: totalLive,
     errorModels: totalError,
+    totalDatapoints,
   };
 }
 
@@ -287,7 +332,7 @@ export function useMonitoringData() {
     queryKey: ['monitoring'],
     queryFn: async (): Promise<MonitoringData> => {
       // Fetch all three in parallel, but don't let one failure kill everything
-      const [results, queue, errors] = await Promise.all([
+      const [results, queue, errors, dpCounts] = await Promise.all([
         fetchLatestResults().catch((e) => {
           console.error('[monitoring] results fetch failed:', e);
           return [] as MonitoringResult[];
@@ -300,8 +345,12 @@ export function useMonitoringData() {
           console.error('[monitoring] errors fetch failed:', e);
           return [] as RunError[];
         }),
+        fetchDatapointCounts().catch((e) => {
+          console.error('[monitoring] datapoint counts fetch failed:', e);
+          return new Map<string, number>();
+        }),
       ]);
-      return aggregateMonitoringData(results, queue, errors);
+      return aggregateMonitoringData(results, queue, errors, dpCounts);
     },
     staleTime: 30_000,
     gcTime: 5 * 60_000,

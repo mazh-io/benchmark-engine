@@ -63,14 +63,16 @@ function shortModelName(name: string): string {
 }
 
 function summarizeError(msg: string): string {
-  if (msg.includes('Rate limit')) return 'Rate limit';
+  if (msg.includes('Rate limit') || msg.includes('rate_limit')) return 'Rate limit';
   if (msg.includes('non-serverless')) return 'Model retired';
-  if (msg.includes('no longer available')) return 'Deprecated';
-  if (msg.includes('temperature')) return 'Bad param';
+  if (msg.includes('no longer available') || msg.includes('deprecated')) return 'Deprecated';
+  if (msg.includes('temperature') || msg.includes('top_p') || msg.includes('Unsupported value')) return 'Bad param';
   if (msg.includes('service tier')) return 'No tier';
+  if (msg.includes('high traffic') || msg.includes('overloaded')) return 'Overloaded';
   if (msg.includes('sequence item')) return 'Format bug';
-  if (msg.includes('401')) return 'Auth error';
+  if (msg.includes('401') || msg.includes('unauthorized')) return 'Auth error';
   if (msg.includes('timeout') || msg.includes('Timeout')) return 'Timeout';
+  if (msg.includes('503') || msg.includes('502')) return 'Server down';
   const clean = msg.replace(/^\[.*?\]\s*/, '').slice(0, 40);
   return clean || 'Unknown';
 }

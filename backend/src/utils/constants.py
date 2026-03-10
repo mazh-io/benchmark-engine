@@ -76,7 +76,7 @@ PROVIDER_CONFIG = {
         "base_url": "https://api.sambanova.ai/v1",
         "pricing_url": "https://cloud.sambanova.ai/pricing",
         "default_pricing": {"input": 0.60, "output": 1.20},  # Meta-Llama rates
-        "inter_call_delay_s": 5,  # Free-tier rate limit needs pause between calls
+        "inter_call_delay_s": 10,  # Free-tier rate limit needs longer pause between calls
     },
     # Phase 3 - Custom SDK Providers
     "anthropic": {

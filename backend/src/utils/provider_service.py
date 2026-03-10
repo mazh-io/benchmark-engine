@@ -352,12 +352,9 @@ ACTIVE_MODELS = [
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", ""),
     ("fireworks", "accounts/fireworks/models/deepseek-v3p2", "flagship", "DeepSeek V3.2"),
 
-    # ===== SambaNova (5) =====
-    ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", ""),
-    ("sambanova", "Llama-4-Maverick-17B-128E-Instruct", "flagship", ""),
-    ("sambanova", "DeepSeek-V3.2", "flagship", ""),
-    ("sambanova", "Qwen3-235B", "flagship", ""),
-    ("sambanova", "Qwen3-32B", "flagship", ""),
+    # ===== SambaNova (2) — free-tier rate limit, keep only unique cross-hardware comparisons =====
+    ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", "RDU vs GPU comparison"),
+    ("sambanova", "DeepSeek-V3.2", "flagship", "RDU vs GPU comparison"),
 
     # ===== Perplexity (2) =====
     ("perplexity", "sonar-pro", "flagship", "Search-augmented"),

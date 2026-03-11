@@ -12,8 +12,8 @@ from typing import Optional, List, Dict, Any
 # ---------------------------------------------------------------------------
 # Configuration for deferred retry behaviour
 # ---------------------------------------------------------------------------
-DEFERRED_RETRY_ROUNDS = 2       # How many retry rounds after the main pass
-DEFERRED_COOLDOWN_SECS = 30     # Seconds to wait before each retry round
+DEFERRED_RETRY_ROUNDS = 3       # How many retry rounds after the main pass
+DEFERRED_COOLDOWN_SECS = 60     # Minimum seconds to wait before each retry round
 
 
 def _resolve_provider_db_ids(db, provider_name: str, model: str):
@@ -174,6 +174,7 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
     # ==================================================================
     # PASS 1 — Try every provider
     # ==================================================================
+    last_provider: Optional[str] = None
     for provider_name, func, model in all_providers:
         # Per-provider delay: throttle calls to rate-limited providers
         if provider_name == last_provider:
@@ -270,13 +271,24 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
         if not pending_retries:
             break
 
+        # Use the largest inter_call_delay_s among pending providers,
+        # falling back to DEFERRED_COOLDOWN_SECS as a minimum.
+        cooldown = max(
+            DEFERRED_COOLDOWN_SECS,
+            max(
+                PROVIDER_CONFIG.get(item["provider_name"], {}).get("inter_call_delay_s", 0)
+                for item in pending_retries
+            ),
+        )
+
         print(f"\n{'─' * 60}")
         print(f"⏱  Deferred retry round {retry_round}/{DEFERRED_RETRY_ROUNDS} "
-              f"— waiting {DEFERRED_COOLDOWN_SECS}s cooldown...")
+              f"— waiting {cooldown}s cooldown...")
         print(f"{'─' * 60}")
-        time.sleep(DEFERRED_COOLDOWN_SECS)
+        time.sleep(cooldown)
 
         still_pending: List[Dict[str, Any]] = []
+        last_retry_provider: Optional[str] = None
 
         for item in pending_retries:
             pname = item["provider_name"]
@@ -284,6 +296,14 @@ def run_benchmark(run_name: str, triggered_by: str, provider_filter: Optional[Li
             pmodel = item["model"]
             pid = item["provider_id"]
             mid = item["model_id"]
+
+            # Per-provider throttle within the retry round
+            if pname == last_retry_provider:
+                delay_s = PROVIDER_CONFIG.get(pname, {}).get("inter_call_delay_s", 0)
+                if delay_s > 0:
+                    print(f"  ⏳ {pname}: waiting {delay_s}s (rate limit throttle)")
+                    time.sleep(delay_s)
+            last_retry_provider = pname
 
             print(f"\n  🔄 Retrying → {pname} / {pmodel}")
 

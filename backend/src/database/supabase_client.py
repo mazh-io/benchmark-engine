@@ -466,17 +466,33 @@ class SupabaseDatabaseClient(BaseDatabaseClient):
             return False
     
     def get_last_provider_call_time(self, provider_key: str) -> Optional[datetime]:
-        """Get the last time a provider was called (from benchmark_results)."""
+        """Get the last time a provider was called (checks both successes AND errors)."""
         try:
-            response = self.supabase.table("benchmark_results").select(
+            latest = None
+            
+            # Check benchmark_results (successful calls)
+            res = self.supabase.table("benchmark_results").select(
                 "created_at"
             ).eq("provider", provider_key).order(
                 "created_at", desc=True
             ).limit(1).execute()
             
-            if response.data and response.data[0].get("created_at"):
-                return datetime.fromisoformat(response.data[0]["created_at"].replace("Z", "+00:00")).replace(tzinfo=None)
-            return None
+            if res.data and res.data[0].get("created_at"):
+                latest = datetime.fromisoformat(res.data[0]["created_at"].replace("Z", "+00:00")).replace(tzinfo=None)
+            
+            # Check run_errors (failed calls including 429s)
+            err = self.supabase.table("run_errors").select(
+                "timestamp"
+            ).eq("provider", provider_key).order(
+                "timestamp", desc=True
+            ).limit(1).execute()
+            
+            if err.data and err.data[0].get("timestamp"):
+                err_time = datetime.fromisoformat(err.data[0]["timestamp"].replace("Z", "+00:00")).replace(tzinfo=None)
+                if latest is None or err_time > latest:
+                    latest = err_time
+            
+            return latest
         except Exception as e:
             print(f"DB Error (get_last_provider_call_time): {e}")
             return None

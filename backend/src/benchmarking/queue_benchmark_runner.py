@@ -68,6 +68,7 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
     processed = 0
     successful = 0
     failed = 0
+    batch_provider_calls: Dict[str, float] = {}
     
     for item in queue_items:
         queue_id = str(item['id'])
@@ -124,18 +125,27 @@ def run_benchmark_batch(batch_size: int = 5) -> dict:
             provider_service = get_provider_service()
             provider_function = provider_service.get_provider_function(provider_key)
             
-            # Per-provider rate limit: check last call time from DB
-            # Serverless functions are stateless, so we check benchmark_results
+            # Per-provider rate limit: check both in-batch memory AND DB
             delay_s = PROVIDER_CONFIG.get(provider_key, {}).get("inter_call_delay_s", 0)
             if delay_s > 0:
+                # Layer 1: in-batch check (catches multiple items in same batch)
+                if provider_key in batch_provider_calls:
+                    batch_elapsed = time.time() - batch_provider_calls[provider_key]
+                    if batch_elapsed < delay_s:
+                        print(f"⏳ {provider_key}: skipping (batch), called {batch_elapsed:.0f}s ago")
+                        db.requeue_item(queue_id)
+                        continue
+                
+                # Layer 2: cross-batch DB check (catches calls from previous batches)
                 last_call = db.get_last_provider_call_time(provider_key)
                 if last_call:
                     elapsed = (datetime.utcnow() - last_call).total_seconds()
                     if elapsed < delay_s:
-                        print(f"⏳ {provider_key}: skipping, last call {elapsed:.0f}s ago (need {delay_s}s)")
+                        print(f"⏳ {provider_key}: skipping (DB), last call {elapsed:.0f}s ago")
                         db.requeue_item(queue_id)
                         continue
             
+            batch_provider_calls[provider_key] = time.time()
             result = provider_function(BENCHMARK_PROMPT, model_name)
             
             # Check if successful

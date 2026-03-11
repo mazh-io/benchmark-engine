@@ -26,6 +26,8 @@ httpx
 requests
 beautifulsoup4
 tiktoken  # Token count estimation and validation
+aiohttp   # Async HTTP for Together/OpenRouter SSE streaming
+PyJWT>=2.0  # Supabase JWT verification
 
 # Local database (PostgreSQL)
 psycopg2-binary

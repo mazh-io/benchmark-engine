@@ -293,7 +293,9 @@ class OpenAICompatibleProvider(BaseProvider):
                     "error": str(e),
                 }
             )
-            # Return error dict with 429 status so retry logic kicks in
+            # Return error dict with 429 status — NOT retried inline.
+            # The benchmark runner's deferred retry loop handles 429s by
+            # continuing with other providers and retrying after a cooldown.
             return self.handle_error(e, model)
             
         except (APIError, APIConnectionError, APITimeoutError) as e:

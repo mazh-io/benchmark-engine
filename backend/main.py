@@ -30,6 +30,13 @@ def main():
     bench_parser.add_argument("--triggered-by", default="cli", help="Who triggered the run")
     bench_parser.add_argument("--providers", nargs="*", default=None, help="Provider filter (e.g., openai groq)")
 
+    # --- async-bench (asyncio concurrent mode) ---
+    async_parser = subparsers.add_parser("async-bench", help="Run a concurrent async benchmark (CLI)")
+    async_parser.add_argument("--run-name", default="async-cli-run", help="Name of the run")
+    async_parser.add_argument("--triggered-by", default="cli", help="Who triggered the run")
+    async_parser.add_argument("--providers", nargs="*", default=None, help="Provider filter (e.g., openai groq)")
+    async_parser.add_argument("--concurrency", type=int, default=10, help="Max concurrent API calls (default: 10)")
+
     args = parser.parse_args()
 
     # Default to 'serve' when no subcommand is given
@@ -69,6 +76,21 @@ def main():
             run_name=args.run_name,
             triggered_by=args.triggered_by,
             provider_filter=args.providers,
+        )
+
+    elif args.command == "async-bench":
+        from benchmarking.async_benchmark_runner import run_async_benchmark
+
+        print("=" * 60)
+        print("Benchmark Engine – Async CLI Run")
+        print("=" * 60)
+        print()
+
+        run_async_benchmark(
+            run_name=args.run_name,
+            triggered_by=args.triggered_by,
+            provider_filter=args.providers,
+            max_concurrent=args.concurrency,
         )
 
 

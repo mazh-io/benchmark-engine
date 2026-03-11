@@ -793,19 +793,32 @@ class LocalDatabaseClient(BaseDatabaseClient):
             return False
     
     def get_last_provider_call_time(self, provider_key: str):
-        """Get the last time a provider was called."""
+        """Get the last time a provider was called (checks both successes AND errors)."""
         try:
+            from datetime import datetime
             conn = self._get_connection()
             cursor = conn.cursor()
+            latest = None
+            
             cursor.execute(
                 "SELECT created_at FROM benchmark_results WHERE provider = ? ORDER BY created_at DESC LIMIT 1",
                 (provider_key,)
             )
             row = cursor.fetchone()
             if row and row[0]:
-                from datetime import datetime
-                return datetime.fromisoformat(row[0])
-            return None
+                latest = datetime.fromisoformat(row[0])
+            
+            cursor.execute(
+                "SELECT timestamp FROM run_errors WHERE provider = ? ORDER BY timestamp DESC LIMIT 1",
+                (provider_key,)
+            )
+            row = cursor.fetchone()
+            if row and row[0]:
+                err_time = datetime.fromisoformat(row[0])
+                if latest is None or err_time > latest:
+                    latest = err_time
+            
+            return latest
         except Exception as e:
             print(f"DB Error (get_last_provider_call_time): {e}")
             return None

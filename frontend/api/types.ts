@@ -138,10 +138,10 @@ export const PROVIDER_CATEGORIES: Record<string, ProviderCategory> = {
   openrouter: 'proxy',
 };
 
-/** Jitter thresholds in milliseconds */
+/** Jitter thresholds in milliseconds (std dev of latency) */
 export const JITTER_THRESHOLDS = {
-  GREEN: 200,
-  YELLOW: 500,
+  GREEN: 2000,
+  YELLOW: 5000,
 } as const;
 
 /** Time range options in milliseconds */

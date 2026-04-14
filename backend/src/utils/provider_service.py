@@ -271,7 +271,7 @@ def get_timeout_for_model(model: str) -> float:
 # ============================================================================
 
 ACTIVE_MODELS = [
-    # ===== OpenAI (12) =====
+    # ===== OpenAI (14) =====
     ("openai", "gpt-4o-mini", "budget", ""),
     ("openai", "gpt-4o", "flagship", ""),
     ("openai", "gpt-4.1", "flagship", ""),
@@ -283,7 +283,9 @@ ACTIVE_MODELS = [
     ("openai", "gpt-5.4", "flagship", "Latest GPT"),
     ("openai", "o3", "reasoning", ""),
     ("openai", "o3-mini", "reasoning", "Budget reasoning"),
+    ("openai", "o3-pro", "reasoning", "Pro reasoning"),
     ("openai", "o4-mini", "reasoning", ""),
+    ("openai", "gpt-oss-120b", "flagship", "Open-weight 120B MoE"),
 
     # ===== Anthropic (8) =====
     ("anthropic", "claude-haiku-4-5-20251001", "budget", ""),
@@ -321,56 +323,62 @@ ACTIVE_MODELS = [
     ("mistral", "magistral-medium-latest", "reasoning", ""),
     ("mistral", "magistral-small-latest", "reasoning", "Budget"),
 
-    # ===== Groq (6) =====
+    # ===== Groq (7) =====
     ("groq", "llama-3.1-8b-instant", "speed", ""),
     ("groq", "llama-3.3-70b-versatile", "speed", ""),
     ("groq", "meta-llama/llama-4-scout-17b-16e-instruct", "flagship", ""),
     ("groq", "moonshotai/kimi-k2-instruct", "flagship", "Kimi on LPU"),
     ("groq", "openai/gpt-oss-20b", "budget", ""),
+    ("groq", "openai/gpt-oss-120b", "flagship", "GPT-OSS 120B on LPU"),
     ("groq", "qwen/qwen3-32b", "flagship", "Qwen3 on LPU"),
 
-    # ===== Together AI (11) =====
+    # ===== Together AI (10) =====
     ("together", "mistralai/Mixtral-8x7B-Instruct-v0.1", "flagship", ""),
     ("together", "meta-llama/Llama-3.3-70B-Instruct-Turbo", "flagship", ""),
-    ("together", "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "flagship", ""),
-    ("together", "Qwen/Qwen3-Next-80B-A3B-Instruct", "flagship", ""),
     ("together", "Qwen/Qwen3.5-397B-A17B", "flagship", "Latest Qwen"),
     ("together", "deepseek-ai/DeepSeek-V3.1", "flagship", ""),
     ("together", "deepseek-ai/DeepSeek-R1", "reasoning", ""),
     ("together", "MiniMaxAI/MiniMax-M2.5", "flagship", ""),
     ("together", "zai-org/GLM-5", "flagship", "Top open-source"),
-    ("together", "zai-org/GLM-4.7", "flagship", ""),
     ("together", "openai/gpt-oss-20b", "budget", ""),
+    ("together", "openai/gpt-oss-120b", "flagship", "GPT-OSS 120B"),
+    ("together", "moonshotai/Kimi-K2.5", "flagship", "Kimi K2.5"),
 
-    # ===== Cerebras (4) =====
+    # ===== Cerebras (6) =====
     ("cerebras", "llama3.1-8b", "speed", ""),
+    ("cerebras", "llama-3.3-70b", "speed", ""),
+    ("cerebras", "qwen-3-32b", "speed", ""),
     ("cerebras", "gpt-oss-120b", "flagship", ""),
     ("cerebras", "qwen-3-235b-a22b-instruct-2507", "flagship", "Qwen3 at Cerebras speed"),
     ("cerebras", "zai-glm-4.7", "flagship", "GLM at Cerebras speed"),
 
-    # ===== Fireworks (2) =====
+    # ===== Fireworks (5) =====
     ("fireworks", "accounts/fireworks/models/llama-v3p3-70b-instruct", "speed", ""),
     ("fireworks", "accounts/fireworks/models/deepseek-v3p2", "flagship", "DeepSeek V3.2"),
+    ("fireworks", "accounts/fireworks/models/gpt-oss-120b", "flagship", "GPT-OSS 120B"),
+    ("fireworks", "accounts/fireworks/models/qwen3-235b-a22b", "flagship", "Qwen3 235B"),
+    ("fireworks", "accounts/fireworks/models/gpt-oss-20b", "budget", "GPT-OSS 20B"),
 
-    # ===== SambaNova (5) — free-tier rate limit, uses inter_call_delay_s throttling =====
+    # ===== SambaNova (3) — free-tier rate limit, uses inter_call_delay_s throttling =====
     ("sambanova", "Meta-Llama-3.3-70B-Instruct", "flagship", ""),
     ("sambanova", "Llama-4-Maverick-17B-128E-Instruct", "flagship", ""),
     ("sambanova", "DeepSeek-V3.2", "flagship", ""),
-    ("sambanova", "Qwen3-235B", "flagship", ""),
-    ("sambanova", "Qwen3-32B", "flagship", ""),
 
-    # ===== Perplexity (2) =====
+    # ===== Perplexity (3) =====
     ("perplexity", "sonar-pro", "flagship", "Search-augmented"),
     ("perplexity", "sonar", "budget", ""),
+    ("perplexity", "sonar-reasoning-pro", "reasoning", "Reasoning + search"),
 
-    # ===== Cohere (2) =====
+    # ===== Cohere (3) =====
     ("cohere", "command-a-03-2025", "flagship", "Enterprise RAG"),
     ("cohere", "command-r7b-12-2024", "budget", ""),
+    ("cohere", "command-a-reasoning-08-2025", "reasoning", "Hybrid reasoning"),
 
-    # ===== OpenRouter (15) — Router tax + exclusive models =====
+    # ===== OpenRouter (18) — Router tax + exclusive models =====
     ("openrouter", "openai/gpt-4o-mini", "budget", "vs direct"),
     ("openrouter", "openai/gpt-4o", "flagship", "vs direct"),
     ("openrouter", "openai/gpt-4.1", "flagship", "vs direct"),
+    ("openrouter", "openai/gpt-oss-120b", "flagship", "GPT-OSS 120B"),
     ("openrouter", "deepseek/deepseek-chat", "budget", "vs direct"),
     ("openrouter", "meta-llama/llama-3.3-70b-instruct", "flagship", "vs direct"),
     ("openrouter", "meta-llama/llama-4-maverick", "flagship", ""),
@@ -378,11 +386,13 @@ ACTIVE_MODELS = [
     ("openrouter", "x-ai/grok-4", "flagship", "vs direct"),
     ("openrouter", "minimax/minimax-01", "flagship", ""),
     ("openrouter", "minimax/minimax-m2.5", "flagship", ""),
+    ("openrouter", "minimax/minimax-m2.7", "flagship", "Latest MiniMax"),
     ("openrouter", "z-ai/glm-5", "flagship", "Top open-source"),
     ("openrouter", "moonshotai/kimi-k2.5", "flagship", ""),
     ("openrouter", "xiaomi/mimo-v2-flash", "speed", ""),
     ("openrouter", "qwen/qwen3-max", "flagship", "Alibaba commercial"),
     ("openrouter", "deepseek/deepseek-v3.2", "flagship", "vs SambaNova"),
+    ("openrouter", "nvidia/nemotron-3-super", "flagship", "NVIDIA Nemotron"),
 ]
 
 def _initialize_default_models():

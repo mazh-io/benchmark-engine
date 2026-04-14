@@ -90,6 +90,7 @@ PROVIDER_CONFIG = {
         "base_url": "https://generativelanguage.googleapis.com",
         "pricing_url": "https://ai.google.dev/pricing",
         "default_pricing": {"input": 1.25, "output": 5.00},
+        "inter_call_delay_s": 3,  # Free-tier rate limit
     },
     # Phase 4 - Direct API Providers
     "xai": {
